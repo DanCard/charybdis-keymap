@@ -1,0 +1,40 @@
+# Build artifacts
+*.uf2
+*.elf
+*.hex
+*.bin
+
+# QMK build directory
+qmk_firmware/.build/
+qmk_firmware/*.uf2
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+old/
+.claude/
+*.tmp
+layout_clean.txt
+notes.txt
+
+# PDF outputs (optional - remove this line if you want to commit PDFs)
+*.pdf
