@@ -82,7 +82,7 @@ static uint8_t show_mode_phase = 0; // 0=off, 1=on
 
 // LED indices for number keys 1-0 (may need adjustment for your board)
 // These are typically the matrix positions for the number row
-static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
+static const uint8_t number_key_leds[] = {36, 37, 44, 45, 49, 20, 16, 15, 8, 7};
 
 void start_show_mode(void) {
     uint8_t mode = rgb_matrix_get_mode();
@@ -553,6 +553,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 rgb_auto_timer = timer_read();
             }
             return false;
+        case RGB_HUI:
+        case RGB_HUD:
+        case RGB_SAI:
+        case RGB_SAD:
+            if (record->event.pressed) {
+                uint8_t mode = rgb_matrix_get_mode();
+                if (mode == RGB_MATRIX_CYCLE_LEFT_RIGHT || mode == RGB_MATRIX_CYCLE_ALL || mode == RGB_MATRIX_CYCLE_SPIRAL) {
+                    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+                }
+            }
+            return true;
         case KC_PLUS_COLON:
             if (record->event.pressed) {
                 if (get_mods() & MOD_MASK_SHIFT) {
@@ -570,8 +581,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT, KC_LCTL, TD(TD_Z_LAYER), KC_X_TG2, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT, KC_L_TG1, KC_R_TG2, KC_ENT, KC_LALT, KC_BSPC, KC_BSPC),
-    [1] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS), KC_TAB, KC_PMNS, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_LSFT, KC_PPLS, KC_P4, KC_P5, KC_P6, KC_PSLS, KC_PPLS, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_PEQL, KC_LCTL, KC_P0, KC_P1, KC_P2, KC_P3, KC_PEQL, KC_PAST, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_PDOT, KC_SPC, KC_ENT, KC_L_TG1, KC_R_TG2, KC_ENT, KC_LALT, KC_BSPC, KC_BSPC),
-    [2] = LAYOUT(KC_GRV, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_RAINBOW, KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_EXIT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_NO, KC_NO, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
+    [1] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS), KC_TAB, KC_PMNS, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_LSFT, KC_PPLS, KC_P4, KC_P5, KC_P6, KC_PSLS, KC_PPLS, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_PEQL, KC_LCTL, KC_P0, KC_P1, KC_P2, KC_P3, KC_PEQL, RGB_HUI, RGB_HUD, RGB_SAI, RGB_SAD, RGB_VAI, RGB_VAD, KC_SPC, KC_ENT, KC_L_TG1, KC_R_TG2, KC_ENT, KC_LALT, KC_BSPC, KC_BSPC),
+    [2] = LAYOUT(KC_GRV, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_RAINBOW, KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_EXIT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_NO, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4, RM_NEXT, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE, QK_CLEAR_EEPROM, QK_BOOT, MS_BTN3, KC_TRNS, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_SCR_MODE, DPI_MOD, S_D_MOD, KC_TURBO, DPI_MOD, KC_NO, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_NO, TD(TD_Z_LAYER), KC_MS_DIAG_DL, MS_DOWN, KC_MS_FAST_DOWN, KC_MS_DIAG_DR, KC_NO, KC_NO, MS_BTN1, KC_MOUSE_LOCK, SNIPING, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, MS_BTN3, MS_BTN2, MS_BTN2),
     [4] = LAYOUT(KC_MINS, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_6, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O, KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_QUOT, KC_SCLN, KC_L, KC_K, KC_J, KC_H, KC_H, KC_J, KC_K, KC_L, KC_SCLN, KC_QUOT, KC_RSFT, LT(3, KC_SLSH), KC_DOT, KC_COMM, KC_M, KC_N, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_LALT, KC_BSPC, KC_BSPC),
 };
@@ -581,19 +592,29 @@ bool rgb_matrix_indicators_user(void) {
         rgb_matrix_set_color_all(255, 255, 255);
         return false;
     }
+
     uint8_t layer = get_highest_layer(layer_state);
+    uint8_t r = 0, g = 0, b = 0;
+    bool show_layer = true;
+
     switch (layer) {
-        case 4: rgb_matrix_set_color_all(0, 255, 255); break; // Teal (One-Hand)
+        case 4: r = 0; g = 255; b = 255; break; // Teal (One-Hand)
         case 3:
             if (mouse_is_locked) {
-                rgb_matrix_set_color_all(255, 0, 255); // Pink (Mouse Locked)
+                r = 255; g = 0; b = 255; // Pink (Mouse Locked)
             } else {
-                rgb_matrix_set_color_all(255, 255, 0); // Yellow (Mouse Active)
+                r = 255; g = 255; b = 0; // Yellow (Mouse Active)
             }
             break;
-        case 2: rgb_matrix_set_color_all(0, 255, 0); break; // Green (Function)
-        case 1: rgb_matrix_set_color_all(0, 0, 255); break; // Blue (Symbols)
-        default: break;
+        case 2: r = 0; g = 255; b = 0; break; // Green (Function)
+        case 1: r = 0; g = 0; b = 255; break; // Blue (Symbols)
+        default: show_layer = false; break;
+    }
+
+    if (show_layer) {
+        // Set thumb keys as layer indicators (Left: 24-28, Right: 53-57)
+        for (uint8_t i = 24; i <= 28; i++) rgb_matrix_set_color(i, r, g, b);
+        for (uint8_t i = 53; i <= 57; i++) rgb_matrix_set_color(i, r, g, b);
     }
 
     // Flash number key to show current RGB mode
@@ -604,12 +625,11 @@ bool rgb_matrix_indicators_user(void) {
         rgb_matrix_set_color(led_index, 255, 255, 255); // White flash
     }
 
-    return false;
+    return true; // Allow background effects to show on non-indicator keys
 }
 
 void keyboard_post_init_user(void) {
     rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
-    rgb_matrix_sethsv_noeeprom(0, 255, 32); // Rainbow (Sat 255), Dim (Val 32)
     rgb_auto_cycle = true;
     rgb_auto_timer = timer_read();
     start_show_mode();
@@ -640,7 +660,7 @@ void matrix_scan_user(void) {
     }
 
     // Handle show mode flash sequence
-    if (show_mode_active && timer_elapsed(show_mode_timer) > 250) {
+    if (show_mode_active && timer_elapsed(show_mode_timer) > 300) {
         if (show_mode_phase == 1) {
             // Flash was on, turn off
             show_mode_phase = 0;
