@@ -8,23 +8,26 @@ The keymap source files are stored in two locations:
 
 | Location | Purpose |
 |----------|---------|
-| `keymap/` | **Version controlled** - Edit and commit changes here |
-| `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/` | **Build location** - Used by QMK compiler |
+| `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/` | **Working files** - Edit and build from here |
+| `keymap/` | **Backup** - Version controlled copy for git |
 
-The `qmk_firmware/` directory is a git submodule pointing to the official QMK repository. Since we can't commit to upstream QMK, the keymap source is maintained in `keymap/` and copied to the build location.
+The `qmk_firmware/` directory is a git submodule pointing to the official QMK repository. Since we can't commit to upstream QMK, the keymap is backed up to `keymap/` for version control.
 
-### Syncing Changes
+### Workflow
 
-After editing files in `keymap/`, copy them to the build location:
+1. **Edit** files in `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/`
+2. **Build** with `qmk compile` (see section 2)
+3. **Backup** when ready to commit:
+   ```bash
+   ./backup.sh
+   git commit -m "Update keymap"
+   ```
 
+### Restoring from Git
+
+To restore a previous version:
 ```bash
 cp keymap/* qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/
-```
-
-Or sync from QMK back to the repo after testing changes:
-
-```bash
-cp qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/* keymap/
 ```
 
 ### Files
