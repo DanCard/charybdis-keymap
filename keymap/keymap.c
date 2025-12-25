@@ -592,29 +592,19 @@ bool rgb_matrix_indicators_user(void) {
         rgb_matrix_set_color_all(255, 255, 255);
         return false;
     }
-
     uint8_t layer = get_highest_layer(layer_state);
-    uint8_t r = 0, g = 0, b = 0;
-    bool show_layer = true;
-
     switch (layer) {
-        case 4: r = 0; g = 255; b = 255; break; // Teal (One-Hand)
+        case 4: rgb_matrix_set_color_all(0, 255, 255); break; // Teal (One-Hand)
         case 3:
             if (mouse_is_locked) {
-                r = 255; g = 0; b = 255; // Pink (Mouse Locked)
+                rgb_matrix_set_color_all(255, 0, 255); // Pink (Mouse Locked)
             } else {
-                r = 255; g = 255; b = 0; // Yellow (Mouse Active)
+                rgb_matrix_set_color_all(255, 255, 0); // Yellow (Mouse Active)
             }
             break;
-        case 2: r = 0; g = 255; b = 0; break; // Green (Function)
-        case 1: r = 0; g = 0; b = 255; break; // Blue (Symbols)
-        default: show_layer = false; break;
-    }
-
-    if (show_layer) {
-        // Set thumb keys as layer indicators (Left: 24-28, Right: 53-57)
-        for (uint8_t i = 24; i <= 28; i++) rgb_matrix_set_color(i, r, g, b);
-        for (uint8_t i = 53; i <= 57; i++) rgb_matrix_set_color(i, r, g, b);
+        case 2: rgb_matrix_set_color_all(0, 255, 0); break; // Green (Function)
+        case 1: rgb_matrix_set_color_all(0, 0, 255); break; // Blue (Symbols)
+        default: break;
     }
 
     // Flash number key to show current RGB mode
@@ -625,7 +615,7 @@ bool rgb_matrix_indicators_user(void) {
         rgb_matrix_set_color(led_index, 255, 255, 255); // White flash
     }
 
-    return true; // Allow background effects to show on non-indicator keys
+    return false;
 }
 
 void keyboard_post_init_user(void) {
