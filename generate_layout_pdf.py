@@ -297,6 +297,12 @@ def simplify_key(key_code, layer_num=None):
         'KC_CHEVRON': 'Chevrn',
         'KC_RGB_AUTO': 'RGB\nAuto',
         'KC_PLUS_COLON': '+\n:',
+        'RM_HUEU': 'Hue\n+',
+        'RM_HUED': 'Hue\n-',
+        'RM_SATU': 'Sat\n+',
+        'RM_SATD': 'Sat\n-',
+        'RM_VALU': 'Brt\n+',
+        'RM_VALD': 'Brt\n-',
     }
     if key_code in custom_map:
         return custom_map[key_code]
