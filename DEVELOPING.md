@@ -2,7 +2,38 @@
 
 This document explains how to build the firmware and how to modify the keymap logic, including the custom "hold-to-toggle" features.
 
-## 1. Building the Firmware
+## 1. Keymap Source Files
+
+The keymap source files are stored in two locations:
+
+| Location | Purpose |
+|----------|---------|
+| `keymap/` | **Version controlled** - Edit and commit changes here |
+| `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/` | **Build location** - Used by QMK compiler |
+
+The `qmk_firmware/` directory is a git submodule pointing to the official QMK repository. Since we can't commit to upstream QMK, the keymap source is maintained in `keymap/` and copied to the build location.
+
+### Syncing Changes
+
+After editing files in `keymap/`, copy them to the build location:
+
+```bash
+cp keymap/* qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/
+```
+
+Or sync from QMK back to the repo after testing changes:
+
+```bash
+cp qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/* keymap/
+```
+
+### Files
+
+- `keymap.c` - Layer definitions, custom keycodes, and behavior logic
+- `config.h` - Charybdis hardware configuration
+- `rules.mk` - QMK build rules and features
+
+## 2. Building the Firmware
 
 The project uses QMK. The build command is specific to the hardware setup (Charybdis 4x6 with Elite-Pi/Splinky).
 
@@ -16,10 +47,9 @@ qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 **Artifact:**
 The compiled file is `bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2`.
 
-## 2. Keymap Architecture
+## 3. Keymap Architecture
 
-The core logic resides in:
-`qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/keymap.c`
+The core logic resides in `keymap/keymap.c` (source of truth) which gets copied to `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/keymap.c` for building.
 
 ### A. Keymap Definitions
 The key layouts for all layers are defined in the `keymaps` array:
@@ -43,7 +73,7 @@ enum custom_keycodes {
 };
 ```
 
-## 3. Implementing "Hold-to-Toggle" Logic
+## 4. Implementing "Hold-to-Toggle" Logic
 
 Standard QMK `LT(layer, key)` (Layer-Tap) functions require you to *hold* the key to keep the layer active. The custom logic implemented here allows you to *hold* the key briefly to **toggle** the layer permanently (on/off), while a quick *tap* sends the keycode.
 
@@ -83,7 +113,7 @@ To add this behavior to a new key (e.g., Key `X` toggling Layer `Y`):
     }
     ```
 
-## 4. Tap Dance (Z Key)
+## 5. Tap Dance (Z Key)
 
 The `Z` key uses QMK's "Tap Dance" feature for more complex multi-tap logic:
 - **Tap:** Send 'Z'
@@ -92,7 +122,7 @@ The `Z` key uses QMK's "Tap Dance" feature for more complex multi-tap logic:
 
 This is configured via `tap_dance_actions[]` and the `z_finished`/`z_reset` functions.
 
-## 5. Mouse Logic
+## 6. Mouse Logic
 
 The trackball automatically switches to Layer 3 (Mouse) upon movement.
 - **Logic:** `pointing_device_task_user` detects movement and calls `layer_on(3)`.
