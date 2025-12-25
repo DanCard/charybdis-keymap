@@ -270,8 +270,8 @@ def simplify_key(key_code, layer_num=None):
         'KC_V_TG5': 'V\nTG5',
         'KC_L_TG1': 'L1\nTgl',
         'KC_R_TG2': 'L2\nTgl',
-        'KC_ENT_MO4': 'Ent\nL4',
-        'KC_ENT_EXIT': 'Ent\nEx',
+        'KC_ENT_MO4': 'Enter\nL4',
+        'KC_ENT_EXIT': 'Enter\nExit',
         'KC_SPC_EXIT': 'Space\nExit',
         'KC_BSPC_EXIT': 'Back\nExit',
         'KC_EXIT': 'Exit',
@@ -296,6 +296,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_SPIRAL': 'Spiral',
         'KC_CHEVRON': 'Chevrn',
         'KC_RGB_AUTO': 'RGB\nAuto',
+        'KC_PLUS_COLON': '+\n:',
     }
     if key_code in custom_map:
         return custom_map[key_code]

@@ -51,7 +51,8 @@ enum custom_keycodes {
     KC_JELLY,
     KC_SPIRAL,
     KC_CHEVRON,
-    KC_RGB_AUTO
+    KC_RGB_AUTO,
+    KC_PLUS_COLON
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -70,6 +71,34 @@ static uint8_t saved_rgb_mode;
 static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static bool rgb_auto_cycle = false;
 static uint16_t rgb_auto_timer = 0;
+
+// Show mode state
+static bool show_mode_active = false;
+static uint8_t show_mode_digits[2];
+static uint8_t show_mode_digit_count = 0;
+static uint8_t show_mode_current_digit = 0;
+static uint16_t show_mode_timer = 0;
+static uint8_t show_mode_phase = 0; // 0=off, 1=on
+
+// LED indices for number keys 1-0 (may need adjustment for your board)
+// These are typically the matrix positions for the number row
+static const uint8_t number_key_leds[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+void start_show_mode(void) {
+    uint8_t mode = rgb_matrix_get_mode();
+    show_mode_digit_count = 0;
+
+    // Extract digits (handle 1-2 digit numbers)
+    if (mode >= 10) {
+        show_mode_digits[show_mode_digit_count++] = mode / 10;
+    }
+    show_mode_digits[show_mode_digit_count++] = mode % 10;
+
+    show_mode_current_digit = 0;
+    show_mode_phase = 1; // Start with flash on
+    show_mode_timer = timer_read();
+    show_mode_active = true;
+}
 
 void z_finished(tap_dance_state_t *state, void *user_data) {
     z_tap_state.state = cur_dance(state);
@@ -160,6 +189,8 @@ static uint16_t home_tap_timer = 0;
 static bool home_held = false;
 static bool home_triggered = false;
 static uint16_t ent_mo_timer = 0;
+static bool ent_mo_held = false;
+static bool ent_mo_triggered = false;
 static layer_state_t layer_state_to_restore = 0;
 
 static uint16_t k1_tap_timer = 0;
@@ -264,15 +295,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
              return false;
         case KC_ENT_MO4:
             if (record->event.pressed) {
-                layer_on(4);
-                rgb_matrix_indicators_user();
+                ent_mo_held = true;
+                ent_mo_triggered = false;
                 ent_mo_timer = timer_read();
             } else {
-                if (timer_elapsed(ent_mo_timer) < MY_TAPPING_TERM) {
+                ent_mo_held = false;
+                if (!ent_mo_triggered) {
                     tap_code(KC_ENT);
+                } else {
+                    layer_off(4);
+                    rgb_matrix_indicators_user();
                 }
-                layer_off(4);
-                rgb_matrix_indicators_user();
             }
             return false;
         case KC_ENT_EXIT:
@@ -409,16 +442,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_RAINBOW:
             if (record->event.pressed) {
                 rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
+                start_show_mode();
             }
             return false;
         case RM_NEXT:
             if (record->event.pressed) {
                 rgb_matrix_step_noeeprom();
+                start_show_mode();
             }
             return false;
         case KC_REACTIVE:
             if (record->event.pressed) {
                 rgb_matrix_mode_noeeprom(RGB_MATRIX_SPLASH);
+                start_show_mode();
             }
             return false;
         case KC_MOUSE_LOCK:
@@ -445,7 +481,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 if (!k1_triggered) {
                     uint8_t layer = get_highest_layer(layer_state);
                     if (layer == 2) tap_code(KC_F1);
-                    else if (layer == 3) rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
+                    else if (layer == 3) { rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT); start_show_mode(); }
                     else if (layer == 4) tap_code(KC_0);
                     else tap_code(KC_1);
                 }
@@ -459,7 +495,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 if (!k2_triggered) {
                     uint8_t layer = get_highest_layer(layer_state);
                     if (layer == 2) tap_code(KC_F2);
-                    else if (layer == 3) rgb_matrix_step_noeeprom(); 
+                    else if (layer == 3) { rgb_matrix_step_noeeprom(); start_show_mode(); }
                     else if (layer == 4) tap_code(KC_9);
                     else tap_code(KC_2);
                 }
@@ -494,13 +530,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return false;
         case KC_JELLY:
-            if (record->event.pressed) rgb_matrix_mode_noeeprom(RGB_MATRIX_JELLYBEAN_RAINDROPS);
+            if (record->event.pressed) {
+                rgb_matrix_mode_noeeprom(RGB_MATRIX_JELLYBEAN_RAINDROPS);
+                start_show_mode();
+            }
             return false;
         case KC_SPIRAL:
-            if (record->event.pressed) rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_SPIRAL);
+            if (record->event.pressed) {
+                rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_SPIRAL);
+                start_show_mode();
+            }
             return false;
         case KC_CHEVRON:
-            if (record->event.pressed) rgb_matrix_mode_noeeprom(RGB_MATRIX_RAINBOW_MOVING_CHEVRON);
+            if (record->event.pressed) {
+                rgb_matrix_mode_noeeprom(RGB_MATRIX_RAINBOW_MOVING_CHEVRON);
+                start_show_mode();
+            }
             return false;
         case KC_RGB_AUTO:
             if (record->event.pressed) {
@@ -508,14 +553,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 rgb_auto_timer = timer_read();
             }
             return false;
+        case KC_PLUS_COLON:
+            if (record->event.pressed) {
+                if (get_mods() & MOD_MASK_SHIFT) {
+                    // Shift held: send colon (shift is already active)
+                    tap_code(KC_SCLN);
+                } else {
+                    // No shift: send plus
+                    tap_code16(S(KC_EQL));
+                }
+            }
+            return false;
     }
     return true;
 }
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_SCLN, KC_QUOT, KC_LCTL, TD(TD_Z_LAYER), KC_X_TG2, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT_MO4, KC_L_TG1, KC_R_TG2, KC_ENT_MO4, KC_LALT, KC_BSPC, KC_BSPC),
-    [1] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS), KC_TAB, KC_PMNS, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_LSFT, KC_PPLS, KC_P4, KC_P5, KC_P6, KC_PSLS, KC_PPLS, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_PEQL, KC_LCTL, KC_P0, KC_P1, KC_P2, KC_P3, KC_PEQL, KC_PAST, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_PDOT, KC_SPC, KC_ENT_MO4, KC_L_TG1, KC_R_TG2, KC_ENT_MO4, KC_LALT, KC_BSPC, KC_BSPC),
-    [2] = LAYOUT(KC_GRV, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_RAINBOW, KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_VOLU, KC_NO, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_NO, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_MUTE, KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
+    [0] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT, KC_LCTL, TD(TD_Z_LAYER), KC_X_TG2, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT, KC_L_TG1, KC_R_TG2, KC_ENT, KC_LALT, KC_BSPC, KC_BSPC),
+    [1] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS), KC_TAB, KC_PMNS, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_LSFT, KC_PPLS, KC_P4, KC_P5, KC_P6, KC_PSLS, KC_PPLS, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_PEQL, KC_LCTL, KC_P0, KC_P1, KC_P2, KC_P3, KC_PEQL, KC_PAST, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_PDOT, KC_SPC, KC_ENT, KC_L_TG1, KC_R_TG2, KC_ENT, KC_LALT, KC_BSPC, KC_BSPC),
+    [2] = LAYOUT(KC_GRV, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_RAINBOW, KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_EXIT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_NO, KC_NO, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4, RM_NEXT, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE, QK_CLEAR_EEPROM, QK_BOOT, MS_BTN3, KC_TRNS, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_SCR_MODE, DPI_MOD, S_D_MOD, KC_TURBO, DPI_MOD, KC_NO, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_NO, TD(TD_Z_LAYER), KC_MS_DIAG_DL, MS_DOWN, KC_MS_FAST_DOWN, KC_MS_DIAG_DR, KC_NO, KC_NO, MS_BTN1, KC_MOUSE_LOCK, SNIPING, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, MS_BTN3, MS_BTN2, MS_BTN2),
     [4] = LAYOUT(KC_MINS, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_6, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O, KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_QUOT, KC_SCLN, KC_L, KC_K, KC_J, KC_H, KC_H, KC_J, KC_K, KC_L, KC_SCLN, KC_QUOT, KC_RSFT, LT(3, KC_SLSH), KC_DOT, KC_COMM, KC_M, KC_N, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_LALT, KC_BSPC, KC_BSPC),
 };
@@ -527,18 +583,28 @@ bool rgb_matrix_indicators_user(void) {
     }
     uint8_t layer = get_highest_layer(layer_state);
     switch (layer) {
-        case 4: rgb_matrix_set_color_all(0, 255, 255); return false; // Teal (One-Hand)
-        case 3: 
+        case 4: rgb_matrix_set_color_all(0, 255, 255); break; // Teal (One-Hand)
+        case 3:
             if (mouse_is_locked) {
                 rgb_matrix_set_color_all(255, 0, 255); // Pink (Mouse Locked)
             } else {
                 rgb_matrix_set_color_all(255, 255, 0); // Yellow (Mouse Active)
             }
-            return false;
-        case 2: rgb_matrix_set_color_all(0, 255, 0); return false; // Green (Function)
-        case 1: rgb_matrix_set_color_all(0, 0, 255); return false; // Blue (Symbols)
-        default: return true;
+            break;
+        case 2: rgb_matrix_set_color_all(0, 255, 0); break; // Green (Function)
+        case 1: rgb_matrix_set_color_all(0, 0, 255); break; // Blue (Symbols)
+        default: break;
     }
+
+    // Flash number key to show current RGB mode
+    if (show_mode_active && show_mode_phase == 1) {
+        uint8_t digit = show_mode_digits[show_mode_current_digit];
+        // digit 1-9 maps to index 0-8, digit 0 maps to index 9
+        uint8_t led_index = (digit == 0) ? number_key_leds[9] : number_key_leds[digit - 1];
+        rgb_matrix_set_color(led_index, 255, 255, 255); // White flash
+    }
+
+    return false;
 }
 
 void keyboard_post_init_user(void) {
@@ -569,6 +635,25 @@ void matrix_scan_user(void) {
     if (rgb_auto_cycle && timer_elapsed(rgb_auto_timer) > 30000) {
         rgb_matrix_step_noeeprom();
         rgb_auto_timer = timer_read();
+        start_show_mode();
+    }
+
+    // Handle show mode flash sequence
+    if (show_mode_active && timer_elapsed(show_mode_timer) > 250) {
+        if (show_mode_phase == 1) {
+            // Flash was on, turn off
+            show_mode_phase = 0;
+            show_mode_timer = timer_read();
+        } else {
+            // Flash was off, move to next digit or end
+            show_mode_current_digit++;
+            if (show_mode_current_digit >= show_mode_digit_count) {
+                show_mode_active = false;
+            } else {
+                show_mode_phase = 1;
+                show_mode_timer = timer_read();
+            }
+        }
     }
 
     if (auto_mouse_on && !mouse_is_locked && timer_elapsed(auto_mouse_timer) > 650) { // 650ms timeout
@@ -607,6 +692,11 @@ void matrix_scan_user(void) {
     if (p_held && !p_triggered && timer_elapsed(p_tap_timer) > MY_TAPPING_TERM) {
         layer_move(0);
         p_triggered = true;
+        rgb_matrix_indicators_user();
+    }
+    if (ent_mo_held && !ent_mo_triggered && timer_elapsed(ent_mo_timer) > MY_TAPPING_TERM) {
+        layer_on(4);
+        ent_mo_triggered = true;
         rgb_matrix_indicators_user();
     }
 
