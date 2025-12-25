@@ -82,7 +82,7 @@ static uint8_t show_mode_phase = 0; // 0=off, 1=on
 
 // LED indices for number keys 1-0 (may need adjustment for your board)
 // These are typically the matrix positions for the number row
-static const uint8_t number_key_leds[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
 
 void start_show_mode(void) {
     uint8_t mode = rgb_matrix_get_mode();
@@ -612,6 +612,7 @@ void keyboard_post_init_user(void) {
     rgb_matrix_sethsv_noeeprom(0, 255, 32); // Rainbow (Sat 255), Dim (Val 32)
     rgb_auto_cycle = true;
     rgb_auto_timer = timer_read();
+    start_show_mode();
 }
 
 static uint16_t auto_mouse_timer = 0;
