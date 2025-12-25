@@ -17,25 +17,23 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (0.9, 0.9, 0.9),      # White/Light gray (Base)
-    1: (0.7, 0.7, 1.0),      # Blue (Symbols)
+    1: (0.6, 0.9, 1.0),      # Light Blue (Symbols + Numpad)
     2: (0.7, 1.0, 0.7),      # Green (Media)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
     4: (0.7, 1.0, 1.0),      # Cyan (One-Hand)
-    5: (0.9, 0.7, 0.9),      # Purple (Numpad)
 }
 
 LAYER_NAMES = {
     0: "BASE",
-    1: "SYMBOLS",
+    1: "SYMBOLS + NUMPAD",
     2: "MEDIA",
     3: "MOUSE",
     4: "ONE-HAND",
-    5: "NUMPAD",
 }
 
 # Key label simplifications
 KEY_LABELS = {
-    'KC_ESC': 'Esc',
+    'KC_ESC': 'Escape',
     'KC_TAB': 'Tab',
     'KC_LSFT': 'Shift',
     'KC_RSFT': 'Shift',
@@ -46,9 +44,9 @@ KEY_LABELS = {
     'KC_LGUI': 'Win',
     'KC_RGUI': 'Win',
     'KC_SPC': 'Space',
-    'KC_BSPC': 'Bksp',
+    'KC_BSPC': 'Back\nSpace',
     'KC_ENT': 'Enter',
-    'KC_DEL': 'Del',
+    'KC_DEL': 'Delete',
     'KC_MINS': '-',
     'KC_EQL': '=',
     'KC_LBRC': '[',
@@ -60,11 +58,11 @@ KEY_LABELS = {
     'KC_COMM': ',',
     'KC_DOT': '.',
     'KC_SLSH': '/',
-    'KC_CAPS': 'Caps',
+    'KC_CAPS': 'Caps\nLock',
     'KC_HOME': 'Home',
     'KC_END': 'End',
-    'KC_PGUP': 'PgUp',
-    'KC_PGDN': 'PgDn',
+    'KC_PGUP': 'Page\nUp',
+    'KC_PGDN': 'Page\nDown',
     'KC_UP': 'Up',
     'KC_DOWN': 'Down',
     'KC_LEFT': 'Left',
@@ -74,39 +72,39 @@ KEY_LABELS = {
     'KC_MPLY': 'Play',
     'KC_MNXT': 'Next',
     'KC_MPRV': 'Prev',
-    'KC_VOLU': 'Vol+',
-    'KC_VOLD': 'Vol-',
+    'KC_VOLU': 'Vol\nUp',
+    'KC_VOLD': 'Vol\nDown',
     'KC_MUTE': 'Mute',
-    'KC_PPLS': 'Num+',
-    'KC_PMNS': 'Num-',
-    'KC_PAST': 'Num*',
-    'KC_PSLS': 'Num/',
-    'KC_PEQL': 'Num=',
-    'KC_PDOT': 'Num.',
-    'KC_P0': 'Num0',
-    'KC_P1': 'Num1',
-    'KC_P2': 'Num2',
-    'KC_P3': 'Num3',
-    'KC_P4': 'Num4',
-    'KC_P5': 'Num5',
-    'KC_P6': 'Num6',
-    'KC_P7': 'Num7',
-    'KC_P8': 'Num8',
-    'KC_P9': 'Num9',
+    'KC_PPLS': 'Num +',
+    'KC_PMNS': 'Num -',
+    'KC_PAST': 'Num *',
+    'KC_PSLS': 'Num /',
+    'KC_PEQL': 'Num =',
+    'KC_PDOT': 'Num .',
+    'KC_P0': 'Num 0',
+    'KC_P1': 'Num 1',
+    'KC_P2': 'Num 2',
+    'KC_P3': 'Num 3',
+    'KC_P4': 'Num 4',
+    'KC_P5': 'Num 5',
+    'KC_P6': 'Num 6',
+    'KC_P7': 'Num 7',
+    'KC_P8': 'Num 8',
+    'KC_P9': 'Num 9',
     'QK_BOOT': 'BOOT',
-    'QK_CLEAR_EEPROM': 'EECLR',
-    'MS_BTN1': 'LClick',
-    'MS_BTN2': 'RClick',
-    'MS_BTN3': 'MClick',
-    'MS_UP': 'M-Up',
-    'MS_DOWN': 'M-Down',
-    'MS_LEFT': 'M-Left',
-    'MS_RGHT': 'M-Right',
+    'QK_CLEAR_EEPROM': 'EE\nCLR',
+    'MS_BTN1': 'Left\nClick',
+    'MS_BTN2': 'Right\nClick',
+    'MS_BTN3': 'Middle\nClick',
+    'MS_UP': 'Mouse\nUp',
+    'MS_DOWN': 'Mouse\nDown',
+    'MS_LEFT': 'Mouse\nLeft',
+    'MS_RGHT': 'Mouse\nRight',
     'SNIPING': 'Snipe',
     'DRGSCRL': 'Scroll',
     'DPI_MOD': 'DPI',
     'S_D_MOD': 'S-DPI',
-    'RM_NEXT': 'RGB>',
+    'RM_NEXT': 'RGB >',
 }
 
 def parse_keymap(file_path):
@@ -154,7 +152,7 @@ def parse_keymap(file_path):
         current_key = ""
         depth = 0
         for char in layout_str:
-            if char == '(':
+            if char == '(': 
                 depth += 1
                 current_key += char
             elif char == ')':
@@ -177,11 +175,62 @@ def parse_keymap(file_path):
 def parse_info_json(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
-    return data['layouts']['LAYOUT']['layout']
+    layout = data['layouts']['LAYOUT']['layout']
+
+    # Adjust layout to minimize whitespace and center thumbs
+    for key in layout:
+        # Right Main (rows 0-3, x >= 11) -> Shift Left by 4
+        if key['y'] < 4 and key['x'] >= 11:
+            key['x'] -= 4.0
+        
+        # Left Thumbs (y >= 4, x < 9) -> Shift Left by 2 (Center under Left Main)
+        elif key['y'] >= 4 and key['x'] < 9:
+            key['x'] -= 2.0
+            
+        # Right Thumbs (y >= 4, x >= 9) -> Shift Left by 1 (Center under Right Main)
+        elif key['y'] >= 4 and key['x'] >= 9:
+            key['x'] -= 1.0
+
+    return layout
 
 
-def simplify_key(key_code):
+def simplify_key(key_code, layer_num=None):
     """Convert QMK keycode to readable label."""
+    # Special handling for Layer 0 Long Press
+    if layer_num == 0:
+        if 'TD_Z_LAYER' in key_code: return 'Z\nMouse\nLight'
+        if key_code == 'KC_1_TG1': return '1\nL1'
+        if key_code == 'KC_2_TG2': return '2\nL2'
+        if key_code == 'KC_3_TG3': return '3\nL3'
+        if key_code == 'KC_4_TG4': return '4\nL4'
+
+    # Special handling for Layer 1
+    if layer_num == 1:
+        if key_code == 'KC_1_TG1': return '1\nL0'
+        if key_code == 'KC_2_TG2': return '2\nL0'
+        if key_code == 'KC_3_TG3': return '3\nL0'
+        if key_code == 'KC_4_TG4': return '4\nL0'
+
+    # Special handling for Layer 2
+    if layer_num == 2:
+        if 'TD_Z_LAYER' in key_code: return 'Home'
+        if 'KC_X_TG2' == key_code: return 'Page\nUp'
+
+    # Special handling for other layer long press returns
+    if layer_num is not None and layer_num > 1:
+        if key_code == 'KC_1_TG1':
+            label = 'F1' if layer_num == 2 else ('Rainb' if layer_num == 3 else '0')
+            return f'{label}\nL0'
+        if key_code == 'KC_2_TG2':
+            label = 'F2' if layer_num == 2 else ('Next' if layer_num == 3 else '9')
+            return f'{label}\nL0'
+        if key_code == 'KC_3_TG3':
+            label = 'F3' if layer_num == 2 else '3'
+            return f'{label}/L0'
+        if key_code == 'KC_4_TG4':
+            label = 'F4' if layer_num == 2 else '4'
+            return f'{label}\nL0'
+
     if key_code in KEY_LABELS:
         return KEY_LABELS[key_code]
 
@@ -203,39 +252,50 @@ def simplify_key(key_code):
     if lt_match:
         layer = lt_match.group(1)
         key = lt_match.group(2)
-        return f'{key}/L{layer}'
+        # Simplify the inner key if possible
+        inner_key_code = f'KC_{key}'
+        label = KEY_LABELS.get(inner_key_code, key)
+        return f'{label}\nL{layer}'
 
     # Handle TD(...)
     td_match = re.match(r'TD\((\w+)\)', key_code)
     if td_match:
-        name = td_match.group(1)
-        if 'Z' in name:
-            return 'Z/TD'
         return 'TD'
 
     # Handle custom keycodes
     custom_map = {
-        'KC_Q_TG4': 'Q/TG4',
-        'KC_P_TO0': 'P/TO0',
-        'KC_X_TG2': 'X/TG2',
-        'KC_C_TG1': 'C/TG1',
-        'KC_V_TG5': 'V/TG5',
-        'KC_L_TG1': 'L1 Tgl',
-        'KC_R_TG2': 'L2 Tgl',
-        'KC_ENT_MO4': 'Ent/L4',
-        'KC_ENT_EXIT': 'Ent/Ex',
-        'KC_RAINBOW': 'Rainbow',
-        'KC_REACTIVE': 'React',
-        'KC_MOUSE_LOCK': 'M-Lock',
-        'KC_MS_FAST_UP': 'M-Up+',
-        'KC_MS_FAST_DOWN': 'M-Dn+',
-        'KC_MS_FAST_LEFT': 'M-Lt+',
-        'KC_MS_FAST_RIGHT': 'M-Rt+',
-        'KC_MS_DIAG_UL': 'M-UL',
-        'KC_MS_DIAG_UR': 'M-UR',
-        'KC_MS_DIAG_DL': 'M-DL',
-        'KC_MS_DIAG_DR': 'M-DR',
-        'KC_SCR_MODE': 'ScrMod',
+        'KC_Q_TG4': 'Q\nTG4',
+        'KC_P_TO0': 'P\nTO0',
+        'KC_X_TG2': 'X\nTG2',
+        'KC_V_TG5': 'V\nTG5',
+        'KC_L_TG1': 'L1\nTgl',
+        'KC_R_TG2': 'L2\nTgl',
+        'KC_ENT_MO4': 'Ent\nL4',
+        'KC_ENT_EXIT': 'Ent\nEx',
+        'KC_SPC_EXIT': 'Space\nExit',
+        'KC_BSPC_EXIT': 'Back\nExit',
+        'KC_EXIT': 'Exit',
+        'KC_TURBO': 'Turbo',
+        'KC_RAINBOW': 'Rain\nbow',
+        'KC_REACTIVE': 'Reac\ntive',
+        'KC_MOUSE_LOCK': 'Mouse\nLock',
+        'KC_MS_FAST_UP': 'Mouse\nUp+',
+        'KC_MS_FAST_DOWN': 'Mouse\nDown+',
+        'KC_MS_FAST_LEFT': 'Mouse\nLeft+',
+        'KC_MS_FAST_RIGHT': 'Mouse\nRight+',
+        'KC_MS_DIAG_UL': 'Up\nLeft',
+        'KC_MS_DIAG_UR': 'Up\nRight',
+        'KC_MS_DIAG_DL': 'Down\nLeft',
+        'KC_MS_DIAG_DR': 'Down\nRight',
+        'KC_SCR_MODE': 'Scr\nMod',
+        'KC_1_TG1': '1\nL1',
+        'KC_2_TG2': '2\nL2',
+        'KC_3_TG3': '3\nL3',
+        'KC_4_TG4': '4\nL4',
+        'KC_JELLY': 'Jelly',
+        'KC_SPIRAL': 'Spiral',
+        'KC_CHEVRON': 'Chevrn',
+        'KC_RGB_AUTO': 'RGB\nAuto',
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -249,7 +309,7 @@ def simplify_key(key_code):
             return rest
         return rest
 
-    return key_code[:8]
+    return key_code[:10]
 
 
 def draw_key(c, x, y, width, height, label, bg_color):
@@ -261,24 +321,41 @@ def draw_key(c, x, y, width, height, label, bg_color):
     # Key label
     c.setFillColor(colors.black)
 
+    # Split lines
+    lines = label.split('\n')
+    
+    # Determine max line length for font sizing
+    max_len = max(len(line) for line in lines)
+    
     # Adjust font size based on label length
-    if len(label) <= 2:
+    if max_len <= 2:
         font_size = 10
-    elif len(label) <= 4:
+    elif max_len <= 4:
         font_size = 8
-    elif len(label) <= 6:
+    elif max_len <= 5:
         font_size = 7
-    else:
+    elif max_len <= 7:
         font_size = 6
+    else:
+        font_size = 5.5
 
     c.setFont("Helvetica-Bold", font_size)
+    
+    # Calculate vertical starting position to center the block of text
+    line_height = font_size + 2
+    total_text_height = len(lines) * line_height
+    
+    start_text_y = y + (height + total_text_height) / 2 - line_height + 2
+    
+    if len(lines) > 1:
+        # Tweak for multi-line to center better visually
+        start_text_y += 1 
 
-    # Center text
-    text_width = c.stringWidth(label, "Helvetica-Bold", font_size)
-    text_x = x + (width - text_width) / 2
-    text_y = y + (height - font_size) / 2 + 2
-
-    c.drawString(text_x, text_y, label)
+    for i, line in enumerate(lines):
+        text_width = c.stringWidth(line, "Helvetica-Bold", font_size)
+        text_x = x + (width - text_width) / 2
+        text_y = start_text_y - (i * line_height)
+        c.drawString(text_x, text_y, line)
 
 
 def draw_layer(c, layer_keys, layout_info, layer_num, start_x, start_y, key_size=28):
@@ -290,17 +367,19 @@ def draw_layer(c, layer_keys, layout_info, layer_num, start_x, start_y, key_size
     c.setFont("Helvetica-Bold", 12)
     c.setFillColor(colors.black)
     title = f"{layer_name} (L{layer_num})"
-    c.drawString(start_x, start_y, title)
+    title_width = c.stringWidth(title, "Helvetica-Bold", 12)
+    title_x = (LETTER[0] - title_width) / 2
+    c.drawString(title_x, start_y, title)
 
     # Calculate layout bounds
     max_x = max(k['x'] for k in layout_info)
     max_y = max(k['y'] for k in layout_info)
 
     # Key dimensions
-    key_gap = 3
+    key_gap = 1
 
-    # Adjust vertical offset for title - increased spacing
-    offset_y = start_y - 35
+    # Adjust vertical offset for title - reduced spacing
+    offset_y = start_y - 40
 
     c.setStrokeColor(colors.gray)
     c.setLineWidth(0.5)
@@ -313,11 +392,11 @@ def draw_layer(c, layer_keys, layout_info, layer_num, start_x, start_y, key_size
         kx = start_x + info['x'] * (key_size + key_gap)
         ky = offset_y - (info['y']) * (key_size + key_gap)
 
-        label = simplify_key(key_code)
+        label = simplify_key(key_code, layer_num)
         draw_key(c, kx, ky, key_size, key_size, label, bg_color)
 
     # Return height used for this layer
-    return (max_y + 1) * (key_size + key_gap) + 30
+    return (max_y + 1) * (key_size + key_gap) + 10
 
 
 def generate_pdf(output_path, keymap_path, info_path):
@@ -335,8 +414,8 @@ def generate_pdf(output_path, keymap_path, info_path):
 
     # Layer pages - fit 3 layers per page
     layer_nums = sorted(layers.keys())
-    margin = 0.4 * inch
-    key_size = 24  # Smaller keys to fit 3 layers
+    margin = 0.15 * inch
+    key_size = 36  # Slightly smaller to fit
 
     for i in range(0, len(layer_nums), 3):
         current_y = page_height - margin
@@ -349,13 +428,12 @@ def generate_pdf(output_path, keymap_path, info_path):
             layer_num = layer_nums[i + j]
             height_used = draw_layer(c, layers[layer_num], layout_info, layer_num,
                                      margin, current_y, key_size=key_size)
-            current_y -= height_used + 30  # Space between layers
+            current_y -= height_used + 15  # Space between layers
 
         c.showPage()
 
     c.save()
     print(f"PDF saved to: {output_path}")
-
 
 def main():
     base_path = '/home/dcar/projects/mech-keyboard'
