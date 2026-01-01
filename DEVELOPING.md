@@ -4,31 +4,25 @@ This document explains how to build the firmware and how to modify the keymap lo
 
 ## 1. Keymap Source Files
 
-The keymap source files are stored in two locations:
+The keymap source files are stored in the `keymap/` directory of this repository.
 
 | Location | Purpose |
 |----------|---------|
-| `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/` | **Working files** - Edit and build from here |
-| `keymap/` | **Backup** - Version controlled copy for git |
+| `keymap/` | **Source of Truth** - Edit files here. |
+| `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/` | **Symlink** - Points back to `keymap/` so QMK can build it. |
 
-The `qmk_firmware/` directory is a git submodule pointing to the official QMK repository. Since we can't commit to upstream QMK, the keymap is backed up to `keymap/` for version control.
+This setup ensures that your custom logic is part of this repository (`mech-keyboard`) and safe from changes/resets in the QMK submodule.
 
 ### Workflow
 
-1. **Edit** files in `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/`
-2. **Build** with `qmk compile` (see section 2)
-3. **Backup** when ready to commit:
+1. **Edit** files in `keymap/` (e.g., `keymap.c`).
+2. **Build** with `qmk compile` (see section 2).
+   - QMK will automatically follow the symlink and build your code.
+3. **Commit** changes to this repository:
    ```bash
-   ./backup.sh
-   git commit -m "Update keymap"
+   git add keymap/
+   git commit -m "Update keymap logic"
    ```
-
-### Restoring from Git
-
-To restore a previous version:
-```bash
-cp keymap/* qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/
-```
 
 ### Files
 

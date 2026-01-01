@@ -39,10 +39,16 @@ python3 print_layout.py
 
 ## Keymap Files
 
-The keymap files in `/keymap/` are **symlinked** to the actual QMK keymap directory:
-- `keymap/` → `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/`
+The keymap source code is stored directly in the `keymap/` directory of this repository.
 
-Edit either location - they point to the same files!
+To allow QMK to build it, a **symlink** has been created inside the QMK firmware directory:
+- **Source:** `keymap/` (This repo)
+- **Destination:** `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar` (Symlink)
+
+**How to Edit:**
+Simply edit the files in `keymap/` (`keymap.c`, `config.h`, `rules.mk`). The symlink ensures QMK always sees the latest changes.
+
+**Note:** This structure ensures your custom keymap is safely backed up in this repository, even without forking the entire QMK firmware.
 
 ## Compilation & Flashing
 
