@@ -105,6 +105,8 @@ KEY_LABELS = {
     'DPI_MOD': 'DPI',
     'S_D_MOD': 'S-DPI',
     'RM_NEXT': 'RGB >',
+    'RM_PREV': 'RGB <',
+    'KC_LED_DEBUG': 'LED\nDebug',
 }
 
 def parse_keymap(file_path):
@@ -303,6 +305,12 @@ def simplify_key(key_code, layer_num=None):
         'RM_SATD': 'Sat\n-',
         'RM_VALU': 'Brt\n+',
         'RM_VALD': 'Brt\n-',
+        'KC_MINS_TO0': '-\nExit',
+        'KC_0_TG1': '0\nL1',
+        'KC_9_TG2': '9\nL2',
+        'KC_8_TG3': '8\nL3',
+        'KC_7_TO0': '7\nExit',
+        'KC_6_TO0': '6\nExit',
     }
     if key_code in custom_map:
         return custom_map[key_code]

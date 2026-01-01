@@ -1,109 +1,107 @@
 # Keyboard Layout Visualization & Guide
 
-This document provides a visual reference for the current keymap layout of the BastardKB Charybdis 4x6.
+This document provides a visual reference for the current keymap layout of the BastardKB Charybdis 4x6 (Dcar's Layout).
 
 ## Visual Layout
 
 ```
-BASE
-Esc     1       2       3       4       5          6       7       8       9       0       -      
-Tab     Q/TG(4) W       E       R       T          Y       U       I       O       P       \      
-Shift   A       S       D       F       G          H       J       K       L       ;       '      
-Ctrl    Z/TG(3) X/TG(2) C/TG(1) V/TG(5) B          N       M       ,       .       //Mouse Shift  
+BASE (Layer 0)
+Esc     1/L1    2/L2    3/L3    4/L4    5          6       7       8       9       0       -      
+Tab     Q/L4    W       E       R       T          Y       U       I       O       P       \      
+Shift   A       S       D       F       G          H       J       K       L       +/:     '      
+Ctrl    Z/Ms    X/L2    C       V       B          N       M       ,       .       //Ms    Shift  
 
-Space   Ent/Hold L4 L1 Toggle                           L2 Toggle Ent/Hold L4
-Alt     Backsp                                           Backsp 
+Space   Enter   L1 Toggle                          L2 Toggle Enter   
+Alt     Backsp                                     Backsp    
+```
 
+```
+SYMBOLS (Layer 1 - Toggle Left Thumb Outer)
+Esc     1/L1    2/L2    3/L3    4/L4    5          ^       &       *       (       )       _      
+Tab     Num -   Num 7   Num 8   Num 9   Num *      [       [       ]       {       }       .      
+Exit    Num +   Num 4   Num 5   Num 6   Num /      +       Left    Up      Down    Right   =      
+Ctrl    Num 0   Num 1   Num 2   Num 3   Num =      Hue+    Hue-    Sat+    Sat-    Val+    Val-   
 
-SYMBOLS (Layer 1 - Toggle Left Thumb Inner)
-~       !       @       #       $       %          ^       &       *       (       )       _      
-RGB Nex Rainbow React   .       .       .          [       [       ]       Down    Right   .      
-Shift   Win     Alt     Ctrl    Shift   .          Num +   Left    Up      Down    Right   +      
-Ctrl    Home/T3 PgUp/T2 PgDn/T1 End     .          Num *   Home    PgUp    PgDn    End     Num .  
+Space/Ex Enter/Ex L1 Toggle                        L2 Toggle Enter/Ex
+Alt     Back/Ex                                    Back/Ex   
+```
 
-.       Ent/Hold B  L0 Toggle                           L0 Toggle Ent/Hold B  
-Delete  .                                                Num +  
-
-
+```
 MEDIA (Layer 2 - Toggle Right Thumb Inner)
-`       F1      F2      F3      F4      F5         F6      F7      F8      F9      F10     F11    
-Next    Rainbow React   .       .       .          [       [       ]       Down    Right   Vol+   
-Play    Left    Up      Down    Right   .          .       Shift   Ctrl    Alt     Win     Mute   
-Prev    Home/T3 PgUp/T2 PgDn/T1 End     .          Num *   Home    PgUp    PgDn    End     Vol-   
+`       1/L1    2/L2    3/L3    4/L4    F5         F6      F7      F8      F9      F10     F11    
+.       Rainbow React   Jelly   Spiral  Chevron    .       [       ]       {       }       Prev   
+Exit    Left    Up      Down    Right   AutoRGB    Exit    Left    Down    Up      Right   Next   
+.       Home/Ms PgUp    PgDn    End     .          .       Home    PgUp    PgDn    End     .      
 
-trans   Ent/Hold B  L0 Toggle                           L0 Toggle Ent/Hold B  
-Delete  trans                                            .      
+Space   Enter   L1 Toggle                          L2 Toggle Enter   
+Del     Backsp                                     Backsp    
+```
 
+```
+MOUSE (Layer 3 - Auto-Active on Trackball Move or Hold Z)
+Boot    ClearEE FastUp  3/L3    4/L4    Next       Trans   Trans   Rainbow React   ClearEE Boot   
+Ms3     Trans   DiagUL  Up      DiagUR  ScrMode    DPI     S-D     Turbo   DPI     LedDbg  .      
+FastL   Left    Btn1    Right   FastR   .          Btn3    Shift   Ctrl    Alt     Gui     .      
+Z/Ms    DiagDL  Down    FastD   DiagDR  .          .       Btn1    MsLock  Snipe   DragScr Trans  
 
-MOUSE (Layer 3 - Auto-Active on Trackball Move or Toggle Z)
-Reset   Clear   .       .       .       .          .       .       .       .       Reset   Clear  
-.       .       .       .       DPI     Snipe      Snipe   DPI     .       .       .       .      
-.       Win     Alt     Ctrl    Shift   .          MidClk  Shift   Ctrl    Alt     Win     .      
-.       Home/T3 PgUp/T2 PgDn/T1 Snipe   PasteSp    L-Click MouseLck Snipe   DragScr trans   .      
+Btn1    Enter   L1 Toggle                          L2 Toggle Enter   
+Btn3    Btn2                                       Btn2      
+```
 
-LeftClk RightCl L0 Toggle                           L0 Toggle LeftClk
-MidClk  Ent/Hold B                                       Ent/Hold B
+```
+ONE-HAND (Layer 4 - Hold Q or Hold Enter)
+-/Ex    0/L1    9/L2    8/L3    7/Ex    6/Ex       6       7       8       9       0       -      
+\       P/Exit  O       I       U       Y          Y       U       I       O       P       \      
+'       +/:     L       K       J       H          H       J       K       L       +/:     '      
+Shift   //Ms    .       ,       M       N          N       M       ,       .       //Ms    Shift  
 
-
-ONE-HAND (Layer 4 - Toggle 'Q')
--       0       9       8       7       6          6       7       8       9       0       -      
-\       P/TO(0) O       I       U       Y          Y       U       I       O       P       \      
-'       ;       L       K       J       H          H       J       K       L       ;       '      
-Shift   / /T3   . /T2   , /T1   M       N          N       M       ,       .       //Mouse Shift  
-
-Space   Ent/Hold B  L0 Toggle                           L0 Toggle Ent/Hold B
-Alt     Backsp                                           Backsp 
-
-
-NUMPAD (Layer 5 - Toggle 'V')
-Esc     1       2       3       4       5          6       7       8       9       0       -      
-Tab     Num -   Num 7   Num 8   Num 9   Num *      Y       U       I       O       P       \      
-Shift   Num +   Num 4   Num 5   Num 6   Num /      H       J       K       L       ;       '      
-Ctrl    Num 0   Num 1   Num 2   3/Base  Num =      N       M       ,       .       L3 Toggle Ent/Hold L4
-
-Space   Ent/Hold B  L1 Toggle                           L2 Toggle Ent/Hold B
-Alt     Backsp                                           Backsp 
+Space   Exit    L1 Toggle                          L2 Toggle Exit    
+Alt     Backsp                                     Backsp    
 ```
 
 ## User Guide
 
 ### 1. Layers Overview
-- **Base (Undefined):** Standard QWERTY layout. No specific color override (shows default animation).
-- **Symbols (Blue):** Access via **Left Inner Thumb** (Toggle) or **Long Press C**. Contains numbers, symbols (`!@#$`), and navigation keys.
-- **Media/Function (Green):** Access via **Right Inner Thumb** (Toggle) or **Long Press X**. Contains F-keys (`F1-F12`), media controls (Play/Pause, Vol+/-), and arrow keys.
-- **Mouse (Yellow):** **Automatically activates** when you move the trackball or via **Long Press Z**.
-- **One-Hand (Cyan):** Access via **Long Press Q** or **Hold Enter** (either hand). Mirrored layout for left-handed use.
-- **Numpad (Purple):** Access via **Long Press V**. Standard calculator layout on the left half.
+- **Base (0):** Standard QWERTY layout.
+- **Symbols (1):** Blue RGB. Access via **Left Outer Thumb** (Toggle) or **Hold '1'**. Contains Numpad (Left hand) and Navigation/RGB controls (Right hand).
+- **Media/Function (2):** Green RGB. Access via **Right Inner Thumb** (Toggle) or **Hold '2'** or **Hold 'X'**. Contains F-keys, Media controls, and RGB Animation modes.
+- **Mouse (3):** Yellow RGB. **Automatically activates** when you move the trackball or via **Hold 'Z'**. Contains mouse keys, scrolling, and DPI controls.
+- **One-Hand (4):** Teal RGB. Access via **Hold 'Q'**, **Hold '4'**, or **Hold Enter**. Mirrored layout for typing with one hand.
+- **Flashlight:** White RGB. Double-tap **'Z'** to toggle max brightness white light.
 
 ### 2. Special Keys & Features
 
-#### Layer Toggles (Hold for 175ms to Trigger)
-- **Long Press 'V' Key:** Toggles Layer 5 (Numpad). Returns to Base if already on Layer 5.
-- **Long Press 'Q' Key:** Toggles Layer 4 (One-Hand). Returns to Base if already on Layer 4.
-- **Long Press 'Z' Key:** Toggles Layer 3 (Mouse). Returns to Base if already on Layer 3.
-- **Long Press 'X' Key:** Toggles Layer 2 (Media). Returns to Base if already on Layer 2.
-- **Long Press 'C' Key:** Toggles Layer 1 (Symbols). Returns to Base if already on Layer 1.
-- **Tap Behaviors:** 
-  - Layers 1 & 2: Z=Home, X=PgUp, C=PgDn, V=End.
-  - Layer 4: Z=/, X=., C=,, V=M.
-  - Layer 5: V=Num 3.
+#### Layer Toggles (Hold for 175ms)
+- **Top Row Numbers (1-4):** Hold to momentarily activate Layers 1, 2, 3, or 4 respectively.
+- **Z Key:** Tap for 'Z', Hold for **Mouse Layer (3)**, Double-Tap for **Flashlight Mode**.
+- **X Key:** Tap for 'X', Hold for **Media Layer (2)**.
+- **Q Key:** Tap for 'Q', Hold for **One-Hand Layer (4)**.
+- **Enter (Base Layer):** Tap for Enter, Hold for **One-Hand Layer (4)**.
+- **Slash (Base Layer):** Tap for '/', Hold for **Mouse Layer (3)**.
 
-#### Exit Keys (Immediate)
-- **Thumb Toggle Keys (All Layers):** Pressing the Left or Right Inner Thumb keys on any non-base layer will immediately return to Layer 0 (Base).
-- **Long Press 'P' (Layer 4):** Returns to Layer 0 (Base).
+#### Thumb Cluster
+- **Left Thumbs:**
+  - Top: Space, Enter (Hold for L4), Layer 1 Toggle.
+  - Bottom: Alt, Backspace.
+- **Right Thumbs:**
+  - Top: Layer 2 Toggle, Enter (Hold for L4).
+  - Bottom: Backspace.
 
-#### Momentary Enter Toggles (Universal)
-- **From Base Layer:** Holding **either Enter key** momentarily switches to **Layer 4 (One-Hand)**.
-- **From Any Other Layer:** Holding **either Enter key** momentarily switches to **Base Layer**.
-- **Tapping:** Always sends a standard **Enter** keypress.
+#### Custom Keys
+- **+/: Key:** Tap for `+` (Plus), Shift+Tap for `:` (Colon). Located next to 'L'.
+- **Exit Keys:**
+  - **Thumb Toggles:** Pressing L1/L2 Toggle on their respective layers returns to Base.
+  - **P (Layer 4):** Exits One-Hand mode immediately.
+  - **Enter/Space/Backspace (Layer 2/4):** Special variants that can exit the layer on tap/hold depending on context.
 
-#### Auto-Mouse Layer
-- Detects trackball movement and switches to the **Mouse Layer (Yellow)** automatically.
-- Reverts after **650ms** of inactivity unless **Mouse Lock** (Pink) is active.
+#### Auto-Mouse
+- Moving the trackball switches to Layer 3 (Yellow).
+- Reverts to previous layer after **650ms** of inactivity.
+- **Mouse Lock:** Press `MouseLck` key (Pink RGB) on Layer 3 to stay in mouse mode.
 
 #### Combos
-- Simultaneous press (15ms window): `A+S` (Copy), `S+D` (Paste), `A+F` (Copy Special), `D+F` (Paste Special), `J+K` (Delete).
-
-### 3. Thumb Cluster
-- **Left Thumbs:** Space, Enter (Hold for L4/Base), Layer 1 Toggle (Return to Base if not on L0), Alt, Backspace.
-- **Right Thumbs:** Layer 2 Toggle (Return to Base if not on L0), Enter (Hold for L4/Base), Backspace.
+- `Ctrl+C` (Copy): **A + S**
+- `Ctrl+V` (Paste): **S + D**
+- `Ctrl+Shift+C` (Copy Special): **A + F**
+- `Ctrl+Shift+V` (Paste Special): **D + F**
+- `Delete`: **J + K**

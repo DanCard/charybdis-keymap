@@ -12,7 +12,10 @@ This project contains the QMK firmware and custom utilities for my BastardKB Cha
 - **Auto-Mouse Layer:** Automatically switches to the Mouse layer (Layer 3) when the trackball is moved.
 - **Mouse Lock:** Toggleable layer for dedicated mouse usage.
 - **One-Handed Mode:** mirrored styling for typing with one hand (Layer 4).
-- **RGB Feedback:** Layer-specific RGB lighting for visual confirmation.
+- **Split RGB Support:** Full RGB matrix on both halves with layer-specific colors.
+  - Uses RP2040 PIO driver (`WS2812_DRIVER = vendor`) for reliable LED control
+  - Layer state synced between halves for consistent colors
+  - 29 LEDs per side (58 total)
 
 ## Keymap Layers & Colors
 The RGB matrix changes color based on the active layer:
@@ -34,6 +37,13 @@ A Python script is included to print the current keymap layout in the terminal w
 python3 print_layout.py
 ```
 
+## Keymap Files
+
+The keymap files in `/keymap/` are **symlinked** to the actual QMK keymap directory:
+- `keymap/` → `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/`
+
+Edit either location - they point to the same files!
+
 ## Compilation & Flashing
 
 ### Prerequisites
@@ -44,17 +54,26 @@ python3 print_layout.py
 To compile the firmware with the Elite-Pi converter:
 
 ```bash
-# From the qmk_firmware directory
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```
 
 ### Flash Command
-The compiled UF2 file will be placed in the `qmk_firmware` directory and copied to the root.
-To flash, put the keyboard into bootloader mode (double-tap reset) and copy the `.uf2` file to the mounted drive (RPI-RP2).
+**IMPORTANT: For split RGB to work, you must flash BOTH controllers!**
 
-```bash
-cp bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2 /media/$USER/RPI-RP2/
-```
+The compiled UF2 file will be in the `qmk_firmware` directory.
+
+1. **Flash the right side (master with trackball):**
+   - Put it in bootloader mode (double-tap reset OR hold BOOT while plugging USB)
+   - Copy the `.uf2` file: `cp bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2 /media/$USER/RPI-RP2/`
+
+2. **Flash the left side (slave):**
+   - Disconnect TRRS cable
+   - Put left controller in bootloader mode (hold BOOT continuously while plugging USB)
+   - Copy the SAME `.uf2` file: `cp bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2 /media/$USER/RPI-RP2/`
+
+3. **Reconnect everything:**
+   - Reconnect TRRS cable
+   - Plug USB into right side (master)
 
 ## Custom Keycodes & Combos
 - **`TD(TD_Z_LAYER)`**: Tap for 'Z', Hold for Mouse Layer, Double-tap for Flashlight Mode.
