@@ -29,7 +29,7 @@
 
 #define SPLIT_TRANSACTION_IDS_USER USER_SYNC_INFO
 
-#define COMBO_TERM 15
+#define COMBO_TERM 20
 #define TAPPING_TERM 200
 
 /* RGB Matrix Tuning */

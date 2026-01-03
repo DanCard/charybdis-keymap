@@ -352,6 +352,8 @@ static bool f12_triggered = false;
 bool is_fast_mouse = false;
 bool is_scroll_mode = false;
 
+static uint16_t last_key_time = 0;
+
 layer_state_t layer_state_set_user(layer_state_t state) {
     uprintf("Layer change: state=%lu, highest=%u\n", (unsigned long)state, get_highest_layer(state));
     return state;
@@ -359,12 +361,41 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
+        uint16_t now = timer_read();
+        uint16_t diff = now - last_key_time;
+        last_key_time = now;
+
         switch(keycode) {
-            case KC_A: uprintf("A pressed: %u\n", timer_read()); break;
-            case KC_S: uprintf("S pressed: %u\n", timer_read()); break;
-            case KC_D: uprintf("D pressed: %u\n", timer_read()); break;
-            case KC_F: uprintf("F pressed: %u\n", timer_read()); break;
-            case KC_G: uprintf("G pressed: %u\n", timer_read()); break;
+            case KC_A: uprintf("A: %u (diff %u)\n", now, diff); break;
+            case KC_S: uprintf("S: %u (diff %u)\n", now, diff); break;
+            case KC_D: uprintf("D: %u (diff %u)\n", now, diff); break;
+            case KC_F: uprintf("F: %u (diff %u)\n", now, diff); break;
+            case KC_G: uprintf("G: %u (diff %u)\n", now, diff); break;
+
+            // Combo Keys
+            case TD(TD_Z_LAYER): uprintf("Z(TD): %u (diff %u)\n", now, diff); break;
+            case KC_X_TG2: uprintf("X(TG2): %u (diff %u)\n", now, diff); break;
+            case KC_C: uprintf("C: %u (diff %u)\n", now, diff); break;
+            case KC_V: uprintf("V: %u (diff %u)\n", now, diff); break;
+            case KC_B: uprintf("B: %u (diff %u)\n", now, diff); break;
+
+            // Thumb Toggles (Layer 0)
+            case KC_ENT_TG2: uprintf("ENT_TG2: %u (diff %u) L:%u\n", now, diff, get_highest_layer(layer_state)); break;
+            case KC_SPC_TG2: uprintf("SPC_TG2: %u (diff %u) L:%u\n", now, diff, get_highest_layer(layer_state)); break;
+
+            // Thumb Exits (Layer 1/2/3)
+            case KC_ENT_EXIT: uprintf("ENT_EXIT: %u (diff %u) L:%u\n", now, diff, get_highest_layer(layer_state)); break;
+            case KC_SPC_EXIT: uprintf("SPC_EXIT: %u (diff %u) L:%u\n", now, diff, get_highest_layer(layer_state)); break;
+
+            // Standard Keys (Layer 4 etc)
+            case KC_ENT: uprintf("ENT: %u (diff %u) L:%u\n", now, diff, get_highest_layer(layer_state)); break;
+            case KC_SPC: uprintf("SPC: %u (diff %u) L:%u\n", now, diff, get_highest_layer(layer_state)); break;
+
+            // Resulting Actions
+            case KC_HOME: uprintf("HOME: %u (diff %u)\n", now, diff); break;
+            case KC_PGUP: uprintf("PGUP: %u (diff %u)\n", now, diff); break;
+            case KC_PGDN: uprintf("PGDN: %u (diff %u)\n", now, diff); break;
+            case KC_END:  uprintf("END: %u (diff %u)\n", now, diff); break;
         }
     }
 
@@ -466,11 +497,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         case KC_ENT_EXIT:
             if (record->event.pressed) {
+                uprintf("KC_ENT_EXIT Pressed. Layer state: %lu. Timer: %u\n", (unsigned long)layer_state, timer_read());
                 layer_state_to_restore = layer_state;
                 layer_state_set(0); // Clear all layers (peek at base)
                 rgb_matrix_indicators_user();
                 ent_mo_timer = timer_read();
             } else {
+                uprintf("KC_ENT_EXIT Released. Elapsed: %u. Action: %s\n", timer_elapsed(ent_mo_timer), (timer_elapsed(ent_mo_timer) < MY_TAPPING_TERM) ? "Tap (Exit)" : "Hold (Restore)");
                 if (timer_elapsed(ent_mo_timer) < MY_TAPPING_TERM) {
                     tap_code(KC_ENT);
                     // Tap = Permanent Exit. We stay at layer 0.
@@ -632,6 +665,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         case KC_ENT_L2_EXIT:
             if (record->event.pressed) {
+                uprintf("KC_ENT_L2_EXIT Pressed. Exiting Layer 2.\n");
                 layer_off(2);
                 tap_code(KC_ENT);
             }
@@ -790,8 +824,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         case KC_ENT_TG2:
             if (record->event.pressed) {
+                uprintf("KC_ENT_TG2 Pressed. Timer: %u\n", timer_read());
                 ent_tg2_held = true; ent_tg2_triggered = false; ent_tg2_timer = timer_read();
             } else {
+                uprintf("KC_ENT_TG2 Released. Held: %d, Triggered: %d. Action: %s\n", ent_tg2_held, ent_tg2_triggered, (!ent_tg2_triggered) ? "Tap (Enter)" : "None (Handled by Timer)");
                 ent_tg2_held = false;
                 if (!ent_tg2_triggered) { tap_code(KC_ENT); }
             }
@@ -1128,16 +1164,19 @@ void matrix_scan_user(void) {
 
     // Thumb Toggle Logic
     if (ent_tg2_held && !ent_tg2_triggered && timer_elapsed(ent_tg2_timer) > MY_TAPPING_TERM) {
+        uprintf(">> Thumb Hold Triggered: ENT_TG2 -> Toggle Layer 2\n");
         if (get_highest_layer(layer_state) == 2) { layer_move(0); } else { layer_move(2); }
         ent_tg2_triggered = true;
         rgb_matrix_indicators_user();
     }
     if (spc_tg2_held && !spc_tg2_triggered && timer_elapsed(spc_tg2_timer) > MY_TAPPING_TERM) {
+        uprintf(">> Thumb Hold Triggered: SPC_TG2 -> Toggle Layer 2\n");
         if (get_highest_layer(layer_state) == 2) { layer_move(0); } else { layer_move(2); }
         spc_tg2_triggered = true;
         rgb_matrix_indicators_user();
     }
     if (f12_held && !f12_triggered && timer_elapsed(f12_tap_timer) > MY_TAPPING_TERM) {
+        uprintf(">> Thumb Hold Triggered: F12 -> Exit to Base\n");
         layer_move(0);
         f12_triggered = true;
         rgb_matrix_indicators_user();
