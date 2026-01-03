@@ -17,10 +17,10 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (0.9, 0.9, 0.9),      # White/Light gray (Base)
-    1: (0.6, 0.9, 1.0),      # Light Blue (Symbols + Numpad)
+    1: (0.7, 0.7, 1.0),      # Blue (Symbols + Numpad)
     2: (0.7, 1.0, 0.7),      # Green (Media)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
-    4: (0.7, 1.0, 1.0),      # Cyan (One-Hand)
+    4: (1.0, 0.7, 1.0),      # Pink (One-Hand)
 }
 
 LAYER_NAMES = {
@@ -104,10 +104,21 @@ KEY_LABELS = {
     'DRGSCRL': 'Scroll',
     'DPI_MOD': 'DPI',
     'S_D_MOD': 'S-DPI',
-    'RM_NEXT': 'RGB >',
-    'RM_PREV': 'RGB <',
-    'KC_LED_DEBUG': 'LED\nDebug',
+    'RM_NEXT': 'rgb +',
+    'RM_PREV': 'rgb -',
 }
+
+# Combos documentation
+COMBOS = [
+    ("A + S", "Left Arrow"),
+    ("S + D", "Up Arrow"),
+    ("D + F", "Down Arrow"),
+    ("F + G", "Right Arrow"),
+    ("J + K", "Delete"),
+    ("Z (Tap)", "Z"),
+    ("Z (Hold)", "Mouse Layer (L3)"),
+    ("Z (Dbl-Tap)", "Flashlight (White)"),
+]
 
 def parse_keymap(file_path):
     with open(file_path, 'r') as f:
@@ -228,7 +239,7 @@ def simplify_key(key_code, layer_num=None):
             return f'{label}\nL0'
         if key_code == 'KC_3_TG3':
             label = 'F3' if layer_num == 2 else '3'
-            return f'{label}/L0'
+            return f'{label}\nL0'
         if key_code == 'KC_4_TG4':
             label = 'F4' if layer_num == 2 else '4'
             return f'{label}\nL0'
@@ -311,6 +322,10 @@ def simplify_key(key_code, layer_num=None):
         'KC_8_TG3': '8\nL3',
         'KC_7_TO0': '7\nExit',
         'KC_6_TO0': '6\nExit',
+        'KC_SPC_TG2': 'Space\nL2',
+        'KC_ENT_TG2': 'Enter\nL2',
+        'KC_PMNS_TG4': 'Num -\nL4',
+        'KC_F12_EXIT': 'F12\nExit',
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -414,6 +429,27 @@ def draw_layer(c, layer_keys, layout_info, layer_num, start_x, start_y, key_size
     return (max_y + 1) * (key_size + key_gap) + 10
 
 
+def draw_combos(c, start_y):
+    """Draw the combos and tap dance information."""
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(colors.black)
+    title = "COMBOS & SPECIAL ACTIONS"
+    title_width = c.stringWidth(title, "Helvetica-Bold", 12)
+    title_x = (LETTER[0] - title_width) / 2
+    c.drawString(title_x, start_y, title)
+
+    c.setFont("Helvetica", 10)
+    col1_x = 1.5 * inch
+    col2_x = 3.5 * inch
+    curr_y = start_y - 20
+
+    for keys, action in COMBOS:
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(col1_x, curr_y, keys)
+        c.setFont("Helvetica", 10)
+        c.drawString(col2_x, curr_y, f": {action}")
+        curr_y -= 15
+
 def generate_pdf(output_path, keymap_path, info_path):
     """Generate the PDF with all layers."""
     layers = parse_keymap(keymap_path)
@@ -445,6 +481,10 @@ def generate_pdf(output_path, keymap_path, info_path):
                                      margin, current_y, key_size=key_size)
             current_y -= height_used + 15  # Space between layers
 
+        # If it's the last page, draw combos
+        if i + 3 >= len(layer_nums):
+            draw_combos(c, current_y - 20)
+
         c.showPage()
 
     c.save()
@@ -452,7 +492,7 @@ def generate_pdf(output_path, keymap_path, info_path):
 
 def main():
     base_path = '/home/dcar/projects/mech-keyboard'
-    keymap_path = f'{base_path}/qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/keymap.c'
+    keymap_path = f'{base_path}/keymap/keymap.c'
     info_path = f'{base_path}/qmk_firmware/keyboards/bastardkb/charybdis/4x6/info.json'
     output_path = f'{base_path}/charybdis_layout.pdf'
 

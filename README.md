@@ -26,8 +26,8 @@ The RGB matrix changes color based on the active layer:
 | **1** | **SYMBOLS** | Blue | Numbers, symbols, and navigation. |
 | **2** | **MEDIA** | Green | Function keys (F1-F12), media controls, volume. |
 | **3** | **MOUSE** | Yellow | Mouse clicks, scrolling, DPI, Sniping. (Auto-activates on move) |
-| **4** | **ONE-HAND** | Cyan | Mirrored layout for one-handed typing. |
-| **3** | **MOUSE LOCK** | Pink | Locked mouse layer (toggled via key). |
+| **4** | **ONE-HAND** | Pink | Mirrored layout for one-handed typing. |
+| **3** | **MOUSE LOCK** | Orange | Locked mouse layer (toggled via key). |
 | **-** | **FLASHLIGHT** | White | Max brightness white (Double-tap Z). |
 
 ## Visualizing the Layout
@@ -57,11 +57,18 @@ Simply edit the files in `keymap/` (`keymap.c`, `config.h`, `rules.mk`). The sym
 - `arm-none-eabi-gcc` toolchain (usually handled by QMK)
 
 ### Compile Command
-To compile the firmware with the Elite-Pi converter:
 
+**Quick Build (Recommended):**
+```bash
+./build.sh
+```
+
+**Manual Command:**
 ```bash
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```
+
+**IMPORTANT:** This keyboard uses Elite-Pi (RP2040), not Elite-C (AVR). The `-e CONVERT_TO=elite_pi` flag is required!
 
 ### Flash Command
 **IMPORTANT: For split RGB to work, you must flash BOTH controllers!**

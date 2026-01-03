@@ -54,13 +54,16 @@ enum custom_keycodes {
     KC_CHEVRON,
     KC_RGB_AUTO,
     KC_PLUS_COLON,
-    KC_LED_DEBUG,
     KC_MINS_TO0,
     KC_0_TG1,
     KC_9_TG2,
     KC_8_TG3,
     KC_7_TO0,
-    KC_6_TO0
+    KC_6_TO0,
+    KC_ENT_TG2,
+    KC_SPC_TG2,
+    KC_PMNS_TG4,
+    KC_F12_EXIT
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -93,10 +96,6 @@ static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
 // LED indices for letter keys Q-P (under numbers 1-0)
 static const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
 
-// LED debug mode - press key to cycle through LEDs and find correct indices
-static bool led_debug_mode = false;
-static uint8_t led_debug_index = 0;
-
 // Custom Split Transport Logic
 typedef struct _user_sync_info_t {
     bool is_flashlight;
@@ -106,8 +105,6 @@ typedef struct _user_sync_info_t {
     uint8_t show_mode_digit_count;
     uint8_t show_mode_current_digit;
     uint8_t show_mode_phase;
-    bool led_debug_mode;
-    uint8_t led_debug_index;
 } user_sync_info_t;
 
 static bool sync_needed = false;
@@ -123,8 +120,6 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void* in_data, uint8_
     show_mode_digit_count = sync_data->show_mode_digit_count;
     show_mode_current_digit = sync_data->show_mode_current_digit;
     show_mode_phase = sync_data->show_mode_phase;
-    led_debug_mode = sync_data->led_debug_mode;
-    led_debug_index = sync_data->led_debug_index;
 }
 
 // Helper to get mode name
@@ -180,6 +175,13 @@ const char* get_rgb_mode_name(uint8_t mode) {
 void start_show_mode(void) {
     uint8_t mode = rgb_matrix_get_mode();
     uprintf("RGB Mode Changed: %d (%s)\n", mode, get_rgb_mode_name(mode));
+
+    // If entering Hue Breathing, pick a random base hue
+    if (mode == RGB_MATRIX_HUE_BREATHING) {
+        uint8_t random_hue = timer_read() % 256;
+        rgb_matrix_sethsv_noeeprom(random_hue, rgb_matrix_get_sat(), rgb_matrix_get_val());
+    }
+
     show_mode_digit_count = 0;
 
     // Extract digits (handle 1-2 digit numbers)
@@ -255,18 +257,26 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 // Combo Definitions
-const uint16_t PROGMEM copy_combo[] = {KC_A, KC_S, COMBO_END};
-const uint16_t PROGMEM paste_combo[] = {KC_S, KC_D, COMBO_END};
-const uint16_t PROGMEM paste_special_combo[] = {KC_D, KC_F, COMBO_END};
-const uint16_t PROGMEM copy_special_combo[] = {KC_A, KC_F, COMBO_END};
+const uint16_t PROGMEM left_combo[] = {KC_A, KC_S, COMBO_END};
+const uint16_t PROGMEM up_combo[] = {KC_S, KC_D, COMBO_END};
+const uint16_t PROGMEM down_combo[] = {KC_D, KC_F, COMBO_END};
+const uint16_t PROGMEM right_combo[] = {KC_F, KC_G, COMBO_END};
 const uint16_t PROGMEM delete_combo[] = {KC_J, KC_K, COMBO_END};
+const uint16_t PROGMEM home_combo[] = {TD(TD_Z_LAYER), KC_X_TG2, COMBO_END};
+const uint16_t PROGMEM pgup_combo[] = {KC_X_TG2, KC_C, COMBO_END};
+const uint16_t PROGMEM pgdn_combo[] = {KC_C, KC_V, COMBO_END};
+const uint16_t PROGMEM end_combo[] = {KC_V, KC_B, COMBO_END};
 
 combo_t key_combos[] = {
-    COMBO(copy_combo, LCTL(KC_C)),
-    COMBO(paste_combo, LCTL(KC_V)),
-    COMBO(paste_special_combo, C(S(KC_V))),
-    COMBO(copy_special_combo, C(S(KC_C))),
+    COMBO(left_combo, KC_LEFT),
+    COMBO(up_combo, KC_UP),
+    COMBO(down_combo, KC_DOWN),
+    COMBO(right_combo, KC_RIGHT),
     COMBO(delete_combo, KC_DEL),
+    COMBO(home_combo, KC_HOME),
+    COMBO(pgup_combo, KC_PGUP),
+    COMBO(pgdn_combo, KC_PGDN),
+    COMBO(end_combo, KC_END),
 };
 
 static uint16_t x_tap_timer = 0;
@@ -322,12 +332,42 @@ static uint16_t k6_tap_timer = 0;
 static bool k6_held = false;
 static bool k6_triggered = false;
 
+// Variables for Thumb Toggle Keys
+static uint16_t ent_tg2_timer = 0;
+static bool ent_tg2_held = false;
+static bool ent_tg2_triggered = false;
+static uint16_t spc_tg2_timer = 0;
+static bool spc_tg2_held = false;
+static bool spc_tg2_triggered = false;
+static uint16_t pmns_tg4_timer = 0;
+static bool pmns_tg4_held = false;
+static bool pmns_tg4_triggered = false;
+
+static uint16_t f12_tap_timer = 0;
+static bool f12_held = false;
+static bool f12_triggered = false;
+
 #define MY_TAPPING_TERM 175
 
 bool is_fast_mouse = false;
 bool is_scroll_mode = false;
 
+layer_state_t layer_state_set_user(layer_state_t state) {
+    uprintf("Layer change: state=%lu, highest=%u\n", (unsigned long)state, get_highest_layer(state));
+    return state;
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        switch(keycode) {
+            case KC_A: uprintf("A pressed: %u\n", timer_read()); break;
+            case KC_S: uprintf("S pressed: %u\n", timer_read()); break;
+            case KC_D: uprintf("D pressed: %u\n", timer_read()); break;
+            case KC_F: uprintf("F pressed: %u\n", timer_read()); break;
+            case KC_G: uprintf("G pressed: %u\n", timer_read()); break;
+        }
+    }
+
     if (is_scroll_mode && record->event.pressed) {
         switch (keycode) {
             case KC_MS_FAST_UP:
@@ -567,6 +607,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 start_show_mode();
             }
             return false;
+        case RM_PREV:
+            if (record->event.pressed) {
+                rgb_matrix_step_reverse_noeeprom();
+                start_show_mode();
+            }
+            return false;
         case KC_REACTIVE:
             if (record->event.pressed) {
                 rgb_matrix_mode_noeeprom(RGB_MATRIX_SPLASH);
@@ -694,26 +740,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return false;
-        case KC_LED_DEBUG:
-            if (record->event.pressed) {
-                if (!led_debug_mode) {
-                    led_debug_mode = true;
-                    led_debug_index = 0;
-                    uprintf("LED Debug Mode: ON\n");
-                    uprintf("LED Debug Index: %d (%s)\n", led_debug_index, (led_debug_index < 29) ? "Left" : "Right");
-                } else {
-                    led_debug_index++;
-                    if (led_debug_index >= 58) { // Charybdis 4x6 has ~58 LEDs
-                        led_debug_mode = false;
-                        led_debug_index = 0;
-                        uprintf("LED Debug Mode: OFF\n");
-                    } else {
-                        uprintf("LED Debug Index: %d (%s)\n", led_debug_index, (led_debug_index < 29) ? "Left" : "Right");
-                    }
-                }
-                sync_needed = true;
-            }
-            return false;
         case KC_MINS_TO0:
             if (record->event.pressed) {
                 mins_held = true; mins_triggered = false; mins_tap_timer = timer_read();
@@ -762,88 +788,151 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 if (!k6_triggered) { tap_code(KC_6); }
             }
             return false;
+        case KC_ENT_TG2:
+            if (record->event.pressed) {
+                ent_tg2_held = true; ent_tg2_triggered = false; ent_tg2_timer = timer_read();
+            } else {
+                ent_tg2_held = false;
+                if (!ent_tg2_triggered) { tap_code(KC_ENT); }
+            }
+            return false;
+        case KC_SPC_TG2:
+            if (record->event.pressed) {
+                spc_tg2_held = true; spc_tg2_triggered = false; spc_tg2_timer = timer_read();
+            } else {
+                spc_tg2_held = false;
+                if (!spc_tg2_triggered) { tap_code(KC_SPC); }
+            }
+            return false;
+        case KC_PMNS_TG4:
+            if (record->event.pressed) {
+                pmns_tg4_held = true; pmns_tg4_triggered = false; pmns_tg4_timer = timer_read();
+            } else {
+                pmns_tg4_held = false;
+                if (!pmns_tg4_triggered) { tap_code(KC_PMNS); }
+            }
+            return false;
+        case KC_F12_EXIT:
+            if (record->event.pressed) {
+                f12_held = true; f12_triggered = false; f12_tap_timer = timer_read();
+            } else {
+                f12_held = false;
+                if (!f12_triggered) { tap_code(KC_F12); }
+            }
+            return false;
     }
     return true;
 }
 
+void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case RM_HUEU:
+        case RM_HUED:
+            if (record->event.pressed) {
+                uprintf("Hue change: %d (S:%d, V:%d)\n", rgb_matrix_get_hue(), rgb_matrix_get_sat(), rgb_matrix_get_val());
+            }
+            break;
+        case RM_SATU:
+        case RM_SATD:
+            if (record->event.pressed) {
+                uprintf("Saturation change: %d (H:%d, V:%d)\n", rgb_matrix_get_sat(), rgb_matrix_get_hue(), rgb_matrix_get_val());
+            }
+            break;
+        case RM_VALU:
+        case RM_VALD:
+            if (record->event.pressed) {
+                uprintf("Brightness change: %d (H:%d, S:%d)\n", rgb_matrix_get_val(), rgb_matrix_get_hue(), rgb_matrix_get_sat());
+            }
+            break;
+    }
+}
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT, KC_LCTL, TD(TD_Z_LAYER), KC_X_TG2, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT, KC_L_TG1, KC_R_TG2, KC_ENT, KC_LALT, KC_BSPC, KC_BSPC),
-    [1] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS), KC_TAB, KC_PMNS, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_EXIT, KC_PPLS, KC_P4, KC_P5, KC_P6, KC_PSLS, KC_PPLS, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_PEQL, KC_LCTL, KC_P0, KC_P1, KC_P2, KC_P3, KC_PEQL, RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(KC_GRV, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_RAINBOW, KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_NO, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_EXIT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, RM_NEXT, KC_NO, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4, RM_NEXT, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE, QK_CLEAR_EEPROM, QK_BOOT, MS_BTN3, KC_TRNS, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_SCR_MODE, DPI_MOD, S_D_MOD, KC_TURBO, DPI_MOD, KC_LED_DEBUG, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_NO, TD(TD_Z_LAYER), KC_MS_DIAG_DL, MS_DOWN, KC_MS_FAST_DOWN, KC_MS_DIAG_DR, KC_NO, KC_NO, MS_BTN1, KC_MOUSE_LOCK, SNIPING, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, MS_BTN3, MS_BTN2, MS_BTN2),
+    [0] = LAYOUT(KC_ESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT, KC_LCTL, TD(TD_Z_LAYER), KC_X_TG2, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC_TG2, KC_ENT_TG2, KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
+    [1] = LAYOUT(S(KC_GRV), KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS), KC_TAB, KC_PMNS_TG4, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_EXIT, KC_PPLS, KC_P4, KC_P5, KC_P6, KC_PSLS, KC_PPLS, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_PEQL, KC_LCTL, KC_P0, KC_P1, KC_P2, KC_P3, KC_PEQL, RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
+    [2] = LAYOUT(KC_F12_EXIT, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_EXIT, KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_NO, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_EXIT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, RM_NEXT, KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
+    [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4, RM_NEXT, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE, QK_CLEAR_EEPROM, QK_BOOT, MS_BTN3, KC_TRNS, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_SCR_MODE, DPI_MOD, S_D_MOD, KC_TURBO, DPI_MOD, KC_NO, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_NO, TD(TD_Z_LAYER), KC_MS_DIAG_DL, MS_DOWN, KC_MS_FAST_DOWN, KC_MS_DIAG_DR, KC_NO, KC_NO, MS_BTN1, KC_MOUSE_LOCK, SNIPING, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, MS_BTN3, MS_BTN2, MS_BTN2),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O, KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_QUOT, KC_PLUS_COLON, KC_L, KC_K, KC_J, KC_H, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT, KC_RSFT, LT(3, KC_SLSH), KC_DOT, KC_COMM, KC_M, KC_N, KC_N, KC_M, KC_COMM, KC_DOT, LT(3,KC_SLSH), KC_RSFT, KC_SPC, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, KC_LALT, KC_BSPC, KC_BSPC),
 };
 
 bool rgb_matrix_indicators_user(void) {
-    // LED debug mode - shows one LED at a time to find indices
-    if (led_debug_mode) {
-        rgb_matrix_set_color_all(0, 0, 0);
-        
-        bool am_i_left = is_keyboard_left();
-        if (led_debug_index < 29 && am_i_left) {
-            rgb_matrix_set_color(led_debug_index, 255, 255, 255);
-        } else if (led_debug_index >= 29 && !am_i_left) {
-            rgb_matrix_set_color(led_debug_index, 255, 255, 255);
-        }
-        return false;
-    }
-
-    if (is_flashlight) {
-        rgb_matrix_set_color_all(255, 255, 255);
-        return false;
-    }
+    if (is_flashlight) { rgb_matrix_set_color_all(255, 255, 255); return false; }
     uint8_t layer = get_highest_layer(layer_state);
     switch (layer) {
-        case 4: rgb_matrix_set_color_all(0, 255, 255); break; // Teal (One-Hand)
-        case 3:
-            if (mouse_is_locked) {
-                rgb_matrix_set_color_all(255, 0, 255); // Pink (Mouse Locked)
-            } else {
-                rgb_matrix_set_color_all(255, 255, 0); // Yellow (Mouse Active)
+        case 1: {
+            // Numpad (Blue)
+            if (is_keyboard_left()) {
+                static const uint8_t left[] = { 6, 9, 14, 17, 21, 5, 10, 13, 18, 22, 4, 11, 12, 19, 23 };
+                for (int i=0; i<sizeof(left); i++) rgb_matrix_set_color(left[i], 0, 0, 255);
+            }
+            if (!is_keyboard_left()) {
+                static const uint8_t right[] = { 22, 2 };
+                for (int i=0; i<sizeof(right); i++) rgb_matrix_set_color(right[i], 0, 0, 255);
             }
             break;
-        case 2: rgb_matrix_set_color_all(0, 255, 0); break; // Green (Function)
-        case 1: rgb_matrix_set_color_all(0, 0, 255); break; // Blue (Symbols)
+        }
+        case 2: {
+            // Movement (Green)
+            if (is_keyboard_left()) {
+                static const uint8_t left[] = { 5, 10, 13, 18, 4, 11, 12, 19 };
+                for (int i=0; i<sizeof(left); i++) rgb_matrix_set_color(left[i], 0, 255, 0);
+            }
+            if (!is_keyboard_left()) {
+                static const uint8_t right[] = { 18, 13, 10, 5, 19, 12, 11, 4 };
+                for (int i=0; i<sizeof(right); i++) rgb_matrix_set_color(right[i], 0, 255, 0);
+            }
+            break;
+        }
+        case 3: {
+            // Mouse (Yellow)
+            if (is_keyboard_left()) {
+                static const uint8_t left[] = { 8, 1, 9, 14, 17, 21, 2, 5, 10, 13, 18, 4, 11, 12, 19, 26, 25, 24 };
+                for (int i=0; i<sizeof(left); i++) rgb_matrix_set_color(left[i], 255, 255, 0);
+            }
+            if (!is_keyboard_left()) {
+                static const uint8_t right[] = { 21, 14, 9, 22, 19, 12, 11, 4 };
+                for (int i=0; i<sizeof(right); i++) rgb_matrix_set_color(right[i], 255, 255, 0);
+            }
+            break;
+        }
+        case 4: {
+            // Left Side (Pink)
+            if (is_keyboard_left()) {
+                static const uint8_t left[] = { 0, 7, 8, 15, 16, 20, 1, 6, 9, 14, 17, 21, 2, 5, 10, 13, 18, 22, 3, 4, 11, 12, 19, 23, 26, 27, 28, 25, 24 };
+                for (int i=0; i<sizeof(left); i++) rgb_matrix_set_color(left[i], 255, 0, 255);
+            }
+            break;
+        }
         default: break;
     }
-
-    // Flash number key to show current RGB mode (master only logic unless synced)
-    // Now that variables are synced, the slave can also render this if it has matching LEDs!
-    if (show_mode_active && show_mode_phase == 1) {
+    // Flash number key logic for show_mode (Master Only) would go here
+    if (show_mode_active) {
         uint8_t digit = show_mode_digits[show_mode_current_digit];
-        // digit 1-9 maps to index 0-8, digit 0 maps to index 9
         uint8_t led_index = (digit == 0) ? number_key_leds[9] : number_key_leds[digit - 1];
-        
-        // Also flash letter key (Q-P) under the number
         uint8_t letter_index = (digit == 0) ? letter_key_leds[9] : letter_key_leds[digit - 1];
-
-        // Determine if I am Left or Right half
         bool am_i_left = is_keyboard_left();
-
-        // Check/Draw Number Key
-        if (led_index < 29 && am_i_left) {
-            rgb_matrix_set_color(led_index, 255, 255, 255); 
-            // uprintf("L-Half setting L-LED: %d\n", led_index);
-        } else if (led_index >= 29 && !am_i_left) {
-            rgb_matrix_set_color(led_index, 255, 255, 255);
-            // uprintf("R-Half setting R-LED: %d\n", led_index);
-        }
-
-        // Check/Draw Letter Key
-        if (letter_index < 29 && am_i_left) {
-            rgb_matrix_set_color(letter_index, 255, 255, 255);
-        } else if (letter_index >= 29 && !am_i_left) {
-            rgb_matrix_set_color(letter_index, 255, 255, 255);
+        uint8_t val = (show_mode_phase == 1) ? 255 : 0;
+        // Local addressing fix:
+        if (am_i_left) {
+            if (led_index < 29) rgb_matrix_set_color(led_index, val, val, val);
+            if (letter_index < 29) rgb_matrix_set_color(letter_index, val, val, val);
+        } else {
+            if (led_index >= 29) rgb_matrix_set_color(led_index - 29, val, val, val);
+            if (letter_index >= 29) rgb_matrix_set_color(letter_index - 29, val, val, val);
         }
     }
-
     return false;
 }
 
 void keyboard_post_init_user(void) {
     transaction_register_rpc(USER_SYNC_INFO, user_sync_info_slave_handler);
 
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
+    // Pick any random mode from all available effects
+    // RGB_MATRIX_EFFECT_MAX gives the total count of defined effects
+    // We start from 1 (SOLID_COLOR) up to MAX-1
+    uint8_t rand_mode = (timer_read() % (RGB_MATRIX_EFFECT_MAX - 1)) + 1;
+    rgb_matrix_mode_noeeprom(rand_mode);
+
     rgb_auto_cycle = true;
     rgb_auto_timer = timer_read();
     if (is_keyboard_master()) {
@@ -864,9 +953,7 @@ void housekeeping_task_user(void) {
                 .show_mode_digits = { show_mode_digits[0], show_mode_digits[1] },
                 .show_mode_digit_count = show_mode_digit_count,
                 .show_mode_current_digit = show_mode_current_digit,
-                .show_mode_phase = show_mode_phase,
-                .led_debug_mode = led_debug_mode,
-                .led_debug_index = led_debug_index
+                .show_mode_phase = show_mode_phase
             };
 
             if (transaction_rpc_send(USER_SYNC_INFO, sizeof(sync_data), &sync_data)) {
@@ -904,22 +991,25 @@ void matrix_scan_user(void) {
     }
 
     // Handle show mode flash sequence
-    if (show_mode_active && timer_elapsed(show_mode_timer) > 500) {
-        if (show_mode_phase == 1) {
-            // Flash was on, turn off
-            show_mode_phase = 0;
-            show_mode_timer = timer_read();
-            sync_needed = true;
-        } else {
-            // Flash was off, move to next digit or end
-            show_mode_current_digit++;
-            if (show_mode_current_digit >= show_mode_digit_count) {
-                show_mode_active = false;
-            } else {
-                show_mode_phase = 1;
+    if (is_keyboard_master()) {
+        if (show_mode_active && timer_elapsed(show_mode_timer) > 500) {
+            if (show_mode_phase == 1) {
+                // Flash was on, turn off
+                show_mode_phase = 0;
                 show_mode_timer = timer_read();
+                sync_needed = true;
+            } else {
+                // Flash was off, move to next digit or end
+                show_mode_current_digit++;
+                if (show_mode_current_digit >= show_mode_digit_count) {
+                    show_mode_active = false;
+                    rgb_matrix_mode_noeeprom(rgb_matrix_get_mode()); // Final nudge to clear overrides
+                } else {
+                    show_mode_phase = 1;
+                    show_mode_timer = timer_read();
+                }
+                sync_needed = true;
             }
-            sync_needed = true;
         }
     }
 
@@ -1035,4 +1125,22 @@ void matrix_scan_user(void) {
         k6_triggered = true;
         rgb_matrix_indicators_user();
     }
+
+    // Thumb Toggle Logic
+    if (ent_tg2_held && !ent_tg2_triggered && timer_elapsed(ent_tg2_timer) > MY_TAPPING_TERM) {
+        if (get_highest_layer(layer_state) == 2) { layer_move(0); } else { layer_move(2); }
+        ent_tg2_triggered = true;
+        rgb_matrix_indicators_user();
+    }
+    if (spc_tg2_held && !spc_tg2_triggered && timer_elapsed(spc_tg2_timer) > MY_TAPPING_TERM) {
+        if (get_highest_layer(layer_state) == 2) { layer_move(0); } else { layer_move(2); }
+        spc_tg2_triggered = true;
+        rgb_matrix_indicators_user();
+    }
+    if (f12_held && !f12_triggered && timer_elapsed(f12_tap_timer) > MY_TAPPING_TERM) {
+        layer_move(0);
+        f12_triggered = true;
+        rgb_matrix_indicators_user();
+    }
+
 }
