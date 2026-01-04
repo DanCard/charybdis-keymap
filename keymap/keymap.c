@@ -428,98 +428,122 @@ bool is_scroll_mode = false;
 static uint16_t last_key_time = 0;
 
 layer_state_t layer_state_set_user(layer_state_t state) {
+  uint32_t now = timer_read32();
+  uint32_t sec = now / 1000;
+  uint32_t ms = now % 1000;
+
   uint8_t layer = get_highest_layer(state);
-  uprintf("Layer change: state=%lu, highest=%u\n", (unsigned long)state,
-          layer);
+  uint8_t prev_layer = get_highest_layer(layer_state);
+
+  uprintf("[%lu.%03lu] Layer change: %u -> %u (state=%lu)\n", sec, ms, prev_layer,
+          layer, (unsigned long)state);
   if (layer == 3) {
-      uprintf("Entering Layer 3. CPI: %u\n", pointing_device_get_cpi());
+      uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms, pointing_device_get_cpi());
   }
   return state;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  uint32_t now = timer_read32();
+  uint32_t sec = now / 1000;
+  uint32_t ms = now % 1000;
+
   if (record->event.pressed) {
-    uint16_t now = timer_read();
-    uint16_t diff = now - last_key_time;
+    uint32_t diff = now - last_key_time;
     last_key_time = now;
 
     switch (keycode) {
     case KC_A:
-      uprintf("A: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] A (diff %lu)\n", sec, ms, diff);
       break;
     case KC_S:
-      uprintf("S: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] S (diff %lu)\n", sec, ms, diff);
       break;
     case KC_D:
-      uprintf("D: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] D (diff %lu)\n", sec, ms, diff);
       break;
     case KC_F:
-      uprintf("F: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] F (diff %lu)\n", sec, ms, diff);
       break;
     case KC_G:
-      uprintf("G: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] G (diff %lu)\n", sec, ms, diff);
       break;
 
     // Combo Keys
     case TD(TD_Z_LAYER):
-      uprintf("Z(TD): %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] Z(TD) (diff %lu)\n", sec, ms, diff);
       break;
     case KC_C:
-      uprintf("C: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] C (diff %lu)\n", sec, ms, diff);
       break;
     case KC_V:
-      uprintf("V: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] V (diff %lu)\n", sec, ms, diff);
       break;
     case KC_B:
-      uprintf("B: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] B (diff %lu)\n", sec, ms, diff);
       break;
 
     // Thumb Toggles (Layer 0)
     case KC_ENT_TG2:
-      uprintf("ENT_TG2: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] ENT_TG2 (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
     case KC_ENT_TG4:
-      uprintf("ENT_TG4: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] ENT_TG4 (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
     case KC_SPC_TG2:
-      uprintf("SPC_TG2: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] SPC_TG2 (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
 
     // Thumb Exits (Layer 1/2/3)
     case KC_ENT_EXIT:
-      uprintf("ENT_EXIT: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] ENT_EXIT (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
     case KC_SPC_EXIT:
-      uprintf("SPC_EXIT: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] SPC_EXIT (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
 
     // Standard Keys (Layer 4 etc)
     case KC_ENT:
-      uprintf("ENT: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] ENT (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
     case KC_SPC:
-      uprintf("SPC: %u (diff %u) L:%u\n", now, diff,
+      uprintf("[%lu.%03lu] SPC (diff %lu) L:%u\n", sec, ms, diff,
               get_highest_layer(layer_state));
       break;
 
     // Resulting Actions
+    case KC_LEFT:
+      uprintf("[%lu.%03lu] LEFT (diff %lu)\n", sec, ms, diff);
+      break;
+    case KC_UP:
+      uprintf("[%lu.%03lu] UP (diff %lu)\n", sec, ms, diff);
+      break;
+    case KC_DOWN:
+      uprintf("[%lu.%03lu] DOWN (diff %lu)\n", sec, ms, diff);
+      break;
+    case KC_RIGHT:
+      uprintf("[%lu.%03lu] RIGHT (diff %lu)\n", sec, ms, diff);
+      break;
+    case KC_DEL:
+      uprintf("[%lu.%03lu] DEL (diff %lu)\n", sec, ms, diff);
+      break;
     case KC_HOME:
-      uprintf("HOME: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] HOME (diff %lu)\n", sec, ms, diff);
       break;
     case KC_PGUP:
-      uprintf("PGUP: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] PGUP (diff %lu)\n", sec, ms, diff);
       break;
     case KC_PGDN:
-      uprintf("PGDN: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] PGDN (diff %lu)\n", sec, ms, diff);
       break;
     case KC_END:
-      uprintf("END: %u (diff %u)\n", now, diff);
+      uprintf("[%lu.%03lu] END (diff %lu)\n", sec, ms, diff);
       break;
     }
   }
@@ -554,10 +578,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_TURBO:
     if (record->event.pressed) {
       pointing_device_set_cpi(3000);
-      uprintf("Turbo ON. CPI -> 3000\n");
+      uprintf("[%lu.%03lu] Turbo ON. CPI -> 3000\n", sec, ms);
     } else {
       pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      uprintf("Turbo OFF. CPI -> Default\n");
+      uprintf("[%lu.%03lu] Turbo OFF. CPI -> Default (%u)\n", sec, ms, pointing_device_get_cpi());
     }
     return false;
   case KC_MS_FAST_UP:
@@ -804,10 +828,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       sync_needed = true;
       if (is_sniping_active) {
         pointing_device_set_cpi(250);
-        uprintf("Snipe ON. CPI -> 250\n");
+        uprintf("[%lu.%03lu] Snipe ON. CPI -> 250\n", sec, ms);
       } else {
         pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-        uprintf("Snipe OFF. CPI -> Default\n");
+        uprintf("[%lu.%03lu] Snipe OFF. CPI -> Default (%u)\n", sec, ms, pointing_device_get_cpi());
       }
     }
     return false;
@@ -1164,23 +1188,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [2] = LAYOUT(KC_F12_EXIT, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5,
                  KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_LR_TOGGLE, KC_EXIT,
-                 KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_POLICE, KC_LBRC,
-                 KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_EXIT, KC_LEFT,
-                 KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT,
+                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_POLICE, KC_LBRC,
+                 KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_LSFT, KC_LEFT,
+                 KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_RSFT, KC_LEFT,
                  KC_DOWN, KC_UP, KC_RGHT, RM_NEXT, KC_EXIT, LT(3, KC_HOME),
                  KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP,
                  KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,
                  KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4,
-                 RM_NEXT, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE,
-                 QK_CLEAR_EEPROM, QK_BOOT, MS_BTN3, KC_TRNS, KC_MS_DIAG_UL,
-                 MS_UP, KC_MS_DIAG_UR, KC_SCR_MODE, DPI_MOD, S_D_MOD, KC_TURBO,
+                 KC_NO, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE,
+                 QK_CLEAR_EEPROM, QK_BOOT, KC_EXIT, KC_MS_DIAG_UL, MS_UP,
+                 KC_MS_DIAG_UR, KC_EXIT, KC_NO, DPI_MOD, S_D_MOD, KC_TURBO,
                  DPI_MOD, KC_NO, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1,
-                 MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_RSFT, KC_RCTL,
-                 KC_RALT, KC_RGUI, KC_NO, TD(TD_Z_LAYER), KC_MS_DIAG_DL,
-                 MS_DOWN, KC_MS_FAST_DOWN, KC_MS_DIAG_DR, KC_NO, KC_NO, MS_BTN1,
-                 KC_MOUSE_LOCK, KC_SNIPE, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT,
-                 KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, MS_BTN3, MS_BTN2, MS_BTN2),
+                 MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_EXIT, KC_RCTL,
+                 KC_RALT, KC_RGUI, KC_NO, KC_EXIT, KC_MS_DIAG_DL,
+                 MS_DOWN, KC_MS_DIAG_DR, KC_EXIT, KC_NO, KC_NO, MS_BTN1,
+                 KC_MOUSE_LOCK, KC_SNIPE, DRGSCRL, KC_RSFT, MS_BTN1, MS_BTN2,
+                 MS_BTN3, KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,
                  KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O,
                  KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
@@ -1260,6 +1284,24 @@ bool rgb_matrix_indicators_user(void) {
   default:
     break;
   }
+
+  // Black out the number and letter for the current active layer (0-4)
+  // This creates a "negative" indicator hole in the lighting
+  uint8_t indicator_idx = (layer == 0) ? 9 : (layer - 1);
+  if (indicator_idx < 10) {
+      uint8_t num_led = number_key_leds[indicator_idx];
+      uint8_t let_led = letter_key_leds[indicator_idx];
+      bool am_i_left = is_keyboard_left();
+      
+      if (am_i_left && num_led < 29) {
+          rgb_matrix_set_color(num_led, 0, 0, 0);
+          rgb_matrix_set_color(let_led, 0, 0, 0);
+      } else if (!am_i_left && num_led >= 29) {
+          rgb_matrix_set_color(num_led - 29, 0, 0, 0);
+          rgb_matrix_set_color(let_led - 29, 0, 0, 0);
+      }
+  }
+
   // Flash number key logic for show_mode (Master Only) would go here
   if (show_mode_active) {
     uint8_t digit = show_mode_digits[show_mode_current_digit];
@@ -1367,37 +1409,49 @@ static bool auto_mouse_on = false;
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
   int8_t x = mouse_report.x;
   int8_t y = mouse_report.y;
+  uint32_t now = timer_read32();
+  uint32_t sec = now / 1000;
+  uint32_t ms = now % 1000;
 
   if (get_highest_layer(layer_state) == 3 && (x != 0 || y != 0)) {
       static uint16_t last_cpi = 0;
       static uint32_t last_cpi_print = 0;
       uint16_t current_cpi = pointing_device_get_cpi();
       
+      // Log if CPI changed OR if it's been > 2 seconds since last log
       if (current_cpi != last_cpi || timer_elapsed32(last_cpi_print) > 2000) {
-          uprintf("Mouse L3 Move. CPI: %u\n", current_cpi);
+          uprintf("[%lu.%03lu] Mouse L3 Move. CPI: %u (x=%d, y=%d)\n", sec, ms, current_cpi, x, y);
           last_cpi = current_cpi;
-          last_cpi_print = timer_read32();
+          last_cpi_print = now;
       }
   }
 
-  int8_t threshold = 2; // Ignore jitter <= 2
+  int8_t threshold = 0; // Respond to any movement (threshold 0)
+  static uint8_t movement_streak = 0;
 
   if (x != 0 || y != 0) {
     if (auto_mouse_on) {
         // Any movement resets the timer to allow fine precision without timeout
         auto_mouse_timer = timer_read();
     } else if (x > threshold || x < -threshold || y > threshold || y < -threshold) {
-        // Only activate layer for significant movement
-        uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
-        layer_on(3); // Switch to Mouse Layer (3)
-        auto_mouse_on = true;
-        auto_mouse_timer = timer_read();
+        movement_streak++;
+        if (movement_streak > 1) { // Require 2 consecutive movement events
+            // Only activate layer for significant movement
+            uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
+            layer_on(3); // Switch to Mouse Layer (3)
+            auto_mouse_on = true;
+            auto_mouse_timer = timer_read();
+            movement_streak = 0;
+        }
     } else {
-        // Only log jitter if it's above 1 (e.g. exactly 2) to reduce console noise
-        if (x > 1 || x < -1 || y > 1 || y < -1) {
+        // Only log jitter if it's above 0 to reduce console noise
+        if (x != 0 || y != 0) {
             uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
         }
+        movement_streak = 0;
     }
+  } else {
+      movement_streak = 0;
   }
   return mouse_report;
 }
@@ -1436,7 +1490,7 @@ void matrix_scan_user(void) {
   }
 
   if (auto_mouse_on && !mouse_is_locked &&
-      timer_elapsed(auto_mouse_timer) > 650) { // 650ms timeout
+      timer_elapsed(auto_mouse_timer) > 2000) { // 2000ms timeout
     layer_off(3);
     auto_mouse_on = false;
   }

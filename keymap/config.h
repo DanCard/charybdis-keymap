@@ -4,6 +4,10 @@
 #define SPLIT_POINTING_ENABLE
 #define POINTING_DEVICE_RIGHT
 
+/* Charybdis Mouse Tuning */
+#define CHARYBDIS_MINIMUM_DEFAULT_DPI 1200
+#define CHARYBDIS_DEFAULT_DPI_CONFIG_STEP 200
+
 /* Mouse Keys Configuration */
 #define MOUSEKEY_DELAY 0
 #define MOUSEKEY_INTERVAL 16

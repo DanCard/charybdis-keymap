@@ -129,8 +129,8 @@ def print_layer(layer_keys, layout_info, layer_name):
             print(line)
 
 def main():
-    keymap_path = '/home/dcar/projects/mech-keyboard/qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/keymap.c'
-    info_path = '/home/dcar/projects/mech-keyboard/qmk_firmware/keyboards/bastardkb/charybdis/4x6/info.json'
+    keymap_path = 'keymap/keymap.c'
+    info_path = 'qmk_firmware/keyboards/bastardkb/charybdis/4x6/info.json'
     
     if not os.path.exists(keymap_path):
         print(f"Error: keymap file not found at {keymap_path}")

@@ -473,6 +473,7 @@ def generate_pdf(output_path, keymap_path, info_path):
 
     page_size = LETTER  # Portrait orientation
     c = canvas.Canvas(output_path, pagesize=page_size)
+    c.setTitle("mech keyboard layout")
     page_width, page_height = page_size
 
     # Layer pages - fit 3 layers per page
