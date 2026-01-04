@@ -29,7 +29,7 @@ Alt     Back/Ex                                    Back/Ex
 ```
 MEDIA (Layer 2 - Toggle Right Thumb Inner)
 F12/Ex  1/L1    2/L2    3/L3    4/L4    F5         F6      F7      F8      F9      F10     F11    
-.       Exit    React   Jelly   Spiral  Chevron    .       [       ]       {       }       Prev   
+L/R     Exit    React   Jelly   Spiral  Chevron    Police  [       ]       {       }       Prev   
 Exit    Left    Up      Down    Right   AutoRGB    Exit    Left    Down    Up      Right   Next   
 .       Home/Ms PgUp    PgDn    End     .          .       Home    PgUp    PgDn    End     .      
 

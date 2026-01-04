@@ -60,7 +60,9 @@ enum custom_keycodes {
   KC_ENT_TG4,
   KC_SPC_TG2,
   KC_PMNS_TG4,
-  KC_F12_EXIT
+  KC_F12_EXIT,
+  KC_LR_TOGGLE,
+  KC_POLICE
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -232,6 +234,8 @@ const char *get_rgb_mode_name(uint8_t mode) {
     return "SOLID_MULTISPLASH";
   case RGB_MATRIX_CUSTOM_left_right_toggle:
     return "LEFT_RIGHT_TOGGLE";
+  case RGB_MATRIX_CUSTOM_police_lights:
+    return "POLICE_LIGHTS";
   default:
     return "UNKNOWN";
   }
@@ -251,6 +255,8 @@ void start_show_mode(void) {
     automatic_hue_tracker += 42;
     rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, 255, 255);
     uprintf("Solid/Breathing/Toggle Activated: New Hue %d\n", automatic_hue_tracker);
+  } else if (mode == RGB_MATRIX_CUSTOM_police_lights) {
+      uprintf("Police Lights Activated\n");
   }
 
   show_mode_digit_count = 0;
@@ -1067,6 +1073,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
+  case KC_LR_TOGGLE:
+    if (record->event.pressed) {
+      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_left_right_toggle);
+      start_show_mode();
+    }
+    return false;
+  case KC_POLICE:
+    if (record->event.pressed) {
+      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_police_lights);
+      start_show_mode();
+    }
+    return false;
   }
   return true;
 }
@@ -1116,8 +1134,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [2] = LAYOUT(KC_F12_EXIT, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5,
-                 KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_NO, KC_EXIT,
-                 KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_NO, KC_LBRC,
+                 KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_LR_TOGGLE, KC_EXIT,
+                 KC_REACTIVE, KC_JELLY, KC_SPIRAL, KC_CHEVRON, KC_POLICE, KC_LBRC,
                  KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_EXIT, KC_LEFT,
                  KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_EXIT, KC_LEFT,
                  KC_DOWN, KC_UP, KC_RGHT, RM_NEXT, KC_EXIT, LT(3, KC_HOME),
@@ -1331,7 +1349,10 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
         auto_mouse_on = true;
         auto_mouse_timer = timer_read();
     } else {
-        uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
+        // Only log jitter if it's above 1 (e.g. exactly 2) to reduce console noise
+        if (x > 1 || x < -1 || y > 1 || y < -1) {
+            uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
+        }
     }
   }
   return mouse_report;

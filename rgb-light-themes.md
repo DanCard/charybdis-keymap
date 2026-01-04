@@ -50,6 +50,8 @@ The keyboard cycles through RGB modes every 30 seconds when `KC_RGB_AUTO` is ena
 | 42 | STARLIGHT_DUAL_HUE | Dual hue stars |
 | 43 | STARLIGHT_DUAL_SAT | Dual saturation stars |
 | 44 | RIVERFLOW | Flowing river |
+| 45 | LEFT_RIGHT_TOGGLE | Left/Right alternating colors (Fast) |
+| 46 | POLICE_LIGHTS | Police strobe effect (Fast) |
 
 **Note:** Actual mode numbers depend on which effects are enabled in your firmware. Not all modes may be available.
 
@@ -57,11 +59,13 @@ The keyboard cycles through RGB modes every 30 seconds when `KC_RGB_AUTO` is ena
 
 | Key | Mode |
 |-----|------|
-| Q | CYCLE_LEFT_RIGHT (Rainbow) |
+| Tab | LEFT_RIGHT_TOGGLE |
+| Q | Exit Layer |
 | W | SPLASH (Reactive) |
 | E | JELLYBEAN_RAINDROPS |
 | R | CYCLE_SPIRAL |
 | T | RAINBOW_MOVING_CHEVRON |
+| Y | POLICE_LIGHTS |
 
 ## Controls
 
