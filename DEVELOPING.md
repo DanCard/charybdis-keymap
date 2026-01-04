@@ -64,7 +64,6 @@ Custom behaviors (like "Hold Q to Toggle Layer 4") use custom keycodes defined i
 ```c
 enum custom_keycodes {
     KC_RAINBOW = QK_USER_0,
-    KC_Q_TG4,     // Custom code for Q / Layer 4 Toggle
     KC_PGUP_TG2,  // Custom code for PgUp / Layer 2 Toggle
     // ...
 };
