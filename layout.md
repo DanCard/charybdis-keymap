@@ -75,6 +75,7 @@ Alt     Backsp                                     Backsp
 - Moving the trackball switches to Layer 3 (Yellow).
 - Reverts to previous layer after **650ms** of inactivity.
 - **Mouse Lock:** Press `MsLock` key (Orange RGB) on Layer 3 to stay in mouse mode.
+- **Snipe Mode:** Press `Snipe` to toggle high precision/low speed (Red RGB). Press again to exit.
 
 #### Combos
 - `Ctrl+C` (Copy): **A + S**

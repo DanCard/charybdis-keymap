@@ -62,7 +62,8 @@ enum custom_keycodes {
   KC_PMNS_TG4,
   KC_F12_EXIT,
   KC_LR_TOGGLE,
-  KC_POLICE
+  KC_POLICE,
+  KC_SNIPE
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -79,6 +80,7 @@ uint8_t cur_dance(tap_dance_state_t *state) {
 
 static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
 static bool is_flashlight = false;
+static bool is_sniping_active = false;
 static bool mouse_is_locked = false;
 static uint8_t saved_rgb_mode;
 static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
@@ -102,6 +104,7 @@ static const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
 // Custom Split Transport Logic
 typedef struct _user_sync_info_t {
   bool is_flashlight;
+  bool is_sniping_active;
   bool mouse_is_locked;
   bool show_mode_active;
   uint8_t show_mode_digits[2];
@@ -123,6 +126,7 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   user_sync_info_response_t *response = (user_sync_info_response_t *)out_data;
 
   is_flashlight = sync_data->is_flashlight;
+  is_sniping_active = sync_data->is_sniping_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   show_mode_active = sync_data->show_mode_active;
   show_mode_digits[0] = sync_data->show_mode_digits[0];
@@ -788,6 +792,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
+  case KC_SNIPE:
+    if (record->event.pressed) {
+      is_sniping_active = !is_sniping_active;
+      sync_needed = true;
+      if (is_sniping_active) {
+        pointing_device_set_cpi(250);
+      } else {
+        pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      }
+    }
+    return false;
   case KC_ENT_L2_EXIT:
     if (record->event.pressed) {
       uprintf("KC_ENT_L2_EXIT Pressed. Exiting Layer 2.\n");
@@ -1156,7 +1171,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_RSFT, KC_RCTL,
                  KC_RALT, KC_RGUI, KC_NO, TD(TD_Z_LAYER), KC_MS_DIAG_DL,
                  MS_DOWN, KC_MS_FAST_DOWN, KC_MS_DIAG_DR, KC_NO, KC_NO, MS_BTN1,
-                 KC_MOUSE_LOCK, SNIPING, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT,
+                 KC_MOUSE_LOCK, KC_SNIPE, DRGSCRL, KC_TRNS, MS_BTN1, KC_ENT_EXIT,
                  KC_L_TG1, KC_R_TG2, KC_ENT_EXIT, MS_BTN3, MS_BTN2, MS_BTN2),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,
                  KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O,
@@ -1171,6 +1186,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 bool rgb_matrix_indicators_user(void) {
   if (is_flashlight) {
     rgb_matrix_set_color_all(255, 255, 255);
+    return false;
+  }
+  if (is_sniping_active) {
+    rgb_matrix_set_color_all(255, 0, 0);
     return false;
   }
   uint8_t layer = get_highest_layer(layer_state);
@@ -1315,6 +1334,7 @@ void housekeeping_task_user(void) {
     if (sync_needed || needs_periodic) {
       user_sync_info_t sync_data = {
           .is_flashlight = is_flashlight,
+          .is_sniping_active = is_sniping_active,
           .mouse_is_locked = mouse_is_locked,
           .show_mode_active = show_mode_active,
           .show_mode_digits = {show_mode_digits[0], show_mode_digits[1]},

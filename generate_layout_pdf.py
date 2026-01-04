@@ -311,6 +311,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_LR_TOGGLE': 'LR\nToggle',
         'KC_POLICE': 'Police',
         'KC_RAINBOW': 'Rain\nbow',
+        'KC_SNIPE': 'Snipe',
         'KC_RGB_AUTO': 'RGB\nAuto',
         'KC_PLUS_COLON': '+\n:',
         'RM_HUEU': 'Hue\n+',
