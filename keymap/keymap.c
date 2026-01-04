@@ -915,6 +915,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return true;
+  case RM_VALU:
+  case RM_VALD:
+    if (record->event.pressed) {
+        uprintf("RM_VAL change requested. Current Val: %d\n", rgb_matrix_get_val());
+    }
+    return true;
   case KC_PLUS_COLON:
     if (record->event.pressed) {
       if (get_mods() & MOD_MASK_SHIFT) {
@@ -1320,9 +1326,6 @@ void housekeeping_task_user(void) {
       user_sync_info_response_t response_data = {0};
 
       if (transaction_rpc_exec(USER_SYNC_INFO, sizeof(sync_data), &sync_data, sizeof(response_data), &response_data)) {
-        if (response_data.did_rgb_sync) {
-            uprintf("Master: Slave confirmed RGB Sync to mode %d\n", sync_data.rgb_mode);
-        }
         last_sync = timer_read32();
         sync_needed = false;
       }
