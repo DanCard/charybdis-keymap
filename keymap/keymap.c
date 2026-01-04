@@ -550,8 +550,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_TURBO:
     if (record->event.pressed) {
       pointing_device_set_cpi(3000);
+      uprintf("Turbo ON. CPI -> 3000\n");
     } else {
       pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      uprintf("Turbo OFF. CPI -> Default\n");
     }
     return false;
   case KC_MS_FAST_UP:
@@ -798,8 +800,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       sync_needed = true;
       if (is_sniping_active) {
         pointing_device_set_cpi(250);
+        uprintf("Snipe ON. CPI -> 250\n");
       } else {
         pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+        uprintf("Snipe OFF. CPI -> Default\n");
       }
     }
     return false;
@@ -1359,6 +1363,19 @@ static bool auto_mouse_on = false;
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
   int8_t x = mouse_report.x;
   int8_t y = mouse_report.y;
+
+  if (get_highest_layer(layer_state) == 3 && (x != 0 || y != 0)) {
+      static uint16_t last_cpi = 0;
+      static uint32_t last_cpi_print = 0;
+      uint16_t current_cpi = pointing_device_get_cpi();
+      
+      if (current_cpi != last_cpi || timer_elapsed32(last_cpi_print) > 2000) {
+          uprintf("Mouse L3 Move. CPI: %u\n", current_cpi);
+          last_cpi = current_cpi;
+          last_cpi_print = timer_read32();
+      }
+  }
+
   int8_t threshold = 2; // Ignore jitter <= 2
 
   if (x != 0 || y != 0) {
