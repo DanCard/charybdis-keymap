@@ -16,7 +16,7 @@ Ctrl      Z/Ms      X/L2      C         V         B                N         M  
 
 ```
                                                SYMBOLS (Layer 1)
-~         1/L1      2/L2      3/L3      4/L4      5                ^         &         *         (         )         _        
+~         !         @         #         $         %                ^         &         *         (         )         _        
 Tab       Num-/L4   Num 7     Num 8     Num 9     Num *            [         [         ]         {         }         .        
 Exit      Num +     Num 4     Num 5     Num 6     Num /            +         Left      Up        Down      Right     =        
 Ctrl      Num 0     Num 1     Num 2     Num 3     Num =            Hue+      Hue-      Sat+      Sat-      Val+      Val-     
@@ -26,8 +26,8 @@ Ctrl      Num 0     Num 1     Num 2     Num 3     Num =            Hue+      Hue
 
 ```
                                                 MEDIA (Layer 2)
-F12/Ex    1/L1      2/L2      3/L3      4/L4      F5               F6        F7        F8        F9        F10       F11      
-L/R       Exit      Exit      Exit      Exit      Exit             Police    [         ]         {         }         Prev     
+F12       F1        F2        F3        F4        F5               F6        F7        F8        F9        F10       F11
+L/R       Exit      Exit      Exit      Exit      Exit             Flash     [         ]         {         }         Prev     
 Shift     Left      Up        Down      Right     AutoRGB          Shift     Left      Down      Up        Right     Next     
 Exit      Home/Ms   PgUp      PgDn      End       .                .         Home      PgUp      PgDn      End       .        
                                Space     Enter     L1 Toggle        L2 Toggle Enter     
@@ -36,10 +36,10 @@ Exit      Home/Ms   PgUp      PgDn      End       .                .         Hom
 
 ```
                                                 MOUSE (Layer 3)
-Boot      ClearEE   FastUp    3/L3      4/L4      Next             Trans     Trans     Rainbow   React     ClearEE   Boot     
-Ms3       Trans     DiagUL    Up        DiagUR    ScrMode          DPI       S-D       Turbo     DPI       .         .        
-FastL     Left      Btn1      Right     FastR     .                Btn3      Shift     Ctrl      Alt       Gui       .        
-Z/Ms      DiagDL    Down      FastD     DiagDR    .                .         Btn1      MsLock    Snipe     DragScr   Trans    
+Boot      ClearEE   FastUp    3/L3      4/L4      Next             Trans     Trans     .         .         ClearEE   Boot
+Ms3       Trans     DiagUL    Up        DiagUR    ScrMode          DPI+      DragScr   LayerLock Snipe     DPI-      .
+FastL     Left      Btn1      Right     FastR     .                Exit      LeftClk   MidClk    MidClk    RightClk  Exit
+Z/Ms      DiagDL    Down      FastD     DiagDR    .                .         Exit      Ctrl      Alt       Gui       Trans    
                                Btn1      Enter     L1 Toggle        L2 Toggle Enter     
                                Btn3      Btn2                       Btn2      
 ```
@@ -69,7 +69,7 @@ Shift     //Ms      .         ,         M         N                N         M  
 #### Auto-Mouse
 - Moving the trackball switches to Layer 3 (Yellow). Activates on ANY movement.
 - Reverts to previous layer after **2000ms (2s)** of inactivity.
-- **Mouse Lock:** Press `MsLock` key (Orange RGB) on Layer 3 to stay in mouse mode.
+- **Layer Lock:** Press `LayerLock` key on Layer 3 to lock the layer and prevent auto-timeout.
 - **Snipe Mode:** Press `Snipe` to toggle high precision/low speed (Red RGB). Press again to exit.
 
 #### Combos

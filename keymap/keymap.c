@@ -62,7 +62,7 @@ enum custom_keycodes {
   KC_PMNS_TG4,
   KC_F12_EXIT,
   KC_LR_TOGGLE,
-  KC_POLICE,
+  KC_FLASH,
   KC_SNIPE
 };
 
@@ -100,6 +100,14 @@ static uint8_t show_mode_phase = 0; // 0=off, 1=on
 static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
 // LED indices for letter keys Q-P (under numbers 1-0)
 static const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
+// Top row LEDs (left side)
+static const uint8_t top_row_left[] = {7, 8, 15, 16, 20};
+// Top row LEDs (right side)
+static const uint8_t top_row_right[] = {49, 45, 44, 37, 36};
+// Far left column LEDs (left keyboard)
+static const uint8_t far_left_col[] = {0, 1, 2, 3};
+// Far right column LEDs (right keyboard)
+static const uint8_t far_right_col[] = {48, 47, 42, 41};
 
 // Custom Split Transport Logic
 typedef struct _user_sync_info_t {
@@ -238,8 +246,8 @@ const char *get_rgb_mode_name(uint8_t mode) {
     return "SOLID_MULTISPLASH";
   case RGB_MATRIX_CUSTOM_left_right_toggle:
     return "LEFT_RIGHT_TOGGLE";
-  case RGB_MATRIX_CUSTOM_police_lights:
-    return "POLICE_LIGHTS";
+  case RGB_MATRIX_CUSTOM_flash:
+    return "FLASH";
   default:
     return "UNKNOWN";
   }
@@ -259,8 +267,8 @@ void start_show_mode(void) {
     automatic_hue_tracker += 42;
     rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, 255, 255);
     uprintf("Solid/Breathing/Toggle Activated: New Hue %d\n", automatic_hue_tracker);
-  } else if (mode == RGB_MATRIX_CUSTOM_police_lights) {
-      uprintf("Police Lights Activated\n");
+  } else if (mode == RGB_MATRIX_CUSTOM_flash) {
+      uprintf("Flash Activated\n");
   }
 
   show_mode_digit_count = 0;
@@ -425,7 +433,7 @@ static bool f12_triggered = false;
 bool is_fast_mouse = false;
 bool is_scroll_mode = false;
 
-static uint16_t last_key_time = 0;
+static uint32_t last_key_time = 0;
 
 layer_state_t layer_state_set_user(layer_state_t state) {
   uint32_t now = timer_read32();
@@ -467,6 +475,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       break;
     case KC_G:
       uprintf("[%lu.%03lu] G (diff %lu)\n", sec, ms, diff);
+      break;
+    case KC_J:
+      uprintf("[%lu.%03lu] J (diff %lu) L:%u\n", sec, ms, diff, get_highest_layer(layer_state));
       break;
 
     // Combo Keys
@@ -680,8 +691,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_ENT_EXIT:
     if (record->event.pressed) {
-      uprintf("KC_ENT_EXIT Pressed. Layer state: %lu. Timer: %u\n",
-              (unsigned long)layer_state, timer_read());
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n",
+              sec, ms, (unsigned long)layer_state);
       layer_state_to_restore = layer_state;
       layer_state_set(0); // Clear all layers (peek at base)
       rgb_matrix_indicators_user();
@@ -1053,12 +1067,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_ENT_TG2:
     if (record->event.pressed) {
-      uprintf("KC_ENT_TG2 Pressed. Timer: %u\n", timer_read());
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_ENT_TG2 Pressed\n", sec, ms);
       ent_tg2_held = true;
       ent_tg2_triggered = false;
       ent_tg2_timer = timer_read();
     } else {
-      uprintf("KC_ENT_TG2 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_ENT_TG2 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
+              sec, ms,
               timer_elapsed(ent_tg2_timer),
               ent_tg2_held, ent_tg2_triggered,
               (!ent_tg2_triggered) ? "Tap (Enter)" : "None (Handled by Timer)");
@@ -1070,12 +1091,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_ENT_TG4:
     if (record->event.pressed) {
-      uprintf("KC_ENT_TG4 Pressed. Timer: %u\n", timer_read());
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_ENT_TG4 Pressed\n", sec, ms);
       ent_tg4_held = true;
       ent_tg4_triggered = false;
       ent_tg4_timer = timer_read();
     } else {
-      uprintf("KC_ENT_TG4 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_ENT_TG4 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
+              sec, ms,
               timer_elapsed(ent_tg4_timer),
               ent_tg4_held, ent_tg4_triggered,
               (!ent_tg4_triggered) ? "Tap (Enter)" : "None (Handled by Timer)");
@@ -1087,12 +1115,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_SPC_TG2:
     if (record->event.pressed) {
-      uprintf("KC_SPC_TG2 Pressed. Timer: %u\n", timer_read());
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_SPC_TG2 Pressed\n", sec, ms);
       spc_tg2_held = true;
       spc_tg2_triggered = false;
       spc_tg2_timer = timer_read();
     } else {
-      uprintf("KC_SPC_TG2 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_SPC_TG2 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
+              sec, ms,
               timer_elapsed(spc_tg2_timer),
               spc_tg2_held, spc_tg2_triggered,
               (!spc_tg2_triggered) ? "Tap (Space)" : "None (Handled by Timer)");
@@ -1132,9 +1167,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       start_show_mode();
     }
     return false;
-  case KC_POLICE:
+  case KC_FLASH:
     if (record->event.pressed) {
-      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_police_lights);
+      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_flash);
       start_show_mode();
     }
     return false;
@@ -1177,7 +1212,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M,
                KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT, KC_SPC_TG2, KC_ENT_TG4,
                KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
-    [1] = LAYOUT(S(KC_GRV), KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5,
+    [1] = LAYOUT(S(KC_GRV), S(KC_1), S(KC_2), S(KC_3), S(KC_4), S(KC_5),
                  S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS),
                  KC_TAB, KC_PMNS_TG4, KC_P7, KC_P8, KC_P9, KC_PAST, KC_LBRC,
                  KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO, KC_EXIT,
@@ -1186,9 +1221,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_PEQL, RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(KC_F12_EXIT, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_F5,
+    [2] = LAYOUT(KC_F12, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5,
                  KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_LR_TOGGLE, KC_EXIT,
-                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_POLICE, KC_LBRC,
+                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_FLASH, KC_LBRC,
                  KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_LSFT, KC_LEFT,
                  KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_RSFT, KC_LEFT,
                  KC_DOWN, KC_UP, KC_RGHT, RM_NEXT, KC_EXIT, LT(3, KC_HOME),
@@ -1196,14 +1231,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,
                  KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4,
-                 KC_NO, KC_TRNS, KC_TRNS, KC_RAINBOW, KC_REACTIVE,
+                 KC_NO, KC_TRNS, KC_TRNS, KC_NO, KC_NO,
                  QK_CLEAR_EEPROM, QK_BOOT, KC_EXIT, KC_MS_DIAG_UL, MS_UP,
-                 KC_MS_DIAG_UR, KC_EXIT, KC_NO, DPI_MOD, S_D_MOD, KC_TURBO,
-                 DPI_MOD, KC_NO, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1,
-                 MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, MS_BTN3, KC_EXIT, KC_RCTL,
-                 KC_RALT, KC_RGUI, KC_NO, KC_EXIT, KC_MS_DIAG_DL,
-                 MS_DOWN, KC_MS_DIAG_DR, KC_EXIT, KC_NO, KC_NO, MS_BTN1,
-                 KC_MOUSE_LOCK, KC_SNIPE, DRGSCRL, KC_RSFT, MS_BTN1, MS_BTN2,
+                 KC_MS_DIAG_UR, KC_EXIT, KC_NO, DPI_MOD, DRGSCRL, KC_MOUSE_LOCK,
+                 KC_SNIPE, DPI_RMOD, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1,
+                 MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, KC_EXIT, MS_BTN1, MS_BTN3,
+                 MS_BTN3, MS_BTN2, KC_EXIT, KC_EXIT, KC_MS_DIAG_DL,
+                 MS_DOWN, KC_MS_DIAG_DR, KC_EXIT, KC_NO, KC_NO, KC_EXIT,
+                 KC_RCTL, KC_RALT, KC_RGUI, KC_RSFT, MS_BTN1, MS_BTN2,
                  MS_BTN3, KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,
                  KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O,
@@ -1220,10 +1255,41 @@ bool rgb_matrix_indicators_user(void) {
     rgb_matrix_set_color_all(255, 255, 255);
     return false;
   }
+
+  bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
+
   if (is_sniping_active) {
-    rgb_matrix_set_color_all(255, 0, 0);
+    // Snipe mode: Black out top row on RIGHT side, rainbow far right column
+    if (!is_keyboard_left()) {
+      for (int i = 0; i < sizeof(top_row_right); i++) {
+        rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
+      }
+      for (int i = 0; i < sizeof(far_right_col); i++) {
+        uint8_t hue = (i * 64) + (timer_read() / 10);  // Cycling rainbow
+        HSV hsv = {hue, 255, 255};
+        RGB rgb = hsv_to_rgb(hsv);
+        rgb_matrix_set_color(far_right_col[i], rgb.r, rgb.g, rgb.b);
+      }
+    }
     return false;
   }
+
+  if (is_scroll_active) {
+    // Scroll mode: Black out top row on LEFT side, rainbow far left column
+    if (is_keyboard_left()) {
+      for (int i = 0; i < sizeof(top_row_left); i++) {
+        rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
+      }
+      for (int i = 0; i < sizeof(far_left_col); i++) {
+        uint8_t hue = (i * 64) + (timer_read() / 10);  // Cycling rainbow
+        HSV hsv = {hue, 255, 255};
+        RGB rgb = hsv_to_rgb(hsv);
+        rgb_matrix_set_color(far_left_col[i], rgb.r, rgb.g, rgb.b);
+      }
+    }
+    return false;
+  }
+
   uint8_t layer = get_highest_layer(layer_state);
   switch (layer) {
   case 1: {
@@ -1490,7 +1556,7 @@ void matrix_scan_user(void) {
   }
 
   if (auto_mouse_on && !mouse_is_locked &&
-      timer_elapsed(auto_mouse_timer) > 2000) { // 2000ms timeout
+      timer_elapsed(auto_mouse_timer) > 2500) { // 2500ms timeout
     layer_off(3);
     auto_mouse_on = false;
   }

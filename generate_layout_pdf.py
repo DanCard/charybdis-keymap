@@ -102,7 +102,8 @@ KEY_LABELS = {
     'MS_RGHT': 'Mouse\nRight',
     'SNIPING': 'Snipe',
     'DRGSCRL': 'Scroll',
-    'DPI_MOD': 'DPI',
+    'DPI_MOD': 'DPI+',
+    'DPI_RMOD': 'DPI-',
     'S_D_MOD': 'S-DPI',
     'RM_NEXT': 'rgb +',
     'RM_PREV': 'rgb -',
@@ -295,10 +296,10 @@ def simplify_key(key_code, layer_num=None):
         'KC_SPC_EXIT': 'Space\nExit',
         'KC_BSPC_EXIT': 'Back\nExit',
         'KC_EXIT': 'Exit',
-        'KC_TURBO': 'Turbo',
+        'KC_TURBO': 'Temp\nTurbo',
         'KC_RAINBOW': 'Rain\nbow',
         'KC_REACTIVE': 'Reac\ntive',
-        'KC_MOUSE_LOCK': 'Mouse\nLock',
+        'KC_MOUSE_LOCK': 'Layer\nLock',
         'KC_MS_FAST_UP': 'Mouse\nUp+',
         'KC_MS_FAST_DOWN': 'Mouse\nDown+',
         'KC_MS_FAST_LEFT': 'Mouse\nLeft+',
@@ -316,7 +317,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_SPIRAL': 'Spiral',
         'KC_CHEVRON': 'Chev\nron',
         'KC_LR_TOGGLE': 'LR\nToggle',
-        'KC_POLICE': 'Police',
+        'KC_FLASH': 'Flash',
         'KC_RAINBOW': 'Rain\nbow',
         'KC_SNIPE': 'Snipe',
         'KC_RGB_AUTO': 'RGB\nAuto',
@@ -370,14 +371,14 @@ def draw_key(c, x, y, width, height, label, bg_color):
     max_len = max(len(line) for line in lines)
     
     # Adjust font size based on label length
-    if max_len <= 2:
+    if max_len <= 3:
         font_size = 10
     elif max_len <= 4:
-        font_size = 8
+        font_size = 9
     elif max_len <= 5:
-        font_size = 7
+        font_size = 8
     elif max_len <= 7:
-        font_size = 6
+        font_size = 6.5
     else:
         font_size = 5.5
 
