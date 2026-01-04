@@ -209,9 +209,17 @@ def parse_info_json(file_path):
 
 def simplify_key(key_code, layer_num=None):
     """Convert QMK keycode to readable label."""
+    # Tap Dance Z-Layer Handling
+    if 'TD_Z_LAYER' in key_code:
+        if layer_num == 0: return 'Z\nMouse\nLight'
+        if layer_num == 1: return 'Num 0\nExit\nLight'
+        if layer_num == 2: return 'Home\nExit\nLight'
+        if layer_num == 3: return 'Z\nExit\nLight'
+        if layer_num == 4: return '/\nExit\nLight'
+        return 'Z\nTD'
+
     # Special handling for Layer 0 Long Press
     if layer_num == 0:
-        if 'TD_Z_LAYER' in key_code: return 'Z\nMouse\nLight'
         if key_code == 'KC_1_TG1': return '1\nL1'
         if key_code == 'KC_2_TG2': return '2\nL2'
         if key_code == 'KC_3_TG3': return '3\nL3'
@@ -226,7 +234,6 @@ def simplify_key(key_code, layer_num=None):
 
     # Special handling for Layer 2
     if layer_num == 2:
-        if 'TD_Z_LAYER' in key_code: return 'Home'
         if 'KC_X_TG2' == key_code: return 'Page\nUp'
 
     # Special handling for other layer long press returns
