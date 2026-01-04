@@ -428,8 +428,12 @@ bool is_scroll_mode = false;
 static uint16_t last_key_time = 0;
 
 layer_state_t layer_state_set_user(layer_state_t state) {
+  uint8_t layer = get_highest_layer(state);
   uprintf("Layer change: state=%lu, highest=%u\n", (unsigned long)state,
-          get_highest_layer(state));
+          layer);
+  if (layer == 3) {
+      uprintf("Entering Layer 3. CPI: %u\n", pointing_device_get_cpi());
+  }
   return state;
 }
 
