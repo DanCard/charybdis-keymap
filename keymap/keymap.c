@@ -583,6 +583,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       layer_move(0);
       rgb_matrix_indicators_user();
     }
+    return false;
   case KC_TURBO:
     if (record->event.pressed) {
       pointing_device_set_cpi(3000);
