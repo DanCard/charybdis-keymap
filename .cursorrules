@@ -1,0 +1,6 @@
+# Antigravity Behavior Rules
+
+1. **FORMATTING**:
+   - **Indentation**: It is OK to fix indentation to match the file's style (2 spaces).
+   - **Line Endings**: **CRITICAL**: Do NOT reflow or change line endings in array lists, enums, or macros (especially `LAYOUT` macros).
+   - **Visual Alignment**: Preserve existing visual grid layouts in code (e.g., keyboard keymaps).

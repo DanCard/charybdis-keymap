@@ -1,79 +1,55 @@
-RGB_MATRIX_EFFECT(left_right_toggle)
-RGB_MATRIX_EFFECT(flash)
+RGB_MATRIX_EFFECT(fire)
 
 #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
-static bool left_right_toggle(effect_params_t* params) {
+static bool fire(effect_params_t* params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
-    // Toggle interval based on speed
-    uint32_t period = (256 - rgb_matrix_config.speed) * 8;
-    if (period < 250) period = 250;
-
-    // Determine which side is active
-    bool left_active = (g_rgb_timer % period) < (period / 2);
-    
-    // Calculate a pulse ID to change color every swap
-    // Dividing by (period/2) gives us a unique index for every "half-period"
-    uint32_t pulse_id = g_rgb_timer / (period / 2);
-    
-    // Calculate hue: Base hue + (pulse_id * step)
-    // Using a step of 32 ensures distinct colors each jump
-    uint8_t dynamic_hue = rgb_matrix_config.hsv.h + (uint8_t)(pulse_id * 32);
-
-    HSV hsv = { dynamic_hue, rgb_matrix_config.hsv.s, rgb_matrix_config.hsv.v };
-    RGB rgb = hsv_to_rgb(hsv);
+    // Speed controls flicker rate
+    uint32_t time = g_rgb_timer / (256 - rgb_matrix_config.speed);
 
     for (uint8_t i = led_min; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
-        bool is_left_led = (i < 29);
-        
-        if ((left_active && is_left_led) || (!left_active && !is_left_led)) {
-            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
-        } else {
+
+        // Get LED position (y: 0=top, 64=bottom thumb cluster)
+        uint8_t y = g_led_config.point[i].y;
+        uint8_t x = g_led_config.point[i].x;
+
+        // Two phase offsets for independent hue and brightness flicker
+        uint8_t phase_val = (time + i * 37) % 256;
+        uint8_t phase_hue = (time / 2 + i * 53) % 256;
+
+        // Base intensity from vertical position (bottom = bright, top = dim)
+        uint8_t y_intensity = (y * 255) / 64;
+
+        // Edge fade: x ranges 0-224, center is 112
+        int16_t x_center_dist = (x > 112) ? (x - 112) : (112 - x);
+        uint8_t edge_fade = 255 - (x_center_dist * 80 / 112);
+
+        // Combine position-based intensity
+        uint16_t base_val = ((uint16_t)y_intensity * edge_fade) / 255;
+
+        // Brightness flicker (+-40%)
+        int16_t flicker = ((phase_val % 80) - 40) * 2;
+        int16_t val = base_val + flicker;
+        if (val < 0) val = 0;
+        if (val > 255) val = 255;
+
+        // Per-key hue variation within warm range (0-40: red to yellow)
+        // Base hue from position (red at bottom, orange/yellow toward top)
+        uint8_t base_hue = ((64 - y) * 25) / 64; // 0-25 based on height
+        // Add per-key hue flicker within warm range
+        uint8_t hue_variation = (phase_hue % 20); // 0-19 variation
+        uint8_t hue = base_hue + hue_variation;
+        if (hue > 45) hue = 45; // cap at yellow, don't go green
+
+        // Skip very dim LEDs (top edges)
+        if (val < 15) {
             rgb_matrix_set_color(i, 0, 0, 0);
-        }
-    }
-    return rgb_matrix_check_finished_leds(led_max);
-}
-
-static bool flash(effect_params_t* params) {
-    RGB_MATRIX_USE_LIMITS(led_min, led_max);
-
-    // Cycle time for color changes
-    uint32_t period = (256 - rgb_matrix_config.speed) * 4;
-    if (period < 250) period = 250;
-
-    uint32_t t = g_rgb_timer % period;
-    bool left_phase = (t < (period / 2));
-
-    // Calculate pulse ID to increment hue on each phase change
-    uint32_t pulse_id = g_rgb_timer / (period / 2);
-
-    // Increment hue on color wheel (step of 42 for distinct colors)
-    uint8_t dynamic_hue = rgb_matrix_config.hsv.h + (uint8_t)(pulse_id * 42);
-
-    // Strobe logic: Blink twice per phase
-    uint32_t phase_t = t % (period / 2);
-    uint32_t blink_dur = period / 8;
-
-    bool light_on = false;
-    // Blink 1
-    if (phase_t < blink_dur) light_on = true;
-    // Blink 2
-    else if (phase_t > (blink_dur * 2) && phase_t < (blink_dur * 3)) light_on = true;
-
-    HSV hsv = { dynamic_hue, 255, light_on ? 255 : 0 };
-    RGB rgb = hsv_to_rgb(hsv);
-
-    for (uint8_t i = led_min; i < led_max; i++) {
-        RGB_MATRIX_TEST_LED_FLAGS();
-        bool is_left_led = (i < 29);
-
-        if ((left_phase && is_left_led) || (!left_phase && !is_left_led)) {
-            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         } else {
-            rgb_matrix_set_color(i, 0, 0, 0);
+            HSV hsv = { hue, 255, (uint8_t)val };
+            RGB rgb = hsv_to_rgb(hsv);
+            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
     }
     return rgb_matrix_check_finished_leds(led_max);

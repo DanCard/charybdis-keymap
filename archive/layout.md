@@ -37,11 +37,11 @@ Exit      Home/Ms   PgUp      PgDn      End       .                .         Hom
 ```
                                                 MOUSE (Layer 3)
 Boot      ClearEE   FastUp    3/L3      4/L4      Next             Trans     Trans     .         .         ClearEE   Boot
-Ms3       Trans     DiagUL    Up        DiagUR    ScrMode          DPI+      DragScr   LayerLock Snipe     DPI-      .
+Ms3       Trans     DiagUL    Up        DiagUR    ScrMode          DPI+      ScrollLck LayerLock Snipe     DPI-      .
 FastL     Left      Btn1      Right     FastR     .                Exit      LeftClk   MidClk    MidClk    RightClk  Exit
-Z/Ms      DiagDL    Down      FastD     DiagDR    .                .         Exit      Ctrl      Alt       Gui       Trans    
-                               Btn1      Enter     L1 Toggle        L2 Toggle Enter     
-                               Btn3      Btn2                       Btn2      
+Z/Ms      DiagDL    Down      FastD     DiagDR    .                .         Exit      Ctrl      Alt       Gui       Trans
+                               Btn1      Enter     L1 Toggle        L2 Toggle Enter
+                               Btn3      Btn2                       Btn2
 ```
 
 ```
@@ -70,6 +70,7 @@ Shift     //Ms      .         ,         M         N                N         M  
 - Moving the trackball switches to Layer 3 (Yellow). Activates on ANY movement.
 - Reverts to previous layer after **2000ms (2s)** of inactivity.
 - **Layer Lock:** Press `LayerLock` key on Layer 3 to lock the layer and prevent auto-timeout.
+- **Scroll Lock:** Press `ScrollLck` (I key) on Layer 3 to lock to Layer 3 and enable scroll mode. Visual indicator: rainbow far left column. Press again to exit.
 - **Snipe Mode:** Press `Snipe` to toggle high precision/low speed (Red RGB). Press again to exit.
 
 #### Combos

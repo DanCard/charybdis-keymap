@@ -123,3 +123,45 @@ This is configured via `tap_dance_actions[]` and the `z_finished`/`z_reset` func
 The trackball automatically switches to Layer 3 (Mouse) upon movement.
 - **Logic:** `pointing_device_task_user` detects movement and calls `layer_on(3)`.
 - **Timeout:** `matrix_scan_user` checks `auto_mouse_timer` and turns off Layer 3 after 650ms of inactivity, unless `mouse_is_locked` is true.
+
+## 7. Updating the Layout PDF
+
+When you make changes to the keymap, you should regenerate the layout PDF documentation to reflect those changes.
+
+### Prerequisites
+```bash
+pip install reportlab
+```
+
+### Updating the PDF
+
+1. **Make your keymap changes** in `keymap/keymap.c`
+
+2. **If you added new custom keycodes**, update the key label mapping in `generate_layout_pdf.py`:
+   - Find the `custom_map` dictionary (around line 287)
+   - Add your keycode mapping, e.g.:
+     ```python
+     'KC_MY_KEY': 'My\nKey',
+     ```
+   - Use `\n` to split labels across multiple lines for better readability
+
+3. **Regenerate the PDF**:
+   ```bash
+   python3 generate_layout_pdf.py
+   ```
+
+   This will update `charybdis_layout.pdf` with the current keymap.
+
+### How it Works
+
+The script:
+- Parses `keymap/keymap.c` to extract all layer definitions
+- Reads the physical layout from `qmk_firmware/keyboards/bastardkb/charybdis/4x6/info.json`
+- Generates a visual PDF with color-coded layers matching the RGB indicators
+- Each layer is rendered on the PDF with simplified, readable key labels
+
+### Troubleshooting
+
+If keys show as raw keycodes (e.g., `KC_SCROLL_LOCK`) instead of friendly labels:
+1. Add a mapping in the `custom_map` dictionary in `generate_layout_pdf.py`
+2. Regenerate the PDF

@@ -61,8 +61,7 @@ enum custom_keycodes {
   KC_SPC_TG2,
   KC_PMNS_TG4,
   KC_F12_EXIT,
-  KC_LR_TOGGLE,
-  KC_FLASH,
+  KC_FIRE,
   KC_SNIPE
 };
 
@@ -145,13 +144,13 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
 
   bool synced = false;
   if (rgb_matrix_get_mode() != sync_data->rgb_mode) {
-      uprintf("Slave: Syncing RGB Mode to %d\n", sync_data->rgb_mode);
-      rgb_matrix_mode_noeeprom(sync_data->rgb_mode);
-      synced = true;
+    uprintf("Slave: Syncing RGB Mode to %d\n", sync_data->rgb_mode);
+    rgb_matrix_mode_noeeprom(sync_data->rgb_mode);
+    synced = true;
   }
-  
+
   if (out_buflen >= sizeof(user_sync_info_response_t)) {
-      response->did_rgb_sync = synced;
+    response->did_rgb_sync = synced;
   }
 }
 
@@ -244,10 +243,8 @@ const char *get_rgb_mode_name(uint8_t mode) {
     return "SOLID_SPLASH";
   case RGB_MATRIX_SOLID_MULTISPLASH:
     return "SOLID_MULTISPLASH";
-  case RGB_MATRIX_CUSTOM_left_right_toggle:
-    return "LEFT_RIGHT_TOGGLE";
-  case RGB_MATRIX_CUSTOM_flash:
-    return "FLASH";
+  case RGB_MATRIX_CUSTOM_fire:
+    return "FIRE";
   default:
     return "UNKNOWN";
   }
@@ -262,13 +259,11 @@ void start_show_mode(void) {
     uint8_t random_hue = timer_read() % 256;
     rgb_matrix_sethsv_noeeprom(random_hue, rgb_matrix_get_sat(),
                                rgb_matrix_get_val());
-  } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING || mode == RGB_MATRIX_CUSTOM_left_right_toggle) {
-    // Increment hue for Solid Color, Breathing, and Custom Toggle modes every time they activate
+  } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING) {
+    // Increment hue for Solid Color and Breathing modes every time they activate
     automatic_hue_tracker += 42;
     rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, 255, 255);
-    uprintf("Solid/Breathing/Toggle Activated: New Hue %d\n", automatic_hue_tracker);
-  } else if (mode == RGB_MATRIX_CUSTOM_flash) {
-      uprintf("Flash Activated\n");
+    uprintf("Solid/Breathing Activated: New Hue %d\n", automatic_hue_tracker);
   }
 
   show_mode_digit_count = 0;
@@ -443,10 +438,11 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   uint8_t layer = get_highest_layer(state);
   uint8_t prev_layer = get_highest_layer(layer_state);
 
-  uprintf("[%lu.%03lu] Layer change: %u -> %u (state=%lu)\n", sec, ms, prev_layer,
-          layer, (unsigned long)state);
+  uprintf("[%lu.%03lu] Layer change: %u -> %u (state=%lu)\n", sec, ms,
+          prev_layer, layer, (unsigned long)state);
   if (layer == 3) {
-      uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms, pointing_device_get_cpi());
+    uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
+            pointing_device_get_cpi());
   }
   return state;
 }
@@ -477,7 +473,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uprintf("[%lu.%03lu] G (diff %lu)\n", sec, ms, diff);
       break;
     case KC_J:
-      uprintf("[%lu.%03lu] J (diff %lu) L:%u\n", sec, ms, diff, get_highest_layer(layer_state));
+      uprintf("[%lu.%03lu] J (diff %lu) L:%u\n", sec, ms, diff,
+              get_highest_layer(layer_state));
       break;
 
     // Combo Keys
@@ -592,7 +589,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uprintf("[%lu.%03lu] Turbo ON. CPI -> 3000\n", sec, ms);
     } else {
       pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      uprintf("[%lu.%03lu] Turbo OFF. CPI -> Default (%u)\n", sec, ms, pointing_device_get_cpi());
+      uprintf("[%lu.%03lu] Turbo OFF. CPI -> Default (%u)\n", sec, ms,
+              pointing_device_get_cpi());
     }
     return false;
   case KC_MS_FAST_UP:
@@ -694,8 +692,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint32_t now = timer_read32();
       uint32_t sec = now / 1000;
       uint32_t ms = now % 1000;
-      uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n",
-              sec, ms, (unsigned long)layer_state);
+      uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n", sec, ms,
+              (unsigned long)layer_state);
       layer_state_to_restore = layer_state;
       layer_state_set(0); // Clear all layers (peek at base)
       rgb_matrix_indicators_user();
@@ -845,7 +843,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         uprintf("[%lu.%03lu] Snipe ON. CPI -> 250\n", sec, ms);
       } else {
         pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-        uprintf("[%lu.%03lu] Snipe OFF. CPI -> Default (%u)\n", sec, ms, pointing_device_get_cpi());
+        uprintf("[%lu.%03lu] Snipe OFF. CPI -> Default (%u)\n", sec, ms,
+                pointing_device_get_cpi());
       }
     }
     return false;
@@ -979,7 +978,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case RM_VALU:
   case RM_VALD:
     if (record->event.pressed) {
-        uprintf("RM_VAL change requested. Current Val: %d\n", rgb_matrix_get_val());
+      uprintf("RM_VAL change requested. Current Val: %d\n",
+              rgb_matrix_get_val());
     }
     return true;
   case KC_PLUS_COLON:
@@ -1078,10 +1078,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint32_t now = timer_read32();
       uint32_t sec = now / 1000;
       uint32_t ms = now % 1000;
-      uprintf("[%lu.%03lu] KC_ENT_TG2 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
-              sec, ms,
-              timer_elapsed(ent_tg2_timer),
-              ent_tg2_held, ent_tg2_triggered,
+      uprintf("[%lu.%03lu] KC_ENT_TG2 Released. Duration: %u ms. Held: %d, "
+              "Triggered: %d. Action: %s\n",
+              sec, ms, timer_elapsed(ent_tg2_timer), ent_tg2_held,
+              ent_tg2_triggered,
               (!ent_tg2_triggered) ? "Tap (Enter)" : "None (Handled by Timer)");
       ent_tg2_held = false;
       if (!ent_tg2_triggered) {
@@ -1102,10 +1102,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint32_t now = timer_read32();
       uint32_t sec = now / 1000;
       uint32_t ms = now % 1000;
-      uprintf("[%lu.%03lu] KC_ENT_TG4 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
-              sec, ms,
-              timer_elapsed(ent_tg4_timer),
-              ent_tg4_held, ent_tg4_triggered,
+      uprintf("[%lu.%03lu] KC_ENT_TG4 Released. Duration: %u ms. Held: %d, "
+              "Triggered: %d. Action: %s\n",
+              sec, ms, timer_elapsed(ent_tg4_timer), ent_tg4_held,
+              ent_tg4_triggered,
               (!ent_tg4_triggered) ? "Tap (Enter)" : "None (Handled by Timer)");
       ent_tg4_held = false;
       if (!ent_tg4_triggered) {
@@ -1126,10 +1126,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint32_t now = timer_read32();
       uint32_t sec = now / 1000;
       uint32_t ms = now % 1000;
-      uprintf("[%lu.%03lu] KC_SPC_TG2 Released. Duration: %u ms. Held: %d, Triggered: %d. Action: %s\n",
-              sec, ms,
-              timer_elapsed(spc_tg2_timer),
-              spc_tg2_held, spc_tg2_triggered,
+      uprintf("[%lu.%03lu] KC_SPC_TG2 Released. Duration: %u ms. Held: %d, "
+              "Triggered: %d. Action: %s\n",
+              sec, ms, timer_elapsed(spc_tg2_timer), spc_tg2_held,
+              spc_tg2_triggered,
               (!spc_tg2_triggered) ? "Tap (Space)" : "None (Handled by Timer)");
       spc_tg2_held = false;
       if (!spc_tg2_triggered) {
@@ -1161,15 +1161,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
-  case KC_LR_TOGGLE:
+  case KC_FIRE:
     if (record->event.pressed) {
-      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_left_right_toggle);
-      start_show_mode();
-    }
-    return false;
-  case KC_FLASH:
-    if (record->event.pressed) {
-      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_flash);
+      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_fire);
       start_show_mode();
     }
     return false;
@@ -1221,25 +1215,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_PEQL, RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(KC_F12, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5,
-                 KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_LR_TOGGLE, KC_EXIT,
-                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_FLASH, KC_LBRC,
-                 KC_RBRC, S(KC_LBRC), S(KC_RBRC), RM_PREV, KC_LSFT, KC_LEFT,
-                 KC_UP, KC_DOWN, KC_RGHT, KC_RGB_AUTO, KC_RSFT, KC_LEFT,
-                 KC_DOWN, KC_UP, KC_RGHT, RM_NEXT, KC_EXIT, LT(3, KC_HOME),
-                 KC_PGUP, KC_PGDN, KC_END, KC_NO, KC_NO, KC_HOME, KC_PGUP,
-                 KC_PGDN, KC_END, KC_NO, KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,
-                 KC_R_TG2, KC_ENT_EXIT, KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
+    [2] = LAYOUT(KC_F12, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8,
+                 KC_F9, KC_F10, KC_F11, KC_NO, KC_EXIT, KC_EXIT, KC_EXIT,
+                 KC_EXIT, KC_EXIT, KC_FIRE, KC_LBRC, KC_RBRC, S(KC_LBRC),
+                 S(KC_RBRC), RM_PREV, KC_LSFT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT,
+                 KC_RGB_AUTO, KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT,
+                 RM_NEXT, KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END,
+                 KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
+                 KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
+                 KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_BOOT, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4,
-                 KC_NO, KC_TRNS, KC_TRNS, KC_NO, KC_NO,
-                 QK_CLEAR_EEPROM, QK_BOOT, KC_EXIT, KC_MS_DIAG_UL, MS_UP,
-                 KC_MS_DIAG_UR, KC_EXIT, KC_NO, DPI_MOD, DRGSCRL, KC_MOUSE_LOCK,
-                 KC_SNIPE, DPI_RMOD, KC_NO, KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1,
-                 MS_RGHT, KC_MS_FAST_RIGHT, KC_NO, KC_EXIT, MS_BTN1, MS_BTN3,
-                 MS_BTN3, MS_BTN2, KC_EXIT, KC_EXIT, KC_MS_DIAG_DL,
-                 MS_DOWN, KC_MS_DIAG_DR, KC_EXIT, KC_NO, KC_NO, KC_EXIT,
-                 KC_RCTL, KC_RALT, KC_RGUI, KC_RSFT, MS_BTN1, MS_BTN2,
-                 MS_BTN3, KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
+                 KC_NO, KC_TRNS, KC_RCTL, KC_RALT, KC_RGUI, QK_CLEAR_EEPROM,
+                 QK_BOOT, KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_EXIT, KC_NO,
+                 KC_NO, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, KC_NO,
+                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_NO,
+                 KC_EXIT, MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
+                 KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, KC_EXIT, KC_NO,
+                 KC_EXIT, KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
+                 MS_BTN1, MS_BTN2, MS_BTN3,
+                 KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,
                  KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O,
                  KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
@@ -1265,7 +1259,7 @@ bool rgb_matrix_indicators_user(void) {
         rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
       }
       for (int i = 0; i < sizeof(far_right_col); i++) {
-        uint8_t hue = (i * 64) + (timer_read() / 10);  // Cycling rainbow
+        uint8_t hue = (i * 64) + (timer_read() / 10); // Cycling rainbow
         HSV hsv = {hue, 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
         rgb_matrix_set_color(far_right_col[i], rgb.r, rgb.g, rgb.b);
@@ -1281,7 +1275,7 @@ bool rgb_matrix_indicators_user(void) {
         rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
       }
       for (int i = 0; i < sizeof(far_left_col); i++) {
-        uint8_t hue = (i * 64) + (timer_read() / 10);  // Cycling rainbow
+        uint8_t hue = (i * 64) + (timer_read() / 10); // Cycling rainbow
         HSV hsv = {hue, 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
         rgb_matrix_set_color(far_left_col[i], rgb.r, rgb.g, rgb.b);
@@ -1355,17 +1349,17 @@ bool rgb_matrix_indicators_user(void) {
   // This creates a "negative" indicator hole in the lighting
   uint8_t indicator_idx = (layer == 0) ? 9 : (layer - 1);
   if (indicator_idx < 10) {
-      uint8_t num_led = number_key_leds[indicator_idx];
-      uint8_t let_led = letter_key_leds[indicator_idx];
-      bool am_i_left = is_keyboard_left();
-      
-      if (am_i_left && num_led < 29) {
-          rgb_matrix_set_color(num_led, 0, 0, 0);
-          rgb_matrix_set_color(let_led, 0, 0, 0);
-      } else if (!am_i_left && num_led >= 29) {
-          rgb_matrix_set_color(num_led - 29, 0, 0, 0);
-          rgb_matrix_set_color(let_led - 29, 0, 0, 0);
-      }
+    uint8_t num_led = number_key_leds[indicator_idx];
+    uint8_t let_led = letter_key_leds[indicator_idx];
+    bool am_i_left = is_keyboard_left();
+
+    if (am_i_left && num_led < 29) {
+      rgb_matrix_set_color(num_led, 0, 0, 0);
+      rgb_matrix_set_color(let_led, 0, 0, 0);
+    } else if (!am_i_left && num_led >= 29) {
+      rgb_matrix_set_color(num_led - 29, 0, 0, 0);
+      rgb_matrix_set_color(let_led - 29, 0, 0, 0);
+    }
   }
 
   // Flash number key logic for show_mode (Master Only) would go here
@@ -1394,52 +1388,55 @@ bool rgb_matrix_indicators_user(void) {
 }
 
 void keyboard_post_init_user(void) {
-    transaction_register_rpc(USER_SYNC_INFO, user_sync_info_slave_handler);
+  transaction_register_rpc(USER_SYNC_INFO, user_sync_info_slave_handler);
 
-    if (!eeconfig_is_enabled()) {
-        uprintf("Init: EEPROM not enabled, initializing...\n");
-        eeconfig_init();
-    }
+  if (!eeconfig_is_enabled()) {
+    uprintf("Init: EEPROM not enabled, initializing...\n");
+    eeconfig_init();
+  }
 
-    // Read user config from EEPROM
-    // Lower 8 bits: Theme Index
-    // Upper 8 bits: Start Hue
-    uint16_t user_config = eeconfig_read_user();
-    uint8_t saved_theme = (uint8_t)(user_config & 0xFF); 
-    uint8_t saved_hue   = (uint8_t)((user_config >> 8) & 0xFF);
-    uint8_t max_effects = RGB_MATRIX_EFFECT_MAX;
+  // Read user config from EEPROM
+  // Lower 8 bits: Theme Index
+  // Upper 8 bits: Start Hue
+  uint16_t user_config = eeconfig_read_user();
+  uint8_t saved_theme = (uint8_t)(user_config & 0xFF);
+  uint8_t saved_hue = (uint8_t)((user_config >> 8) & 0xFF);
+  uint8_t max_effects = RGB_MATRIX_EFFECT_MAX;
 
-    uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d)\n", user_config, saved_theme, saved_hue);
+  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d)\n", user_config, saved_theme,
+          saved_hue);
 
-    // Increment Theme (Cycle 1 to MAX-1)
-    uint8_t next_theme = saved_theme + 1;
-    if (next_theme >= max_effects || next_theme == 0) {
-        next_theme = 1; 
-    }
+  // Increment Theme (Cycle 1 to MAX-1)
+  uint8_t next_theme = saved_theme + 1;
+  if (next_theme >= max_effects || next_theme == 0) {
+    next_theme = 1;
+  }
 
-    // Increment Hue (Shift by ~42 for distinct color steps)
-    // 0=Red, 42=Yellow, 84=Green, 126=Cyan, 168=Blue, 210=Magenta
-    uint8_t next_hue = saved_hue + 42;
+  // Increment Hue (Shift by ~42 for distinct color steps)
+  // 0=Red, 42=Yellow, 84=Green, 126=Cyan, 168=Blue, 210=Magenta
+  uint8_t next_hue = saved_hue + 42;
 
-    // Save Combined
-    uint16_t new_config = ((uint16_t)next_hue << 8) | next_theme;
-    eeconfig_update_user(new_config);
-    
-    // Initialize the tracker with the OLD hue, so the first increment 
-    // in start_show_mode() lands exactly on 'next_hue'.
-    automatic_hue_tracker = saved_hue;
+  // Save Combined
+  uint16_t new_config = ((uint16_t)next_hue << 8) | next_theme;
+  eeconfig_update_user(new_config);
 
-    uprintf("Init: Next Theme=%d, Next Hue=%d. Saved=%u\n", next_theme, next_hue, new_config);
+  // Initialize the tracker with the OLD hue, so the first increment
+  // in start_show_mode() lands exactly on 'next_hue'.
+  automatic_hue_tracker = saved_hue;
 
-    // Apply Settings
-    rgb_matrix_mode_noeeprom(next_theme);
-    // rgb_matrix_sethsv_noeeprom(next_hue, 255, 255); // Handled by start_show_mode now
+  uprintf("Init: Next Theme=%d, Next Hue=%d. Saved=%u\n", next_theme, next_hue,
+          new_config);
 
-    rgb_auto_cycle = true;
-    rgb_auto_timer = timer_read();
-    if (is_keyboard_master()) {
-        start_show_mode();
-    }
+  // Apply Settings
+  rgb_matrix_mode_noeeprom(next_theme);
+  // rgb_matrix_sethsv_noeeprom(next_hue, 255, 255); // Handled by
+  // start_show_mode now
+
+  rgb_auto_cycle = true;
+  rgb_auto_timer = timer_read();
+  if (is_keyboard_master()) {
+    start_show_mode();
+  }
 }
 
 void housekeeping_task_user(void) {
@@ -1458,10 +1455,11 @@ void housekeeping_task_user(void) {
           .show_mode_current_digit = show_mode_current_digit,
           .show_mode_phase = show_mode_phase,
           .rgb_mode = rgb_matrix_get_mode()};
-      
+
       user_sync_info_response_t response_data = {0};
 
-      if (transaction_rpc_exec(USER_SYNC_INFO, sizeof(sync_data), &sync_data, sizeof(response_data), &response_data)) {
+      if (transaction_rpc_exec(USER_SYNC_INFO, sizeof(sync_data), &sync_data,
+                               sizeof(response_data), &response_data)) {
         last_sync = timer_read32();
         sync_needed = false;
       }
@@ -1480,16 +1478,17 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
   uint32_t ms = now % 1000;
 
   if (get_highest_layer(layer_state) == 3 && (x != 0 || y != 0)) {
-      static uint16_t last_cpi = 0;
-      static uint32_t last_cpi_print = 0;
-      uint16_t current_cpi = pointing_device_get_cpi();
-      
-      // Log if CPI changed OR if it's been > 2 seconds since last log
-      if (current_cpi != last_cpi || timer_elapsed32(last_cpi_print) > 2000) {
-          uprintf("[%lu.%03lu] Mouse L3 Move. CPI: %u (x=%d, y=%d)\n", sec, ms, current_cpi, x, y);
-          last_cpi = current_cpi;
-          last_cpi_print = now;
-      }
+    static uint16_t last_cpi = 0;
+    static uint32_t last_cpi_print = 0;
+    uint16_t current_cpi = pointing_device_get_cpi();
+
+    // Log if CPI changed OR if it's been > 2 seconds since last log
+    if (current_cpi != last_cpi || timer_elapsed32(last_cpi_print) > 2000) {
+      uprintf("[%lu.%03lu] Mouse L3 Move. CPI: %u (x=%d, y=%d)\n", sec, ms,
+              current_cpi, x, y);
+      last_cpi = current_cpi;
+      last_cpi_print = now;
+    }
   }
 
   int8_t threshold = 0; // Respond to any movement (threshold 0)
@@ -1497,27 +1496,28 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
   if (x != 0 || y != 0) {
     if (auto_mouse_on) {
-        // Any movement resets the timer to allow fine precision without timeout
+      // Any movement resets the timer to allow fine precision without timeout
+      auto_mouse_timer = timer_read();
+    } else if (x > threshold || x < -threshold || y > threshold ||
+               y < -threshold) {
+      movement_streak++;
+      if (movement_streak > 1) { // Require 2 consecutive movement events
+        // Only activate layer for significant movement
+        uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
+        layer_on(3); // Switch to Mouse Layer (3)
+        auto_mouse_on = true;
         auto_mouse_timer = timer_read();
-    } else if (x > threshold || x < -threshold || y > threshold || y < -threshold) {
-        movement_streak++;
-        if (movement_streak > 1) { // Require 2 consecutive movement events
-            // Only activate layer for significant movement
-            uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
-            layer_on(3); // Switch to Mouse Layer (3)
-            auto_mouse_on = true;
-            auto_mouse_timer = timer_read();
-            movement_streak = 0;
-        }
-    } else {
-        // Only log jitter if it's above 0 to reduce console noise
-        if (x != 0 || y != 0) {
-            uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
-        }
         movement_streak = 0;
+      }
+    } else {
+      // Only log jitter if it's above 0 to reduce console noise
+      if (x != 0 || y != 0) {
+        uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
+      }
+      movement_streak = 0;
     }
   } else {
-      movement_streak = 0;
+    movement_streak = 0;
   }
   return mouse_report;
 }
