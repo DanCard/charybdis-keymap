@@ -35,12 +35,13 @@ Exit      Home      PgUp      PgDn      End       .        |  .         Home    
 ### MOUSE (Layer 3)
 ```
 Esc       ClrEE     FastUp    3/L3      4/L4      Boot     |  Trans     RCtl      RAlt      RGui      ClrEE     Boot
-Ms3       Trans     DiagUL    MsUp      DiagUR    Exit     |            DPI+      DPI-      Snipe     Exit      
+Ms3       Trans     DiagUL    MsUp      DiagUR    Exit     |  Time-     Time+     DPI+      DPI-      Snipe     Exit
 FastL     MsL       Btn1      MsR       FastR              |  Exit      Btn1      DragScr   MsLock    Btn2      Exit
 Z/Ms      DiagDL    MsDn      DiagDR    Exit               |  Exit      Exit      Btn3      Btn3      Btn3      RSft
                     Btn1      Btn2      Btn3               |  Exit      Btn1      Exit
 ```
 *Note: This layer activates automatically on trackball movement.*
+*Time+/Time-: Adjust auto-mouse timeout in 500ms steps (0.5s - 10s). Lower timeout for gaming, higher for general use.*
 
 ### ONE-HAND (Layer 4)
 ```
@@ -78,7 +79,8 @@ Simultaneous key presses for navigation and editing.
 | **LShift + RShift** | Caps Lock |
 
 ### 3. Mouse Features
-- **Auto-Mouse:** Moving the trackball switches to Layer 3 (Yellow). Activates on movement > threshold. Reverts to previous layer after **2.5s** of inactivity (unless Locked).
+- **Auto-Mouse:** Moving the trackball switches to Layer 3 (Yellow). Activates on movement > threshold. Reverts to previous layer after timeout period (unless Locked).
+- **Timeout Adjustment:** Press `Time+`/`Time-` (Layer 3) to adjust auto-deactivation timeout in 500ms increments (range: 0.5s - 10s). Default is 2.0s. Lower timeout (0.5-1.5s) recommended for gaming; higher timeout (3-5s) for general use.
 - **Mouse Lock:** Press `MsLock` (Layer 3, \'H\' position) to lock the mouse layer.
 - **Snipe Mode:** Press `Snipe` (Layer 3, \'K\' position) to lower DPI (250) for precision.
 - **Drag Scroll:** Press `DragScr` (Layer 3, \'J\' position) to turn trackball into a scroll wheel.

@@ -63,7 +63,11 @@ enum custom_keycodes {
   KC_MINS_TG4,
   KC_F12_EXIT,
   KC_FIRE,
-  KC_SNIPE
+  KC_SNIPE,
+  KC_MS_TMO_INC,
+  KC_MS_TMO_DEC,
+  KC_SET_LEFT,
+  KC_SET_RIGHT
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -87,6 +91,13 @@ static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static uint8_t automatic_hue_tracker = 0;
 static bool rgb_auto_cycle = false;
 static uint16_t rgb_auto_timer = 0;
+static uint16_t auto_mouse_timeout = 2000; // Default 2 seconds, adjustable
+static uint16_t auto_mouse_timer = 0;
+static bool auto_mouse_on = false;
+
+// Handedness reporting state
+static uint8_t handedness_print_count = 0;
+static uint32_t handedness_print_timer = 0;
 
 // Show mode state
 static bool show_mode_active = false;
@@ -142,6 +153,7 @@ typedef struct _user_sync_info_t {
   uint8_t show_mode_current_digit;
   uint8_t show_mode_phase;
   uint8_t rgb_mode;
+  bool is_left_hand;
 } user_sync_info_t;
 
 static bool is_caps_lock_on = false;
@@ -167,6 +179,8 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   show_mode_digit_count = sync_data->show_mode_digit_count;
   show_mode_current_digit = sync_data->show_mode_current_digit;
   show_mode_phase = sync_data->show_mode_phase;
+
+  // Send slave's handedness back to master via response (not used currently, just stored locally)
 
   bool synced = false;
   uint8_t current_mode = rgb_matrix_get_mode();
@@ -1214,6 +1228,40 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       start_show_mode();
     }
     return false;
+  case KC_MS_TMO_INC:
+    if (record->event.pressed) {
+      auto_mouse_timeout += 500;
+      if (auto_mouse_timeout > 10000) {
+        auto_mouse_timeout = 10000; // Max 10 seconds
+      }
+      uprintf("Auto-mouse timeout: %u ms\n", auto_mouse_timeout);
+    }
+    return false;
+  case KC_MS_TMO_DEC:
+    if (record->event.pressed) {
+      if (auto_mouse_timeout > 500) {
+        auto_mouse_timeout -= 500;
+      }
+      if (auto_mouse_timeout < 500) {
+        auto_mouse_timeout = 500; // Min 0.5 seconds
+      }
+      uprintf("Auto-mouse timeout: %u ms\n", auto_mouse_timeout);
+    }
+    return false;
+  case KC_SET_LEFT:
+    if (record->event.pressed) {
+      eeconfig_update_handedness(true);  // true = left hand
+      uprintf("\n*** EEPROM SET: LEFT HAND ***\n");
+      uprintf("Please unplug and replug keyboard for change to take effect.\n\n");
+    }
+    return false;
+  case KC_SET_RIGHT:
+    if (record->event.pressed) {
+      eeconfig_update_handedness(false);  // false = right hand
+      uprintf("\n*** EEPROM SET: RIGHT HAND ***\n");
+      uprintf("Please unplug and replug keyboard for change to take effect.\n\n");
+    }
+    return false;
   }
   return true;
 }
@@ -1251,8 +1299,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
-    [1] = LAYOUT(QK_BOOT, S(KC_1), S(KC_2), S(KC_3), S(KC_4), S(KC_5),
-                 QK_BOOT, S(KC_7), S(KC_8), S(KC_9), S(KC_0), QK_BOOT,
+    [1] = LAYOUT(QK_BOOT, KC_SET_LEFT, KC_SET_RIGHT, S(KC_3), S(KC_4), S(KC_5),
+                 QK_BOOT, KC_SET_LEFT, KC_SET_RIGHT, S(KC_9), S(KC_0), QK_BOOT,
                  KC_TAB, KC_MINS, KC_7, KC_8, KC_9, S(KC_8),    RM_NEXT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), QK_BOOT,
                  KC_EXIT, S(KC_EQL), KC_4, KC_5, KC_6, KC_SLSH, RM_PREV, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_EQL,
                  KC_LCTL, KC_0, KC_1, KC_2, KC_3, KC_EQL,
@@ -1265,11 +1313,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_EXIT, KC_RGB_AUTO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [3] = LAYOUT(QK_GESC, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4,
-                 QK_BOOT, KC_TRNS, KC_RCTL, KC_RALT, KC_RGUI, QK_CLEAR_EEPROM,
-                 QK_BOOT, KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_EXIT, KC_NO,
-                 KC_NO, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, KC_NO,
-                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_NO,
+    [3] = LAYOUT(QK_GESC, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4, QK_BOOT, KC_TRNS, KC_RCTL, KC_RALT, KC_RGUI, QK_CLEAR_EEPROM, QK_BOOT,
+                 KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, KC_EXIT, KC_MS_TMO_INC, KC_NO, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, KC_TRNS,
+                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1, MS_RGHT, KC_MS_FAST_RIGHT, KC_MS_TMO_DEC,
                  KC_EXIT, MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
                  KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, KC_EXIT, KC_NO,
                  KC_EXIT, KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
@@ -1453,6 +1499,10 @@ bool rgb_matrix_indicators_user(void) {
 void keyboard_post_init_user(void) {
   transaction_register_rpc(USER_SYNC_INFO, user_sync_info_slave_handler);
 
+  // Start handedness reporting timer
+  handedness_print_timer = timer_read32();
+  handedness_print_count = 0;
+
   if (!eeconfig_is_enabled()) {
     uprintf("Init: EEPROM not enabled, initializing...\n");
     eeconfig_init();
@@ -1510,6 +1560,23 @@ void housekeeping_task_user(void) {
     // Update caps lock state on master
     is_caps_lock_on = host_keyboard_led_state().caps_lock;
 
+    // Print handedness 3 times after boot with 3 second delays
+    if (handedness_print_count < 3) {
+      if (timer_elapsed32(handedness_print_timer) > 3000) {
+        bool master_is_left = is_keyboard_left();
+        bool slave_is_left = !master_is_left;
+        uint8_t ee_hands_val = eeconfig_read_handedness();
+        uprintf("\n=== HANDEDNESS REPORT (%d/3) ===\n", handedness_print_count + 1);
+        uprintf("EEPROM handedness byte: %d\n", ee_hands_val);
+        uprintf("is_keyboard_left(): %s\n", master_is_left ? "true" : "false");
+        uprintf("Master (USB): %s\n", master_is_left ? "LEFT" : "RIGHT");
+        uprintf("Slave (TRRS): %s (inferred)\n", slave_is_left ? "LEFT" : "RIGHT");
+        uprintf("================================\n\n");
+        handedness_print_count++;
+        handedness_print_timer = timer_read32();
+      }
+    }
+
     if (sync_needed || needs_periodic) {
       user_sync_info_t sync_data = {
           .is_flashlight = is_flashlight,
@@ -1521,10 +1588,10 @@ void housekeeping_task_user(void) {
           .show_mode_digit_count = show_mode_digit_count,
           .show_mode_current_digit = show_mode_current_digit,
           .show_mode_phase = show_mode_phase,
-          .rgb_mode = rgb_matrix_get_mode()};
+          .rgb_mode = rgb_matrix_get_mode(),
+          .is_left_hand = is_keyboard_left()};
 
       user_sync_info_response_t response_data = {0};
-      static uint8_t sync_fail_count = 0;
 
       static uint8_t last_synced_mode = 0;
       if (transaction_rpc_exec(USER_SYNC_INFO, sizeof(sync_data), &sync_data,
@@ -1535,21 +1602,10 @@ void housekeeping_task_user(void) {
           last_synced_mode = sync_data.rgb_mode;
         }
         sync_needed = false;
-        sync_fail_count = 0;
-      } else {
-        sync_fail_count++;
-        // Only log after multiple consecutive failures to reduce noise
-        if (sync_fail_count >= 10) {
-          uprintf("\033[91mMaster: Sync FAILED %d times (mode %d)\033[0m\n", sync_fail_count, sync_data.rgb_mode);
-          sync_fail_count = 0;
-        }
       }
     }
   }
 }
-
-static uint16_t auto_mouse_timer = 0;
-static bool auto_mouse_on = false;
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
   int8_t x = mouse_report.x;
@@ -1637,7 +1693,7 @@ void matrix_scan_user(void) {
   }
 
   if (auto_mouse_on && !mouse_is_locked &&
-      timer_elapsed(auto_mouse_timer) > 2000) { // 2500ms timeout
+      timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
     layer_off(3);
     auto_mouse_on = false;
   }

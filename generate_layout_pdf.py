@@ -342,6 +342,8 @@ def simplify_key(key_code, layer_num=None):
         'KC_ENT_TG4': 'Enter\nL4',
         'KC_PMNS_TG4': 'Num -\nL4',
         'KC_F12_EXIT': 'F12\nExit',
+        'KC_MS_TMO_INC': 'Time\n+',
+        'KC_MS_TMO_DEC': 'Time\n-',
     }
     if key_code in custom_map:
         return custom_map[key_code]
