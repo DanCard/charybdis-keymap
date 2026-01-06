@@ -253,7 +253,7 @@ const char *get_rgb_mode_name(uint8_t mode) {
 
 void start_show_mode(void) {
   uint8_t mode = rgb_matrix_get_mode();
-  uprintf("RGB Mode Changed: %d (%s)\n", mode, get_rgb_mode_name(mode));
+  uprintf("\033[93mRGB Mode Changed: %d (%s)\033[0m\n", mode, get_rgb_mode_name(mode));
 
   // If entering Hue Breathing, pick a random base hue
   if (mode == RGB_MATRIX_HUE_BREATHING) {
@@ -264,7 +264,8 @@ void start_show_mode(void) {
     // Increment hue for Solid Color and Breathing modes every time they activate
     automatic_hue_tracker += 42;
     rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, 255, 255);
-    uprintf("Solid/Breathing Activated: New Hue %d\n", automatic_hue_tracker);
+    uprintf("Solid/Breathing Activated: Mode=%d (SOLID=%d, BREATHING=%d) Hue=%d\n",
+            mode, RGB_MATRIX_SOLID_COLOR, RGB_MATRIX_BREATHING, automatic_hue_tracker);
   }
 
   show_mode_digit_count = 0;
