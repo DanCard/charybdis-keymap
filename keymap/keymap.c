@@ -1259,9 +1259,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(KC_F12, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11,
-                 KC_PSCR, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT, KC_FIRE, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO,
-                 KC_LSFT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_EXIT, KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_NO,
+    [2] = LAYOUT(QK_BOOT, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, QK_BOOT,
+                 KC_PSCR, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT, KC_FIRE, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_F11,
+                 KC_LSFT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_EXIT, KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_F12,
                  KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_EXIT, KC_RGB_AUTO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
@@ -1365,7 +1365,7 @@ bool rgb_matrix_indicators_user(void) {
     break;
   }
   case 2: {
-    // Movement (Green)
+    // Arrow (Green)
     if (is_keyboard_left()) {
       static const uint8_t left[] = {5, 10, 13, 18, 4, 11, 12, 19};
       for (int i = 0; i < sizeof(left); i++)

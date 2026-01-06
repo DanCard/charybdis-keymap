@@ -23,7 +23,7 @@ Ctrl      0         1         2         3         =        |  Hue+      Hue-    
                     Spc/Exit  Ent/Exit  L1(Tog)            |  R_TG2     Ent/Exit  Alt
 ```
 
-### MEDIA (Layer 2)
+### ARROW (Layer 2)
 ```
 F12       F1        F2        F3        F4        F5       |  F6        F7        F8        F9        F10       F11
 PScr      Exit      Exit      Exit      Exit               |  Fire      [         ]         {         }         
@@ -56,7 +56,7 @@ Shift     /         .         ,         M         N        |  N         M       
 ### 1. Layers Overview
 - **Base (0):** Standard QWERTY layout.
 - **Symbols (1):** Blue RGB. Access via **Left Outer Thumb** (Toggle) or **Hold \'1\'**. Contains Numpad (Left hand) and Navigation/RGB controls (Right hand).
-- **Media/Function (2):** Green RGB. Access via **Right Middle Thumb** (Enter/Toggle L2) or **Hold \'2\'**. Contains F-keys, Media controls, and RGB Animation modes.
+- **Arrow (2):** Green RGB. Access via **Right Middle Thumb** (Enter/Toggle L2) or **Hold \'2\'**. Contains F-keys, Arrow keys, navigation, and RGB Animation modes.
 - **Mouse (3):** Yellow RGB. **Automatically activates** when you move the trackball. Also accessible via **Hold \'/'**.
 - **One-Hand (4)::** Pink RGB. Access via **Hold '4'**, **Hold Left Middle Thumb (Enter)**, or **Hold 'Z'**. Mirrored layout for typing with one hand.
 - **Flashlight:** White RGB. Double-tap **\'Z\'** (Layer 0) to toggle max brightness white light.
