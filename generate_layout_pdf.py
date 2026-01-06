@@ -108,6 +108,12 @@ KEY_LABELS = {
     'S_D_MOD': 'S-DPI',
     'RM_NEXT': 'rgb +',
     'RM_PREV': 'rgb -',
+    'RM_HUEU': 'Hue +',
+    'RM_HUED': 'Hue -',
+    'RM_SATU': 'Sat +',
+    'RM_SATD': 'Sat -',
+    'RM_VALU': 'Val +',
+    'RM_VALD': 'Val -',
 }
 
 # Combos documentation
