@@ -14,7 +14,7 @@ Ctrl      Z(TD)     X         C         V         B        |  N         M       
 ```
 *Note: TD(Z) = Tap: Z, Hold: Layer 4. Double Tap: Flashlight.*
 
-### SYMBOLS (Layer 1)
+### NUMPAD + LIGHT CONTROL (Layer 1)
 ```
 Boot      S-1       S-2       S-3       S-4       S-5      |  S-6       S-7       S-8       S-9       S-0       Boot
 Tab       -         7         8         9         S-8(*)   |  RGB-      [         ]         {         }         
@@ -56,7 +56,7 @@ Shift     /         .         ,         M         N        |  N         M       
 
 ### 1. Layers Overview
 - **Base (0):** Standard QWERTY layout.
-- **Symbols (1):** Blue RGB. Access via **Left Outer Thumb** (Toggle) or **Hold \'1\'**. Contains Numpad (Left hand) and Navigation/RGB controls (Right hand).
+- **Numpad + Light Control (1):** Blue RGB. Access via **Left Outer Thumb** (Toggle) or **Hold \'1\'**. Contains Numpad (Left hand) and Navigation/RGB controls (Right hand).
 - **Arrow (2):** Green RGB. Access via **Right Middle Thumb** (Enter/Toggle L2) or **Hold \'2\'**. Contains F-keys, Arrow keys, navigation, and RGB Animation modes.
 - **Mouse (3):** Yellow RGB. **Automatically activates** when you move the trackball. Also accessible via **Hold \'/'**.
 - **One-Hand (4)::** Pink RGB. Access via **Hold '4'**, **Hold Left Middle Thumb (Enter)**, or **Hold 'Z'**. Mirrored layout for typing with one hand.

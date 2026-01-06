@@ -17,7 +17,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (0.9, 0.9, 0.9),      # White/Light gray (Base)
-    1: (0.7, 0.7, 1.0),      # Blue (Symbols + Numpad)
+    1: (0.7, 0.7, 1.0),      # Blue (Numpad + Light Control)
     2: (0.7, 1.0, 0.7),      # Green (Arrow)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
     4: (1.0, 0.7, 1.0),      # Pink (One-Hand)
@@ -25,7 +25,7 @@ LAYER_COLORS = {
 
 LAYER_NAMES = {
     0: "BASE",
-    1: "SYMBOLS + NUMPAD",
+    1: "NUMPAD + LIGHT CONTROL",
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
