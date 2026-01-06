@@ -96,18 +96,39 @@ static uint8_t show_mode_current_digit = 0;
 static uint16_t show_mode_timer = 0;
 static uint8_t show_mode_phase = 0; // 0=off, 1=on
 
-// LED indices for number keys 1-0 (from info.json rgb_matrix.layout)
+/*
+ * LED Layout for Charybdis 4x6 (from info.json rgb_matrix.layout)
+ * Each half has 29 LEDs (0-28 local addressing). LEDs snake through columns.
+ *
+ * LEFT HALF (global 0-28):
+ *   Col0    Col1    Col2    Col3    Col4    Col5
+ *   Esc=0   1=7     2=8     3=15    4=16    5=20    <- Row 0 (number row)
+ *   Tab=1   Q=6     W=9     E=14    R=17    T=21    <- Row 1
+ *   Sft=2   A=5     S=10    D=13    F=18    G=22    <- Row 2
+ *   Ctl=3   Z=4     X=11    C=12    V=19    B=23    <- Row 3
+ *                   Thumb: 24=inner, 25, 26, 27, 28=outer
+ *
+ * RIGHT HALF (global 29-57, use local 0-28 in code):
+ *   Col0    Col1    Col2    Col3    Col4    Col5
+ *   -=0     0=7     9=8     8=15    7=16    6=20    <- Row 0 (number row)
+ *   \=1     P=6     O=9     I=14    U=17    Y=21    <- Row 1
+ *   '=2     ;=5     L=10    K=13    J=18    H=22    <- Row 2
+ *   Sft=3   /=4     .=11    ,=12    M=19    N=23    <- Row 3
+ *                   Thumb: 24, 25, 26 + Trackball underglow: 27, 28
+ */
+
+// LED indices for number keys 1-0 (uses global indices, subtract 29 for right side)
 static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
 // LED indices for letter keys Q-P (under numbers 1-0)
 static const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
-// Top row LEDs (left side)
+// Top row LEDs (left side, local: 1, 2, 3, 4, 5)
 static const uint8_t top_row_left[] = {7, 8, 15, 16, 20};
-// Top row LEDs (right side)
-static const uint8_t top_row_right[] = {49, 45, 44, 37, 36};
-// Far left column LEDs (left keyboard)
+// Top row LEDs (right side, local: 6, 7, 8, 9, 0)
+static const uint8_t top_row_right[] = {20, 16, 15, 8, 7};
+// Far left column LEDs (left keyboard, local: Esc, Tab, Shift, Ctrl)
 static const uint8_t far_left_col[] = {0, 1, 2, 3};
-// Far right column LEDs (right keyboard)
-static const uint8_t far_right_col[] = {48, 47, 42, 41};
+// Far right column LEDs (right keyboard, local: Minus, Backslash, Quote, RShift)
+static const uint8_t far_right_col[] = {0, 1, 2, 3};
 
 // Custom Split Transport Logic
 typedef struct _user_sync_info_t {
@@ -115,12 +136,15 @@ typedef struct _user_sync_info_t {
   bool is_sniping_active;
   bool mouse_is_locked;
   bool show_mode_active;
+  bool is_caps_lock_on;
   uint8_t show_mode_digits[2];
   uint8_t show_mode_digit_count;
   uint8_t show_mode_current_digit;
   uint8_t show_mode_phase;
   uint8_t rgb_mode;
 } user_sync_info_t;
+
+static bool is_caps_lock_on = false;
 
 typedef struct _user_sync_info_response_t {
   bool did_rgb_sync;
@@ -137,6 +161,7 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   is_sniping_active = sync_data->is_sniping_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   show_mode_active = sync_data->show_mode_active;
+  is_caps_lock_on = sync_data->is_caps_lock_on;
   show_mode_digits[0] = sync_data->show_mode_digits[0];
   show_mode_digits[1] = sync_data->show_mode_digits[1];
   show_mode_digit_count = sync_data->show_mode_digit_count;
@@ -144,9 +169,15 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   show_mode_phase = sync_data->show_mode_phase;
 
   bool synced = false;
-  if (rgb_matrix_get_mode() != sync_data->rgb_mode) {
-    uprintf("Slave: Syncing RGB Mode to %d\n", sync_data->rgb_mode);
+  uint8_t current_mode = rgb_matrix_get_mode();
+  if (current_mode != sync_data->rgb_mode) {
+    uprintf("\033[93mSlave: Syncing RGB %d -> %d\033[0m\n", current_mode, sync_data->rgb_mode);
     rgb_matrix_mode_noeeprom(sync_data->rgb_mode);
+    // Verify the mode was applied
+    uint8_t new_mode = rgb_matrix_get_mode();
+    if (new_mode != sync_data->rgb_mode) {
+      uprintf("\033[91mSlave: RGB sync FAILED! Expected %d, got %d\033[0m\n", sync_data->rgb_mode, new_mode);
+    }
     synced = true;
   }
 
@@ -298,10 +329,10 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
       register_code(KC_Z);
   } break;
   case SINGLE_HOLD:
-    if (get_highest_layer(layer_state) == 1) {
+    if (get_highest_layer(layer_state) == 4) {
       layer_move(0);
     } else {
-      layer_move(1);
+      layer_move(4);
     }
     rgb_matrix_indicators_user();
     break;
@@ -351,13 +382,14 @@ const uint16_t PROGMEM home_combo[] = {TD(TD_Z_LAYER), KC_X, COMBO_END};
 const uint16_t PROGMEM pgup_combo[] = {KC_X, KC_C, COMBO_END};
 const uint16_t PROGMEM pgdn_combo[] = {KC_C, KC_V, COMBO_END};
 const uint16_t PROGMEM end_combo[] = {KC_V, KC_B, COMBO_END};
+const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
 
 combo_t key_combos[] = {
     COMBO(left_combo, KC_LEFT),  COMBO(up_combo, KC_UP),
     COMBO(down_combo, KC_DOWN),  COMBO(right_combo, KC_RIGHT),
     COMBO(delete_combo, KC_DEL), COMBO(home_combo, KC_HOME),
     COMBO(pgup_combo, KC_PGUP),  COMBO(pgdn_combo, KC_PGDN),
-    COMBO(end_combo, KC_END),
+    COMBO(end_combo, KC_END),    COMBO(caps_combo, KC_CAPS),
 };
 
 static uint16_t pgup_tap_timer = 0;
@@ -1214,29 +1246,23 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] =
-        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7,
-               KC_8, KC_9, KC_0, KC_MINS, KC_TAB, KC_Q, KC_W, KC_E, KC_R, KC_T,
-               KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS, KC_LSFT, KC_A, KC_S, KC_D,
-               KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-               KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M,
-               KC_COMM, KC_DOT, LT(1, KC_SLSH), KC_RSFT, KC_SPC_TG2, KC_ENT_TG4,
-               KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
-    [1] = LAYOUT(S(KC_GRV), S(KC_1), S(KC_2), S(KC_3), S(KC_4), S(KC_5),
-                 S(KC_6), S(KC_7), S(KC_8), S(KC_9), S(KC_0), S(KC_MINS),
-                 KC_TAB, KC_MINS, KC_7, KC_8, KC_9, S(KC_8), KC_LBRC,
-                 KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_PSCR, KC_EXIT,
-                 S(KC_EQL), KC_4, KC_5, KC_6, KC_SLSH, S(KC_EQL), KC_LEFT, KC_UP,
-                 KC_DOWN, KC_RGHT, KC_EQL, KC_LCTL, KC_0, KC_1, KC_2, KC_3,
-                 KC_EQL, RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD,
+        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
+               KC_TAB, KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+               KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+               KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
+               KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
+    [1] = LAYOUT(QK_BOOT, S(KC_1), S(KC_2), S(KC_3), S(KC_4), S(KC_5),
+                 QK_BOOT, S(KC_7), S(KC_8), S(KC_9), S(KC_0), QK_BOOT,
+                 KC_TAB, KC_MINS, KC_7, KC_8, KC_9, S(KC_8),    RM_NEXT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), QK_BOOT,
+                 KC_EXIT, S(KC_EQL), KC_4, KC_5, KC_6, KC_SLSH, RM_PREV, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_EQL,
+                 KC_LCTL, KC_0, KC_1, KC_2, KC_3, KC_EQL,
+                 RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(KC_F12, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8,
-                 KC_F9, KC_F10, KC_F11, KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT,
-                 KC_EXIT, KC_NO, KC_FIRE, KC_LBRC, KC_RBRC, S(KC_LBRC),
-                 S(KC_RBRC), RM_PREV, KC_LSFT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT,
-                 KC_RGB_AUTO, KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT,
-                 RM_NEXT, KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END,
-                 KC_NO, KC_NO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
+    [2] = LAYOUT(KC_F12, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11,
+                 KC_PSCR, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT, KC_FIRE, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_NO,
+                 KC_LSFT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_EXIT, KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_NO,
+                 KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_EXIT, KC_RGB_AUTO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_GESC, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3, KC_4_TG4,
@@ -1263,6 +1289,28 @@ bool rgb_matrix_indicators_user(void) {
   if (is_flashlight) {
     rgb_matrix_set_color_all(255, 255, 255);
     return false;
+  }
+
+  // Caps Lock indicator: alternating blink on top-left and top-right keys
+  if (is_caps_lock_on) {
+    bool phase = (timer_read() / 300) % 2; // Alternates every 300ms
+    bool am_i_left = is_keyboard_left();
+
+    if (am_i_left) {
+      // Top-left key (LED 0 = Escape) on left half
+      if (phase) {
+        rgb_matrix_set_color(far_left_col[0], 255, 255, 255);
+      } else {
+        rgb_matrix_set_color(far_left_col[0], 0, 0, 0);
+      }
+    } else {
+      // Top-right key (Minus) on right half - use same index pattern as snipe mode
+      if (!phase) {
+        rgb_matrix_set_color(far_right_col[0], 255, 255, 255);
+      } else {
+        rgb_matrix_set_color(far_right_col[0], 0, 0, 0);
+      }
+    }
   }
 
   bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
@@ -1459,12 +1507,16 @@ void housekeeping_task_user(void) {
     static uint32_t last_sync = 0;
     bool needs_periodic = timer_elapsed32(last_sync) > 250;
 
+    // Update caps lock state on master
+    is_caps_lock_on = host_keyboard_led_state().caps_lock;
+
     if (sync_needed || needs_periodic) {
       user_sync_info_t sync_data = {
           .is_flashlight = is_flashlight,
           .is_sniping_active = is_sniping_active,
           .mouse_is_locked = mouse_is_locked,
           .show_mode_active = show_mode_active,
+          .is_caps_lock_on = is_caps_lock_on,
           .show_mode_digits = {show_mode_digits[0], show_mode_digits[1]},
           .show_mode_digit_count = show_mode_digit_count,
           .show_mode_current_digit = show_mode_current_digit,
@@ -1472,11 +1524,25 @@ void housekeeping_task_user(void) {
           .rgb_mode = rgb_matrix_get_mode()};
 
       user_sync_info_response_t response_data = {0};
+      static uint8_t sync_fail_count = 0;
 
+      static uint8_t last_synced_mode = 0;
       if (transaction_rpc_exec(USER_SYNC_INFO, sizeof(sync_data), &sync_data,
                                sizeof(response_data), &response_data)) {
         last_sync = timer_read32();
+        if (response_data.did_rgb_sync && sync_data.rgb_mode != last_synced_mode) {
+          uprintf("\033[92mMaster: Slave synced RGB to mode %d\033[0m\n", sync_data.rgb_mode);
+          last_synced_mode = sync_data.rgb_mode;
+        }
         sync_needed = false;
+        sync_fail_count = 0;
+      } else {
+        sync_fail_count++;
+        // Only log after multiple consecutive failures to reduce noise
+        if (sync_fail_count >= 10) {
+          uprintf("\033[91mMaster: Sync FAILED %d times (mode %d)\033[0m\n", sync_fail_count, sync_data.rgb_mode);
+          sync_fail_count = 0;
+        }
       }
     }
   }

@@ -118,8 +118,9 @@ COMBOS = [
     ("F + G", "Right Arrow"),
     ("J + K", "Delete"),
     ("Z (Tap)", "Z"),
-    ("Z (Hold)", "Layer 1"),
+    ("Z (Hold)", "Layer 4"),
     ("Z (Dbl-Tap)", "Flashlight (White)"),
+    ("LShift + RShift", "Caps Lock"),
 ]
 
 def parse_keymap(file_path):
@@ -213,7 +214,7 @@ def simplify_key(key_code, layer_num=None):
     """Convert QMK keycode to readable label."""
     # Tap Dance Z-Layer Handling
     if 'TD_Z_LAYER' in key_code:
-        if layer_num == 0: return 'Z\nL1\nLight'
+        if layer_num == 0: return 'Z\nL4\nLight'
         if layer_num == 1: return 'Num 0\nExit\nLight'
         if layer_num == 2: return 'Home\nExit\nLight'
         if layer_num == 3: return 'Z\nExit\nLight'
