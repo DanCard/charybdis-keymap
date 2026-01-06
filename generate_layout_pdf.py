@@ -93,6 +93,7 @@ KEY_LABELS = {
     'KC_P9': 'Num 9',
     'QK_BOOT': 'BOOT',
     'QK_CLEAR_EEPROM': 'EE\nCLR',
+    'QK_GESC': 'Esc\n~\n`',
     'MS_BTN1': 'Left\nClick',
     'MS_BTN2': 'Right\nClick',
     'MS_BTN3': 'Middle\nClick',
@@ -117,7 +118,7 @@ COMBOS = [
     ("F + G", "Right Arrow"),
     ("J + K", "Delete"),
     ("Z (Tap)", "Z"),
-    ("Z (Hold)", "Mouse Layer (L3)"),
+    ("Z (Hold)", "Layer 1"),
     ("Z (Dbl-Tap)", "Flashlight (White)"),
 ]
 
@@ -212,7 +213,7 @@ def simplify_key(key_code, layer_num=None):
     """Convert QMK keycode to readable label."""
     # Tap Dance Z-Layer Handling
     if 'TD_Z_LAYER' in key_code:
-        if layer_num == 0: return 'Z\nMouse\nLight'
+        if layer_num == 0: return 'Z\nL1\nLight'
         if layer_num == 1: return 'Num 0\nExit\nLight'
         if layer_num == 2: return 'Home\nExit\nLight'
         if layer_num == 3: return 'Z\nExit\nLight'
@@ -388,12 +389,16 @@ def draw_key(c, x, y, width, height, label, bg_color):
     # Calculate vertical starting position to center the block of text
     line_height = font_size + 2
     total_text_height = len(lines) * line_height
-    
+
     start_text_y = y + (height + total_text_height) / 2 - line_height + 2
-    
+
     if len(lines) > 1:
         # Tweak for multi-line to center better visually
-        start_text_y += 1 
+        start_text_y += 1
+
+    if len(lines) >= 3 and font_size >= 10:
+        # 3+ line labels with large font need to be lowered more
+        start_text_y -= 4 
 
     for i, line in enumerate(lines):
         text_width = c.stringWidth(line, "Helvetica-Bold", font_size)
