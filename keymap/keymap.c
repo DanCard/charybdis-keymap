@@ -1300,7 +1300,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
                //QK_BOOT, KC_PSCR  , KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT, KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
-    [1] = LAYOUT(QK_BOOT, KC_PSCR  , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
+    [1] = LAYOUT(KC_PSCR, KC_EXIT, TO(2), TO(3), TO(4), KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
                  KC_TAB , KC_MINS  , KC_7   , KC_8   , KC_9   , S(KC_8), RM_NEXT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_TRNS,
                  KC_EXIT, S(KC_EQL), KC_4   , KC_5   , KC_6   , KC_SLSH, RM_PREV, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EQL,
                  KC_LCTL, KC_0, KC_1, KC_2, KC_3, KC_EQL,
@@ -1772,31 +1772,19 @@ void matrix_scan_user(void) {
   }
   if (k0_held && !k0_triggered &&
       timer_elapsed(k0_tap_timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_move(1);
-    } else {
-      layer_move(0);
-    } // Toggle logic like Base
+    layer_move(1);
     k0_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k9_held && !k9_triggered &&
       timer_elapsed(k9_tap_timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_move(2);
-    } else {
-      layer_move(0);
-    }
+    layer_move(2);
     k9_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k8_held && !k8_triggered &&
       timer_elapsed(k8_tap_timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_move(3);
-    } else {
-      layer_move(0);
-    }
+    layer_move(3);
     k8_triggered = true;
     rgb_matrix_indicators_user();
   }

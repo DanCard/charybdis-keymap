@@ -255,10 +255,10 @@ def simplify_key(key_code, layer_num=None):
             return f'{label}\nL0'
         if key_code == 'KC_3_TG3':
             label = 'F3' if layer_num == 2 else '3'
-            return f'{label}\nL0'
+            return f'{label}\nExit'
         if key_code == 'KC_4_TG4':
             label = 'F4' if layer_num == 2 else '4'
-            return f'{label}\nL0'
+            return f'{label}\nExit'
 
     if key_code in KEY_LABELS:
         return KEY_LABELS[key_code]
@@ -294,7 +294,7 @@ def simplify_key(key_code, layer_num=None):
     # Handle custom keycodes
     custom_map = {
     'KC_X': 'X',
-        'KC_P_TO0': 'P\nTO0',
+        'KC_P_TO0': 'P\nExit',
         'KC_X_TG2': 'X\nTG2',
         'KC_V_TG5': 'V\nTG5',
         'KC_L_TG1': 'L1\nTgl',
@@ -348,8 +348,8 @@ def simplify_key(key_code, layer_num=None):
         'KC_ENT_TG4': 'Enter\nL4',
         'KC_PMNS_TG4': 'Num -\nL4',
         'KC_F12_EXIT': 'F12\nExit',
-        'KC_MS_TMO_INC': 'Time\n+',
-        'KC_MS_TMO_DEC': 'Time\n-',
+        'KC_MS_TMO_INC': 'Time\nout +',
+        'KC_MS_TMO_DEC': 'Time\nout -',
     }
     if key_code in custom_map:
         return custom_map[key_code]
