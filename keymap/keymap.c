@@ -163,6 +163,9 @@ typedef struct _user_sync_info_response_t {
 } user_sync_info_response_t;
 
 static bool sync_needed = false;
+static bool slave_first_sync = true;
+static bool master_rgb_init_pending = false;
+static uint8_t master_rgb_init_mode = 0;
 
 void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
                                   uint8_t out_buflen, void *out_data) {
@@ -184,9 +187,10 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
 
   bool synced = false;
   uint8_t current_mode = rgb_matrix_get_mode();
-  if (current_mode != sync_data->rgb_mode) {
-    uprintf("\033[93mSlave: Syncing RGB %d -> %d\033[0m\n", current_mode, sync_data->rgb_mode);
+  if (current_mode != sync_data->rgb_mode || slave_first_sync) {
+    uprintf("\033[93mSlave: Syncing RGB %d -> %d%s\033[0m\n", current_mode, sync_data->rgb_mode, slave_first_sync ? " (first sync)" : "");
     rgb_matrix_mode_noeeprom(sync_data->rgb_mode);
+    slave_first_sync = false;
     // Verify the mode was applied
     uint8_t new_mode = rgb_matrix_get_mode();
     if (new_mode != sync_data->rgb_mode) {
@@ -1323,10 +1327,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O,
                  KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_QUOT, KC_PLUS_COLON, KC_L, KC_K, KC_J, KC_H, KC_H, KC_J,
-                 KC_K, KC_L, KC_PLUS_COLON, KC_QUOT, KC_RSFT, LT(3, KC_SLSH),
-                 KC_DOT, KC_COMM, KC_M, KC_N, KC_N, KC_M, KC_COMM, KC_DOT,
-                 LT(3, KC_SLSH), KC_RSFT, KC_SPC, KC_ENT_EXIT, KC_L_TG1,
-                 KC_R_TG2, KC_ENT_EXIT, KC_LALT, KC_BSPC, KC_BSPC),
+                 KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+                 KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM, KC_M, KC_N, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
+                 KC_SPC, KC_ENT_EXIT, KC_LSFT,
+                 KC_R_TG2, KC_ENT_EXIT,
+                 KC_LALT, KC_BSPC, KC_BSPC),
 };
 
 bool rgb_matrix_indicators_user(void) {
@@ -1538,16 +1543,12 @@ void keyboard_post_init_user(void) {
   uprintf("Init: Next Theme=%d, Next Hue=%d. Saved=%u\n", next_theme, next_hue,
           new_config);
 
-  // Apply Settings
-  rgb_matrix_mode_noeeprom(next_theme);
-  // rgb_matrix_sethsv_noeeprom(next_hue, 255, 255); // Handled by
-  // start_show_mode now
+  // Defer RGB mode application to matrix_scan for timing reliability
+  master_rgb_init_mode = next_theme;
+  master_rgb_init_pending = true;
 
   rgb_auto_cycle = true;
   rgb_auto_timer = timer_read();
-  if (is_keyboard_master()) {
-    start_show_mode();
-  }
 }
 
 void housekeeping_task_user(void) {
@@ -1658,6 +1659,16 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 }
 
 void matrix_scan_user(void) {
+  // Deferred RGB init - apply after matrix is fully ready
+  if (master_rgb_init_pending) {
+    rgb_matrix_mode_noeeprom(master_rgb_init_mode);
+    master_rgb_init_pending = false;
+    if (is_keyboard_master()) {
+      start_show_mode();
+    }
+    uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
+  }
+
   if (rgb_auto_cycle && timer_elapsed(rgb_auto_timer) > 30000) {
     rgb_matrix_step_noeeprom();
     rgb_auto_timer = timer_read();
