@@ -410,7 +410,7 @@ combo_t key_combos[] = {
     COMBO(af_combo, KC_RIGHT),    COMBO(delete_combo, KC_DEL),
     COMBO(home_combo, KC_HOME),   COMBO(pgup_combo, KC_PGUP),
     COMBO(pgdn_combo, KC_PGDN),   COMBO(end_combo, KC_END),
-    COMBO(zv_combo, KC_END),      COMBO(caps_combo, KC_CAPS),
+    COMBO(zv_combo, C(S(KC_V))),  COMBO(caps_combo, KC_CAPS),
 };
 
 static uint16_t pgup_tap_timer = 0;
