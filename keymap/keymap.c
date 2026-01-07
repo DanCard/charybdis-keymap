@@ -400,6 +400,7 @@ const uint16_t PROGMEM delete_combo[] = {KC_J, KC_K, COMBO_END};
 const uint16_t PROGMEM home_combo[] = {TD(TD_Z_LAYER), KC_X, COMBO_END};
 const uint16_t PROGMEM pgup_combo[] = {KC_X, KC_C, COMBO_END};
 const uint16_t PROGMEM pgdn_combo[] = {KC_C, KC_V, COMBO_END};
+const uint16_t PROGMEM xv_combo[] = {KC_X, KC_V, COMBO_END};
 const uint16_t PROGMEM end_combo[] = {KC_V, KC_B, COMBO_END};
 const uint16_t PROGMEM zv_combo[] = {TD(TD_Z_LAYER), KC_V, COMBO_END};
 const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
@@ -409,8 +410,9 @@ combo_t key_combos[] = {
     COMBO(down_combo, KC_DOWN),   COMBO(right_combo, KC_RIGHT),
     COMBO(af_combo, KC_RIGHT),    COMBO(delete_combo, KC_DEL),
     COMBO(home_combo, KC_HOME),   COMBO(pgup_combo, KC_PGUP),
-    COMBO(pgdn_combo, KC_PGDN),   COMBO(end_combo, KC_END),
-    COMBO(zv_combo, KC_END),      COMBO(caps_combo, KC_CAPS),
+    COMBO(pgdn_combo, KC_PGDN),   COMBO(xv_combo, C(S(KC_V))),
+    COMBO(end_combo, KC_END),     COMBO(zv_combo, KC_END),
+    COMBO(caps_combo, KC_CAPS),
 };
 
 static uint16_t pgup_tap_timer = 0;

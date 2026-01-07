@@ -75,6 +75,7 @@ Simultaneous key presses for navigation and editing.
 | **J + K** | Delete |
 | **Z + X** | Home |
 | **X + C** | Page Up |
+| **X + V** | Paste (Term) |
 | **C + V** | Page Down |
 | **V + B** | End |
 | **Z + V** | End |
