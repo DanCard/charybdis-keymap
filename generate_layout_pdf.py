@@ -122,10 +122,16 @@ COMBOS = [
     ("S + D", "Up Arrow"),
     ("D + F", "Down Arrow"),
     ("F + G", "Right Arrow"),
+    ("A + V", "Right Arrow"),
     ("J + K", "Delete"),
     ("Z (Tap)", "Z"),
     ("Z (Hold)", "Layer 4"),
     ("Z (Dbl-Tap)", "Flashlight (White)"),
+    ("Z + X", "Home"),
+    ("X + C", "Page Up"),
+    ("C + V", "Page Down"),
+    ("V + B", "End"),
+    ("Z + V", "End"),
     ("LShift + RShift", "Caps Lock"),
 ]
 
@@ -416,10 +422,21 @@ def draw_key(c, x, y, width, height, label, bg_color):
         c.drawString(text_x, text_y, line)
 
 
-def draw_layer(c, layer_keys, layout_info, layer_num, start_x, start_y, key_size=28):
+def draw_layer(c, layer_keys, layout_info, layer_num, start_x_arg, start_y, key_size=28):
     """Draw a complete layer on the canvas at specified position."""
     layer_name = LAYER_NAMES.get(layer_num, f"Layer {layer_num}")
     bg_color = LAYER_COLORS.get(layer_num, (0.9, 0.9, 0.9))
+    
+    # Key dimensions
+    key_gap = 1
+
+    # Calculate layout bounds to determine width
+    max_x = max(k['x'] for k in layout_info)
+    layout_width = (max_x + 1) * (key_size + key_gap)
+    
+    # Calculate start_x to center on page
+    page_width = LETTER[0]
+    start_x = (page_width - layout_width) / 2
 
     # Title
     c.setFont("Helvetica-Bold", 12)
@@ -430,11 +447,7 @@ def draw_layer(c, layer_keys, layout_info, layer_num, start_x, start_y, key_size
     c.drawString(title_x, start_y, title)
 
     # Calculate layout bounds
-    max_x = max(k['x'] for k in layout_info)
     max_y = max(k['y'] for k in layout_info)
-
-    # Key dimensions
-    key_gap = 1
 
     # Adjust vertical offset for title - reduced spacing
     offset_y = start_y - 40

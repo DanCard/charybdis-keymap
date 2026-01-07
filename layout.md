@@ -71,11 +71,13 @@ Simultaneous key presses for navigation and editing.
 | **S + D** | Up Arrow |
 | **D + F** | Down Arrow |
 | **F + G** | Right Arrow |
+| **A + V** | Right Arrow |
 | **J + K** | Delete |
 | **Z + X** | Home |
 | **X + C** | Page Up |
 | **C + V** | Page Down |
 | **V + B** | End |
+| **Z + V** | End |
 | **LShift + RShift** | Caps Lock |
 
 ### 3. Mouse Features
