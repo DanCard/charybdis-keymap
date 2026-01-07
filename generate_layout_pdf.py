@@ -131,7 +131,7 @@ COMBOS = [
     ("X + C", "Page Up"),
     ("C + V", "Page Down"),
     ("V + B", "End"),
-    ("Z + V", "Paste (No fmt)"),
+    ("Z + V", "End"),
     ("LShift + RShift", "Caps Lock"),
 ]
 
