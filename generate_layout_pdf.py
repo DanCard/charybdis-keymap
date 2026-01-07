@@ -122,7 +122,7 @@ COMBOS = [
     ("S + D", "Up Arrow"),
     ("D + F", "Down Arrow"),
     ("F + G", "Right Arrow"),
-    ("A + V", "Right Arrow"),
+    ("A + F", "Right Arrow"),
     ("J + K", "Delete"),
     ("Z (Tap)", "Z"),
     ("Z (Hold)", "Layer 4"),

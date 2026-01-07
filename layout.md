@@ -71,7 +71,7 @@ Simultaneous key presses for navigation and editing.
 | **S + D** | Up Arrow |
 | **D + F** | Down Arrow |
 | **F + G** | Right Arrow |
-| **A + V** | Right Arrow |
+| **A + F** | Right Arrow |
 | **J + K** | Delete |
 | **Z + X** | Home |
 | **X + C** | Page Up |

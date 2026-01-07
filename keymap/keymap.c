@@ -395,7 +395,7 @@ const uint16_t PROGMEM left_combo[] = {KC_A, KC_S, COMBO_END};
 const uint16_t PROGMEM up_combo[] = {KC_S, KC_D, COMBO_END};
 const uint16_t PROGMEM down_combo[] = {KC_D, KC_F, COMBO_END};
 const uint16_t PROGMEM right_combo[] = {KC_F, KC_G, COMBO_END};
-const uint16_t PROGMEM av_combo[] = {KC_A, KC_V, COMBO_END};
+const uint16_t PROGMEM af_combo[] = {KC_A, KC_F, COMBO_END};
 const uint16_t PROGMEM delete_combo[] = {KC_J, KC_K, COMBO_END};
 const uint16_t PROGMEM home_combo[] = {TD(TD_Z_LAYER), KC_X, COMBO_END};
 const uint16_t PROGMEM pgup_combo[] = {KC_X, KC_C, COMBO_END};
@@ -407,7 +407,7 @@ const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
 combo_t key_combos[] = {
     COMBO(left_combo, KC_LEFT),   COMBO(up_combo, KC_UP),
     COMBO(down_combo, KC_DOWN),   COMBO(right_combo, KC_RIGHT),
-    COMBO(av_combo, KC_RIGHT),    COMBO(delete_combo, KC_DEL),
+    COMBO(af_combo, KC_RIGHT),    COMBO(delete_combo, KC_DEL),
     COMBO(home_combo, KC_HOME),   COMBO(pgup_combo, KC_PGUP),
     COMBO(pgdn_combo, KC_PGDN),   COMBO(end_combo, KC_END),
     COMBO(zv_combo, KC_END),      COMBO(caps_combo, KC_CAPS),
