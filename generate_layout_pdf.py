@@ -357,6 +357,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_F12_EXIT': 'F12\nExit',
         'KC_MS_TMO_INC': 'Time\nout +',
         'KC_MS_TMO_DEC': 'Time\nout -',
+        'KC_P_FRAC': 'Pixel\nFractal',
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -368,8 +369,14 @@ def simplify_key(key_code, layer_num=None):
             return rest
         if rest.startswith('F') and rest[1:].isdigit():
             return rest
+        # Split on underscore and join with newline for multi-part names
+        if '_' in rest:
+            return '\n'.join(rest.split('_'))
         return rest
 
+    # Handle any remaining codes with underscores
+    if '_' in key_code:
+        return '\n'.join(key_code.split('_'))
     return key_code[:10]
 
 
@@ -389,21 +396,21 @@ def draw_key(c, x, y, width, height, label, bg_color):
     max_len = max(len(line) for line in lines)
     
     # Adjust font size based on label length
-    if max_len <= 3:
-        font_size = 10
+    if max_len <= 2:
+        font_size = 14
     elif max_len <= 4:
-        font_size = 9
-    elif max_len <= 5:
-        font_size = 8
+        font_size = 12
     elif max_len <= 7:
-        font_size = 6.5
+        font_size = 10
+    elif max_len <= 10:
+        font_size = 8
     else:
-        font_size = 5.5
+        font_size = 6.5
 
     c.setFont("Helvetica-Bold", font_size)
     
     # Calculate vertical starting position to center the block of text
-    line_height = font_size + 2
+    line_height = font_size + 1
     total_text_height = len(lines) * line_height
 
     start_text_y = y + (height + total_text_height) / 2 - line_height + 2

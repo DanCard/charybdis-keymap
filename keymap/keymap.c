@@ -86,7 +86,9 @@ enum custom_keycodes {
   KC_MS_TMO_DEC,
   KC_SET_LEFT,
   KC_SET_RIGHT,
-  KC_DEBUG_SYNC  // Debug key to dump sync state
+  KC_DEBUG_SYNC,  // Debug key to dump sync state
+  KC_JITTER,      // Toggle Mouse Jitter Filter
+  KC_P_FRAC       // Set Pixel Fractal Theme (29)
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -105,6 +107,7 @@ static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
 static bool is_flashlight = false;
 static bool is_sniping_active = false;
 static bool mouse_is_locked = false;
+static bool is_jitter_filter_active = false; // Default: Filter OFF
 static uint8_t saved_rgb_mode;
 static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static uint8_t automatic_hue_tracker = 0;
@@ -163,6 +166,7 @@ typedef struct _user_sync_info_t {
   bool is_flashlight;
   bool is_sniping_active;
   bool mouse_is_locked;
+  bool is_jitter_filter_active;
   bool show_mode_active;
   bool is_caps_lock_on;
   uint8_t show_mode_digits[2];
@@ -178,6 +182,8 @@ static bool is_caps_lock_on = false;
 
 typedef struct _user_sync_info_response_t {
   bool did_rgb_sync;
+  uint8_t slave_rgb_mode;
+  uint16_t slave_task_counter;
 } user_sync_info_response_t;
 
 static bool sync_needed = false;
@@ -185,15 +191,20 @@ static bool slave_first_sync = true;
 static bool master_rgb_init_pending = false;
 static uint8_t master_rgb_init_mode = 0;
 static uint16_t current_random_seed = 0;  // Shared random seed for RGB effects
+static uint16_t slave_task_counter = 0; // Running counter on slave
 
 void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
                                   uint8_t out_buflen, void *out_data) {
   const user_sync_info_t *sync_data = (const user_sync_info_t *)in_data;
   user_sync_info_response_t *response = (user_sync_info_response_t *)out_data;
 
+  // Increment slave liveness counter
+  slave_task_counter++;
+
   is_flashlight = sync_data->is_flashlight;
   is_sniping_active = sync_data->is_sniping_active;
   mouse_is_locked = sync_data->mouse_is_locked;
+  is_jitter_filter_active = sync_data->is_jitter_filter_active;
   show_mode_active = sync_data->show_mode_active;
   is_caps_lock_on = sync_data->is_caps_lock_on;
   show_mode_digits[0] = sync_data->show_mode_digits[0];
@@ -235,6 +246,8 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
 
   if (out_buflen >= sizeof(user_sync_info_response_t)) {
     response->did_rgb_sync = synced;
+    response->slave_rgb_mode = rgb_matrix_get_mode();
+    response->slave_task_counter = slave_task_counter;
   }
 }
 
@@ -395,6 +408,7 @@ void debug_dump_sync_state(void) {
   uprintf("is_flashlight: %s\n", is_flashlight ? "YES" : "no");
   uprintf("is_sniping_active: %s\n", is_sniping_active ? "YES" : "no");
   uprintf("mouse_is_locked: %s\n", mouse_is_locked ? "YES" : "no");
+  uprintf("is_jitter_filter_active: %s\n", is_jitter_filter_active ? "YES" : "no");
   uprintf("is_caps_lock_on: %s\n", is_caps_lock_on ? "YES" : "no");
   uprintf("\033[95m======================================\033[0m\n\n");
 }
@@ -1347,6 +1361,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uprintf("Auto-mouse timeout: %u ms\n", auto_mouse_timeout);
     }
     return false;
+  case KC_P_FRAC:
+    if (record->event.pressed) {
+      rgb_matrix_mode_noeeprom(29); // 29 = PIXEL_FRACTAL
+      start_show_mode();
+    }
+    return false;
   case KC_SET_LEFT:
     if (record->event.pressed) {
       eeconfig_update_handedness(true);  // true = left hand
@@ -1359,6 +1379,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       eeconfig_update_handedness(false);  // false = right hand
       uprintf("\n*** EEPROM SET: RIGHT HAND ***\n");
       uprintf("Please unplug and replug keyboard for change to take effect.\n\n");
+    }
+    return false;
+  case KC_JITTER:
+    if (record->event.pressed) {
+      is_jitter_filter_active = !is_jitter_filter_active;
+      sync_needed = true;
+      uprintf("[%lu.%03lu] Jitter Filter: %s\n", sec, ms, is_jitter_filter_active ? "ON" : "OFF");
+
+      // Update EEPROM
+      uint16_t current_config = eeconfig_read_user();
+      if (is_jitter_filter_active) {
+        current_config |= 0x0080; // Set bit 7
+      } else {
+        current_config &= ~0x0080; // Clear bit 7
+      }
+      eeconfig_update_user(current_config);
     }
     return false;
   case KC_DEBUG_SYNC:
@@ -1404,17 +1440,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
                //QK_BOOT, KC_PSCR  , KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT, KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
-    [1] = LAYOUT(KC_PSCR, KC_EXIT, TO(2), TO(3), TO(4), KC_EXIT, KC_DEBUG_SYNC, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR, QK_BOOT,
-                 KC_TAB , KC_MINS  , KC_7   , KC_8   , KC_9   , S(KC_8), RM_NEXT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_TRNS,
-                 KC_EXIT, S(KC_EQL), KC_4   , KC_5   , KC_6   , KC_SLSH, RM_PREV, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EQL,
-                 KC_LCTL, KC_0, KC_1, KC_2, KC_3, KC_EQL,
-                 RM_HUEU, RM_HUED, RM_SATU, RM_SATD, RM_VALU, RM_VALD,
+    [1] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_DEBUG_SYNC, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
+                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , S(KC_8),   RM_NEXT  , KC_LBRC  , KC_RBRC  , S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
+                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_SLSH,   RM_PREV  , KC_LEFT  , KC_UP    , KC_DOWN   , KC_RGHT   , KC_JITTER,                  
+                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL,    RM_HUEU  , RM_HUED  , RM_SATU  , RM_SATD   , RM_VALU   , RM_VALD,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(QK_BOOT, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, QK_BOOT,
-                 KC_PSCR, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT, KC_FIRE, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_F11,
-                 KC_LSFT, KC_LEFT, KC_UP, KC_DOWN, KC_RGHT, KC_EXIT, KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_F12,
-                 KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END, KC_EXIT, KC_RGB_AUTO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
+    [2] = LAYOUT(QK_BOOT, KC_F1         , KC_F2  , KC_F3  , KC_F4  , KC_F5  ,   KC_F6  , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
+                 KC_PSCR, KC_EXIT       , KC_EXIT, KC_EXIT, KC_EXIT, KC_P_FRAC,   KC_FIRE, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
+                 KC_LSFT, KC_LEFT       , KC_UP  , KC_DOWN, KC_RGHT, KC_EXIT,   KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_F12,
+                 KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END , KC_EXIT,   KC_RGB_AUTO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
     [3] = LAYOUT(QK_GESC, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3     , KC_4_TG4, QK_BOOT      , KC_EXIT, KC_RCTL, KC_RALT, KC_RGUI, QK_CLEAR_EEPROM, QK_BOOT,
@@ -1459,6 +1494,14 @@ bool rgb_matrix_indicators_user(void) {
       } else {
         rgb_matrix_set_color(far_right_col[0], 0, 0, 0);
       }
+    }
+  }
+
+  if (is_jitter_filter_active) {
+    if (!is_keyboard_left()) {
+      // Trackball underglow LEDs (Right Side) -> Cyan for Stability
+      rgb_matrix_set_color(27, 0, 255, 255);
+      rgb_matrix_set_color(28, 0, 255, 255);
     }
   }
 
@@ -1610,15 +1653,20 @@ void keyboard_post_init_user(void) {
   }
 
   // Read user config from EEPROM
-  // Lower 8 bits: Theme Index
+  // Lower 7 bits: Theme Index
+  // Bit 7: Jitter Filter Active
   // Upper 8 bits: Start Hue
   uint16_t user_config = eeconfig_read_user();
-  uint8_t saved_theme = (uint8_t)(user_config & 0xFF);
+
+  // Restore Jitter State
+  is_jitter_filter_active = (user_config & 0x0080) ? true : false;
+
+  uint8_t saved_theme = (uint8_t)(user_config & 0x7F);
   uint8_t saved_hue = (uint8_t)((user_config >> 8) & 0xFF);
   uint8_t max_effects = RGB_MATRIX_EFFECT_MAX;
 
-  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d)\n", user_config, saved_theme,
-          saved_hue);
+  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d)\n", user_config, saved_theme,
+          saved_hue, is_jitter_filter_active);
 
   // Increment Theme (Cycle 1 to MAX-1)
   uint8_t next_theme = saved_theme + 1;
@@ -1630,8 +1678,11 @@ void keyboard_post_init_user(void) {
   // 0=Red, 42=Yellow, 84=Green, 126=Cyan, 168=Blue, 210=Magenta
   uint8_t next_hue = saved_hue + 42;
 
-  // Save Combined
-  uint16_t new_config = ((uint16_t)next_hue << 8) | next_theme;
+  // Save Combined (Preserve Jitter Bit)
+  uint16_t new_config = ((uint16_t)next_hue << 8) | (next_theme & 0x7F);
+  if (is_jitter_filter_active) {
+    new_config |= 0x0080;
+  }
   eeconfig_update_user(new_config);
 
   // Initialize the tracker with the OLD hue, so the first increment
@@ -1659,11 +1710,14 @@ void housekeeping_task_user(void) {
 
 
 
+    static user_sync_info_response_t last_slave_response = {0};
+
     if (sync_needed || needs_periodic) {
       user_sync_info_t sync_data = {
           .is_flashlight = is_flashlight,
           .is_sniping_active = is_sniping_active,
           .mouse_is_locked = mouse_is_locked,
+          .is_jitter_filter_active = is_jitter_filter_active,
           .show_mode_active = show_mode_active,
           .is_caps_lock_on = is_caps_lock_on,
           .show_mode_digits = {show_mode_digits[0], show_mode_digits[1]},
@@ -1682,6 +1736,8 @@ void housekeeping_task_user(void) {
         last_sync = timer_read32();
         last_sync_time = last_sync;
         sync_success_count++;
+        last_slave_response = response_data; // Cache for heartbeat
+
         if (response_data.did_rgb_sync && sync_data.rgb_mode != last_synced_mode) {
           LOG_TIME();
           uprintf("\033[92mMaster: Slave synced RGB to mode %d (seed=%u)\033[0m\n", sync_data.rgb_mode, current_random_seed);
@@ -1698,10 +1754,11 @@ void housekeeping_task_user(void) {
       last_heartbeat_time = timer_read32();
       uint32_t since_sync = timer_elapsed32(last_sync_time);
       LOG_TIME();
-      uprintf("\033[36m[Heartbeat] Mode=%d (%s) Seed=%u Syncs=%lu/%lu LastSync=%lu.%03lus ago\033[0m\n",
+      uprintf("\033[36m[Heartbeat] Mode=%d (%s) Seed=%u Syncs=%lu/%lu LastSync=%lu.%03lus ago Slave(Mode=%d Ctr=%u)\033[0m\n",
               rgb_matrix_get_mode(), get_rgb_mode_name(rgb_matrix_get_mode()),
               current_random_seed, (unsigned long)sync_success_count, (unsigned long)sync_fail_count,
-              (unsigned long)(since_sync / 1000), (unsigned long)(since_sync % 1000));
+              (unsigned long)(since_sync / 1000), (unsigned long)(since_sync % 1000),
+              last_slave_response.slave_rgb_mode, last_slave_response.slave_task_counter);
     }
   }
 }
@@ -1729,6 +1786,20 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
   int8_t threshold = 0; // Respond to any movement (threshold 0)
   static uint8_t movement_streak = 0;
+
+  if (is_jitter_filter_active) {
+    // Filter out 1-unit orthogonal movements (jitter)
+    // Keep diagonals (e.g. x=1, y=1) or larger movements
+    if ((x == 0 && (y == 1 || y == -1)) || (y == 0 && (x == 1 || x == -1))) {
+      LOG_TIME();
+      uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d)\033[0m\n", x, y);
+      // Zero out the report so it's ignored by the host AND by the auto-layer logic below
+      mouse_report.x = 0;
+      mouse_report.y = 0;
+      x = 0;
+      y = 0;
+    }
+  }
 
   if (x != 0 || y != 0) {
     if (auto_mouse_on) {
