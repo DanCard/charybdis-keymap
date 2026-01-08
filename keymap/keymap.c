@@ -1,6 +1,8 @@
 #include QMK_KEYBOARD_H
 #include "transactions.h"
 
+static const char *layer_change_reason = NULL;
+
 // Tap Dance Definitions
 typedef struct {
   bool is_press_action;
@@ -95,9 +97,7 @@ static uint16_t auto_mouse_timeout = 2000; // Default 2 seconds, adjustable
 static uint16_t auto_mouse_timer = 0;
 static bool auto_mouse_on = false;
 
-// Handedness reporting state
-static uint8_t handedness_print_count = 0;
-static uint32_t handedness_print_timer = 0;
+
 
 // Show mode state
 static bool show_mode_active = false;
@@ -348,8 +348,10 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
   } break;
   case SINGLE_HOLD:
     if (get_highest_layer(layer_state) == 4) {
+      layer_change_reason = "Tap Dance Z Hold";
       layer_move(0);
     } else {
+      layer_change_reason = "Tap Dance Z Hold";
       layer_move(4);
     }
     rgb_matrix_indicators_user();
@@ -495,8 +497,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   uint8_t layer = get_highest_layer(state);
   uint8_t prev_layer = get_highest_layer(layer_state);
 
-  uprintf("[%lu.%03lu] Layer change: %u -> %u (state=%lu)\n", sec, ms,
-          prev_layer, layer, (unsigned long)state);
+  uprintf("[%lu.%03lu] Layer change: %u -> %u (state=%lu) Reason: %s\n", sec, ms,
+          prev_layer, layer, (unsigned long)state,
+          layer_change_reason ? layer_change_reason : "Standard Keycode / Core");
+  layer_change_reason = NULL;
   if (layer == 3) {
     uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
             pointing_device_get_cpi());
@@ -510,6 +514,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   uint32_t ms = now % 1000;
 
   if (record->event.pressed) {
+    // Shift cancels Caps Lock
+    if (host_keyboard_led_state().caps_lock && (keycode == KC_LSFT || keycode == KC_RSFT)) {
+      tap_code(KC_CAPS);
+      return false;
+    }
+
     uint32_t diff = now - last_key_time;
     last_key_time = now;
 
@@ -637,6 +647,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
   case KC_EXIT:
     if (record->event.pressed) {
+      layer_change_reason = "KC_EXIT (Tap): L0";
       layer_move(0);
       rgb_matrix_indicators_user();
     }
@@ -740,6 +751,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (!ent_mo_triggered) {
         tap_code(KC_ENT);
       } else {
+        layer_change_reason = "ENT_MO4 (Release): L4->L0";
         layer_off(4);
         rgb_matrix_indicators_user();
       }
@@ -753,6 +765,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n", sec, ms,
               (unsigned long)layer_state);
       layer_state_to_restore = layer_state;
+      layer_change_reason = "ENT_EXIT (Tap): L0";
       layer_state_set(0); // Clear all layers (peek at base)
       rgb_matrix_indicators_user();
       ent_mo_timer = timer_read();
@@ -774,6 +787,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_SPC_EXIT:
     if (record->event.pressed) {
       layer_state_to_restore = layer_state;
+      layer_change_reason = "SPC_EXIT (Tap): L0";
       layer_state_set(0);
       rgb_matrix_indicators_user();
       ent_mo_timer = timer_read();
@@ -789,6 +803,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_BSPC_EXIT:
     if (record->event.pressed) {
       layer_state_to_restore = layer_state;
+      layer_change_reason = "BSPC_EXIT (Tap): L0";
       layer_state_set(0);
       rgb_matrix_indicators_user();
       ent_mo_timer = timer_read();
@@ -804,8 +819,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_L_TG1:
     if (record->event.pressed) {
       if (get_highest_layer(layer_state) > 0) {
+        layer_change_reason = "L_TG1 (Tap): L0 (Reset)";
         layer_move(0);
       } else {
+        layer_change_reason = "L_TG1 (Tap): Toggle L1 (Invert)";
         layer_invert(1);
       }
       rgb_matrix_indicators_user();
@@ -814,8 +831,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_R_TG2:
     if (record->event.pressed) {
       if (get_highest_layer(layer_state) > 0) {
+        layer_change_reason = "R_TG2 (Tap): L0 (Reset)";
         layer_move(0);
       } else {
+        layer_change_reason = "R_TG2 (Tap): Toggle L2 (Invert)";
         layer_invert(2);
       }
       rgb_matrix_indicators_user();
@@ -886,8 +905,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       mouse_is_locked = !mouse_is_locked;
       sync_needed = true;
       if (mouse_is_locked) {
+        layer_change_reason = "Mouse Lock ON";
         layer_on(3);
       } else {
+        layer_change_reason = "Mouse Lock OFF";
         layer_off(3);
       }
     }
@@ -909,6 +930,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_ENT_L2_EXIT:
     if (record->event.pressed) {
       uprintf("KC_ENT_L2_EXIT Pressed. Exiting Layer 2.\n");
+      layer_change_reason = "ENT_L2_EXIT";
       layer_off(2);
       tap_code(KC_ENT);
     }
@@ -1507,9 +1529,7 @@ bool rgb_matrix_indicators_user(void) {
 void keyboard_post_init_user(void) {
   transaction_register_rpc(USER_SYNC_INFO, user_sync_info_slave_handler);
 
-  // Start handedness reporting timer
-  handedness_print_timer = timer_read32();
-  handedness_print_count = 0;
+
 
   if (!eeconfig_is_enabled()) {
     uprintf("Init: EEPROM not enabled, initializing...\n");
@@ -1564,22 +1584,7 @@ void housekeeping_task_user(void) {
     // Update caps lock state on master
     is_caps_lock_on = host_keyboard_led_state().caps_lock;
 
-    // Print handedness 3 times after boot with 3 second delays
-    if (handedness_print_count < 3) {
-      if (timer_elapsed32(handedness_print_timer) > 3000) {
-        bool master_is_left = is_keyboard_left();
-        bool slave_is_left = !master_is_left;
-        uint8_t ee_hands_val = eeconfig_read_handedness();
-        uprintf("\n=== HANDEDNESS REPORT (%d/3) ===\n", handedness_print_count + 1);
-        uprintf("EEPROM handedness byte: %d\n", ee_hands_val);
-        uprintf("is_keyboard_left(): %s\n", master_is_left ? "true" : "false");
-        uprintf("Master (USB): %s\n", master_is_left ? "LEFT" : "RIGHT");
-        uprintf("Slave (TRRS): %s (inferred)\n", slave_is_left ? "LEFT" : "RIGHT");
-        uprintf("================================\n\n");
-        handedness_print_count++;
-        handedness_print_timer = timer_read32();
-      }
-    }
+
 
     if (sync_needed || needs_periodic) {
       user_sync_info_t sync_data = {
@@ -1645,6 +1650,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
       if (movement_streak > 1) { // Require 2 consecutive movement events
         // Only activate layer for significant movement
         uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
+        layer_change_reason = "Auto Mouse Movement";
         layer_on(3); // Switch to Mouse Layer (3)
         auto_mouse_on = true;
         auto_mouse_timer = timer_read();
@@ -1708,29 +1714,34 @@ void matrix_scan_user(void) {
 
   if (auto_mouse_on && !mouse_is_locked &&
       timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
+    layer_change_reason = "Auto Mouse Timeout";
     layer_off(3);
     auto_mouse_on = false;
   }
 
   if (pgup_held && !pgup_triggered &&
       timer_elapsed(pgup_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "PGUP(Hold): Exit to Base";
     layer_move(0);
     pgup_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (home_held && !home_triggered &&
       timer_elapsed(home_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "HOME(Hold): Exit to Base";
     layer_move(0);
     home_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (p_held && !p_triggered && timer_elapsed(p_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "P(Hold): Exit to Base";
     layer_move(0);
     p_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (ent_mo_held && !ent_mo_triggered &&
       timer_elapsed(ent_mo_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "ENT(Hold): MO(4)";
     layer_on(4);
     ent_mo_triggered = true;
     rgb_matrix_indicators_user();
@@ -1739,8 +1750,10 @@ void matrix_scan_user(void) {
   if (k1_held && !k1_triggered &&
       timer_elapsed(k1_tap_timer) > MY_TAPPING_TERM) {
     if (get_highest_layer(layer_state) == 0) {
+      layer_change_reason = "K1(Hold): Toggle L1 (ON)";
       layer_move(1);
     } else {
+      layer_change_reason = "K1(Hold): Toggle L1 (OFF)";
       layer_move(0);
     }
     k1_triggered = true;
@@ -1749,8 +1762,10 @@ void matrix_scan_user(void) {
   if (k2_held && !k2_triggered &&
       timer_elapsed(k2_tap_timer) > MY_TAPPING_TERM) {
     if (get_highest_layer(layer_state) == 0) {
+      layer_change_reason = "K2(Hold): Toggle L2 (ON)";
       layer_move(2);
     } else {
+      layer_change_reason = "K2(Hold): Toggle L2 (OFF)";
       layer_move(0);
     }
     k2_triggered = true;
@@ -1759,8 +1774,10 @@ void matrix_scan_user(void) {
   if (k3_held && !k3_triggered &&
       timer_elapsed(k3_tap_timer) > MY_TAPPING_TERM) {
     if (get_highest_layer(layer_state) == 0) {
+      layer_change_reason = "K3(Hold): Toggle L3 (ON)";
       layer_move(3);
     } else {
+      layer_change_reason = "K3(Hold): Toggle L3 (OFF)";
       layer_move(0);
     }
     k3_triggered = true;
@@ -1769,8 +1786,10 @@ void matrix_scan_user(void) {
   if (k4_held && !k4_triggered &&
       timer_elapsed(k4_tap_timer) > MY_TAPPING_TERM) {
     if (get_highest_layer(layer_state) == 0) {
+      layer_change_reason = "K4(Hold): Toggle L4 (ON)";
       layer_move(4);
     } else {
+      layer_change_reason = "K4(Hold): Toggle L4 (OFF)";
       layer_move(0);
     }
     k4_triggered = true;
@@ -1780,36 +1799,42 @@ void matrix_scan_user(void) {
   // New Layer 4 Keys Logic
   if (mins_held && !mins_triggered &&
       timer_elapsed(mins_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "MINS(Hold): L4->Base";
     layer_move(0);
     mins_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k0_held && !k0_triggered &&
       timer_elapsed(k0_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "K0(Hold): L4->L1 (Jump)";
     layer_move(1);
     k0_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k9_held && !k9_triggered &&
       timer_elapsed(k9_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "K9(Hold): L4->L2 (Jump)";
     layer_move(2);
     k9_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k8_held && !k8_triggered &&
       timer_elapsed(k8_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "K8(Hold): L4->L3 (Jump)";
     layer_move(3);
     k8_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k7_held && !k7_triggered &&
       timer_elapsed(k7_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "K7(Hold): L4->Base";
     layer_move(0);
     k7_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (k6_held && !k6_triggered &&
       timer_elapsed(k6_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "K6(Hold): L4->Base";
     layer_move(0);
     k6_triggered = true;
     rgb_matrix_indicators_user();
@@ -1820,8 +1845,10 @@ void matrix_scan_user(void) {
       timer_elapsed(ent_tg2_timer) > MY_TAPPING_TERM) {
     uprintf(">> Thumb Hold Triggered: ENT_TG2 -> Toggle Layer 2\n");
     if (get_highest_layer(layer_state) == 2) {
+      layer_change_reason = "ENT(Hold): Toggle L2 (OFF)";
       layer_move(0);
     } else {
+      layer_change_reason = "ENT(Hold): Toggle L2 (ON)";
       layer_move(2);
     }
     ent_tg2_triggered = true;
@@ -1831,8 +1858,10 @@ void matrix_scan_user(void) {
       timer_elapsed(ent_tg4_timer) > MY_TAPPING_TERM) {
     uprintf(">> Thumb Hold Triggered: ENT_TG4 -> Toggle Layer 4\n");
     if (get_highest_layer(layer_state) == 4) {
+      layer_change_reason = "ENT(Hold): Toggle L4 (OFF)";
       layer_move(0);
     } else {
+      layer_change_reason = "ENT(Hold): Toggle L4 (ON)";
       layer_move(4);
     }
     ent_tg4_triggered = true;
@@ -1842,8 +1871,10 @@ void matrix_scan_user(void) {
       timer_elapsed(spc_tg2_timer) > MY_TAPPING_TERM) {
     uprintf(">> Thumb Hold Triggered: SPC_TG2 -> Toggle Layer 2\n");
     if (get_highest_layer(layer_state) == 2) {
+      layer_change_reason = "SPC(Hold): Toggle L2 (OFF)";
       layer_move(0);
     } else {
+      layer_change_reason = "SPC(Hold): Toggle L2 (ON)";
       layer_move(2);
     }
     spc_tg2_triggered = true;
@@ -1852,6 +1883,7 @@ void matrix_scan_user(void) {
   if (f12_held && !f12_triggered &&
       timer_elapsed(f12_tap_timer) > MY_TAPPING_TERM) {
     uprintf(">> Thumb Hold Triggered: F12 -> Exit to Base\n");
+    layer_change_reason = "F12(Hold): Exit to Base";
     layer_move(0);
     f12_triggered = true;
     rgb_matrix_indicators_user();
