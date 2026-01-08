@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include <stdio.h>
 #include "transactions.h"
 #include <lib/lib8tion/lib8tion.h>
 
@@ -16,6 +17,7 @@ static uint32_t last_heartbeat_time = 0;
 #define HEARTBEAT_INTERVAL 15000  // 15 seconds
 
 static const char *layer_change_reason = NULL;
+static char layer_reason_buffer[64];
 
 // Tap Dance Definitions
 typedef struct {
@@ -712,7 +714,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
   case KC_EXIT:
     if (record->event.pressed) {
-      layer_change_reason = "KC_EXIT (Tap): L0";
+      snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "KC_EXIT (Tap): L0 (Key: R%u, C%u)", record->event.key.row, record->event.key.col);
+      layer_change_reason = layer_reason_buffer;
       layer_move(0);
       rgb_matrix_indicators_user();
     }
