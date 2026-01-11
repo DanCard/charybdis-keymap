@@ -17,18 +17,20 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (0.9, 0.9, 0.9),      # White/Light gray (Base)
-    1: (0.7, 0.7, 1.0),      # Blue (Numpad + Light Control)
+    1: (0.7, 0.7, 1.0),      # Blue (Numpad)
     2: (0.7, 1.0, 0.7),      # Green (Arrow)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
     4: (1.0, 0.7, 1.0),      # Pink (One-Hand)
+    5: (0.7, 1.0, 1.0),      # Cyan (Settings)
 }
 
 LAYER_NAMES = {
     0: "BASE",
-    1: "NUMPAD + LIGHT CONTROL",
+    1: "NUMPAD",
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
+    5: "SETTINGS",
 }
 
 # Key label simplifications
@@ -123,6 +125,7 @@ COMBOS = [
     ("D + F", "Down Arrow"),
     ("F + G", "Right Arrow"),
     ("A + F", "Right Arrow"),
+    ("A + D", "Delete"),
     ("J + K", "Delete"),
     ("Z (Tap)", "Z"),
     ("Z (Hold)", "Layer 4"),
@@ -134,6 +137,8 @@ COMBOS = [
     ("V + B", "End"),
     ("Z + V", "End"),
     ("LShift + RShift", "Caps Lock"),
+    ("Snipe Active", "Right Top Black"),
+    ("Snipe Active", "R-Col Rainbow"),
 ]
 
 def parse_keymap(file_path):
@@ -240,6 +245,7 @@ def simplify_key(key_code, layer_num=None):
         if key_code == 'KC_2_TG2': return '2\nL2'
         if key_code == 'KC_3_TG3': return '3\nL3'
         if key_code == 'KC_4_TG4': return '4\nL4'
+        if key_code == 'KC_5_TG5': return '5\nL5'
 
     # Special handling for Layer 1
     if layer_num == 1:
@@ -328,6 +334,8 @@ def simplify_key(key_code, layer_num=None):
         'KC_2_TG2': '2\nL2',
         'KC_3_TG3': '3\nL3',
         'KC_4_TG4': '4\nL4',
+        'KC_5_TG5': '5\nL5',
+        'RM_TOGG': 'RGB\nToggle',
         'KC_JELLY': 'Jelly',
         'KC_SPIRAL': 'Spiral',
         'KC_CHEVRON': 'Chev\nron',
@@ -348,6 +356,8 @@ def simplify_key(key_code, layer_num=None):
         'KC_0_TG1': '0\nL1',
         'KC_9_TG2': '9\nL2',
         'KC_8_TG3': '8\nL3',
+        'KC_P_FRAC': 'Pixel\nFrac',
+        'KC_PINWHEEL': 'Pin\nwheel',
         'KC_7_TO0': '7\nExit',
         'KC_6_TO0': '6\nExit',
         'KC_SPC_TG2': 'Space\nL2',
@@ -358,6 +368,14 @@ def simplify_key(key_code, layer_num=None):
         'KC_MS_TMO_INC': 'Time\nout +',
         'KC_MS_TMO_DEC': 'Time\nout -',
         'KC_P_FRAC': 'Pixel\nFractal',
+        'HYPR(KC_N)': 'New\nGdoc',
+        'KC_JITTER': 'Jitter',
+        'JITTER': 'Jitter',
+        'PSCR': 'Save\nScreen',
+        'KC_PSCR': 'Save\nScreen',
+        'LALT(KC_HOME)': 'Alt\nHome',
+        'KC_DEBUG_SYNC': 'Sync\nDbg',
+        'KC_FIRE': 'Fire',
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -479,7 +497,7 @@ def draw_layer(c, layer_keys, layout_info, layer_num, start_x_arg, start_y, key_
 
 
 def draw_combos(c, start_y):
-    """Draw the combos and tap dance information."""
+    """Draw the combos and tap dance information as two side-by-side tables."""
     c.setFont("Helvetica-Bold", 12)
     c.setFillColor(colors.black)
     title = "COMBOS & SPECIAL ACTIONS"
@@ -487,17 +505,35 @@ def draw_combos(c, start_y):
     title_x = (LETTER[0] - title_width) / 2
     c.drawString(title_x, start_y, title)
 
-    c.setFont("Helvetica", 10)
-    col1_x = 1.5 * inch
-    col2_x = 3.5 * inch
-    curr_y = start_y - 20
+    # Split combos into two columns
+    mid = (len(COMBOS) + 1) // 2
+    left_combos = COMBOS[:mid]
+    right_combos = COMBOS[mid:]
 
-    for keys, action in COMBOS:
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(col1_x, curr_y, keys)
-        c.setFont("Helvetica", 10)
-        c.drawString(col2_x, curr_y, f": {action}")
-        curr_y -= 15
+    # Column positions for 4-column layout (two tables side by side)
+    left_col1_x = 0.5 * inch   # Left table: combo keys
+    left_col2_x = 1.7 * inch   # Left table: actions
+    right_col1_x = 4.1 * inch  # Right table: combo keys
+    right_col2_x = 5.4 * inch  # Right table: actions
+
+    font_size = 14
+    curr_y = start_y - 24
+
+    c.setFont("Helvetica", font_size)
+    for i in range(max(len(left_combos), len(right_combos))):
+        # Draw left table entry
+        if i < len(left_combos):
+            keys, action = left_combos[i]
+            c.drawString(left_col1_x, curr_y, keys)
+            c.drawString(left_col2_x, curr_y, f": {action}")
+
+        # Draw right table entry
+        if i < len(right_combos):
+            keys, action = right_combos[i]
+            c.drawString(right_col1_x, curr_y, keys)
+            c.drawString(right_col2_x, curr_y, f": {action}")
+
+        curr_y -= 19
 
 def generate_pdf(output_path, keymap_path, info_path):
     """Generate the PDF with all layers."""
@@ -531,10 +567,17 @@ def generate_pdf(output_path, keymap_path, info_path):
                                      margin, current_y, key_size=key_size)
             current_y -= height_used + 15  # Space between layers
 
-        # If it's the last page, draw combos
-        if i + 3 >= len(layer_nums):
+        # Check if there's room for combos on this page (last page with < 3 layers)
+        layers_on_this_page = min(3, len(layer_nums) - i)
+        if i + 3 >= len(layer_nums) and layers_on_this_page < 3:
             draw_combos(c, current_y - 20)
 
+        c.showPage()
+
+    # If last page was full (3 layers), add combos on a new page
+    if len(layer_nums) % 3 == 0:
+        current_y = page_height - margin
+        draw_combos(c, current_y)
         c.showPage()
 
     c.save()

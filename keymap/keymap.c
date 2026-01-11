@@ -88,7 +88,9 @@ enum custom_keycodes {
   KC_SET_RIGHT,
   KC_DEBUG_SYNC,  // Debug key to dump sync state
   KC_JITTER,      // Toggle Mouse Jitter Filter
-  KC_P_FRAC       // Set Pixel Fractal Theme (29)
+  KC_P_FRAC,      // Set Pixel Fractal Theme (29)
+  KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
+  KC_5_TG5        // Tap: 5, Hold: Toggle Layer 5 (Settings)
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -479,6 +481,7 @@ const uint16_t PROGMEM up_combo[] = {KC_S, KC_D, COMBO_END};
 const uint16_t PROGMEM down_combo[] = {KC_D, KC_F, COMBO_END};
 const uint16_t PROGMEM right_combo[] = {KC_F, KC_G, COMBO_END};
 const uint16_t PROGMEM af_combo[] = {KC_A, KC_F, COMBO_END};
+const uint16_t PROGMEM ad_combo[] = {KC_A, KC_D, COMBO_END};
 const uint16_t PROGMEM delete_combo[] = {KC_J, KC_K, COMBO_END};
 const uint16_t PROGMEM home_combo[] = {TD(TD_Z_LAYER), KC_X, COMBO_END};
 const uint16_t PROGMEM pgup_combo[] = {KC_X, KC_C, COMBO_END};
@@ -491,7 +494,8 @@ const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
 combo_t key_combos[] = {
     COMBO(left_combo, KC_LEFT),   COMBO(up_combo, KC_UP),
     COMBO(down_combo, KC_DOWN),   COMBO(right_combo, KC_RIGHT),
-    COMBO(af_combo, KC_RIGHT),    COMBO(delete_combo, KC_DEL),
+    COMBO(af_combo, KC_RIGHT),    COMBO(ad_combo, KC_DEL),
+    COMBO(delete_combo, KC_DEL),
     COMBO(home_combo, KC_HOME),   COMBO(pgup_combo, KC_PGUP),
     COMBO(pgdn_combo, KC_PGDN),   COMBO(xv_combo, C(S(KC_V))),
     COMBO(end_combo, KC_END),     COMBO(zv_combo, KC_END),
@@ -524,6 +528,9 @@ static bool k3_triggered = false;
 static uint16_t k4_tap_timer = 0;
 static bool k4_held = false;
 static bool k4_triggered = false;
+static uint16_t k5_tap_timer = 0;
+static bool k5_held = false;
+static bool k5_triggered = false;
 
 // Variables for new Layer 4 keys
 static uint16_t mins_tap_timer = 0;
@@ -582,6 +589,11 @@ layer_state_t layer_state_set_user(layer_state_t state) {
           prev_layer, layer, (unsigned long)state,
           layer_change_reason ? layer_change_reason : "Standard Keycode / Core");
   layer_change_reason = NULL;
+
+  // Force RGB refresh when returning to layer 0 to clear stale indicator colors
+  if (layer == 0 && prev_layer != 0) {
+    rgb_matrix_mode_noeeprom(rgb_matrix_get_mode());
+  }
   if (layer == 3) {
     uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
             pointing_device_get_cpi());
@@ -1099,6 +1111,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
+  case KC_5_TG5:
+    if (record->event.pressed) {
+      k5_held = true;
+      k5_triggered = false;
+      k5_tap_timer = timer_read();
+    } else {
+      k5_held = false;
+      if (!k5_triggered) {
+        uint8_t layer = get_highest_layer(layer_state);
+        if (layer == 2)
+          tap_code(KC_F5);
+        else
+          tap_code(KC_5);
+      }
+    }
+    return false;
   case KC_JELLY:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(RGB_MATRIX_JELLYBEAN_RAINDROPS);
@@ -1367,6 +1395,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       start_show_mode();
     }
     return false;
+  case KC_PINWHEEL:
+    if (record->event.pressed) {
+      rgb_matrix_mode_noeeprom(18); // 18 = CYCLE_PINWHEEL
+      start_show_mode();
+    }
+    return false;
   case KC_SET_LEFT:
     if (record->event.pressed) {
       eeconfig_update_handedness(true);  // true = left hand
@@ -1434,28 +1468,29 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] =
-        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
+        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                KC_TAB, KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
-               KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2, KC_LALT, KC_BSPC, KC_BSPC),
+               KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2,
+               KC_LALT, KC_BSPC, KC_BSPC),
                //QK_BOOT, KC_PSCR  , KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT, KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
-    [1] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_DEBUG_SYNC, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
-                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , S(KC_8),   RM_NEXT  , KC_LBRC  , KC_RBRC  , S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
-                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_SLSH,   RM_PREV  , KC_LEFT  , KC_UP    , KC_DOWN   , KC_RGHT   , KC_JITTER,                  
-                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL,    RM_HUEU  , RM_HUED  , RM_SATU  , RM_SATD   , RM_VALU   , RM_VALD,
+    [1] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
+                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , S(KC_8),   KC_EXIT  , KC_LBRC  , KC_RBRC  , S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
+                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_SLSH,   KC_EXIT  , KC_LEFT  , KC_UP    , KC_DOWN   , KC_RGHT   , KC_EXIT,
+                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL,    KC_EXIT  , KC_EXIT  , KC_EXIT  , KC_EXIT   , KC_EXIT   , KC_EXIT,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(QK_BOOT, KC_F1         , KC_F2  , KC_F3  , KC_F4  , KC_F5  ,   KC_F6  , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
-                 KC_PSCR, KC_EXIT       , KC_EXIT, KC_EXIT, KC_EXIT, KC_P_FRAC,   KC_FIRE, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
-                 KC_LSFT, KC_LEFT       , KC_UP  , KC_DOWN, KC_RGHT, KC_EXIT,   KC_RSFT, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_F12,
-                 KC_EXIT, LT(3, KC_HOME), KC_PGUP, KC_PGDN, KC_END , KC_EXIT,   KC_RGB_AUTO, KC_HOME, KC_PGUP, KC_PGDN, KC_END, KC_NO,
+    [2] = LAYOUT(QK_BOOT, KC_F1         , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
+                 KC_PSCR, KC_EXIT       , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
+                 KC_LSFT, KC_LEFT       , KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
+                 KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
-                 KC_DEL, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [3] = LAYOUT(QK_GESC, QK_CLEAR_EEPROM, KC_MS_FAST_UP, KC_3_TG3     , KC_4_TG4, QK_BOOT      , KC_EXIT, KC_RCTL, KC_RALT, KC_RGUI, QK_CLEAR_EEPROM, QK_BOOT,
-                 KC_EXIT, KC_MS_DIAG_UL  , MS_UP        , KC_MS_DIAG_UR, KC_EXIT , KC_MS_TMO_INC, KC_EXIT, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, KC_TRNS,
-                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1  , MS_RGHT  , KC_MS_FAST_RIGHT, KC_MS_TMO_DEC, KC_EXIT, MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
-                 KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR,      KC_EXIT , KC_EXIT      , KC_EXIT, KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
+                 KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
+    [3] = LAYOUT(QK_GESC, KC_EXIT   , KC_MS_FAST_UP, KC_EXIT, KC_EXIT  , QK_BOOT,   KC_EXIT, KC_RCTL, KC_RALT, KC_RGUI, KC_EXIT, QK_BOOT,
+                 KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN1, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT, KC_SNIPE, KC_EXIT, KC_EXIT,
+                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1 , MS_RGHT , KC_MS_FAST_RIGHT, MS_BTN2,   KC_EXIT, MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
+                 KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    , KC_EXIT,   KC_EXIT, KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
                  MS_BTN1, MS_BTN2, MS_BTN3,
                  KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,
@@ -1467,6 +1502,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_SPC, KC_ENT_EXIT, KC_LSFT,
                  KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC, KC_BSPC),
+    // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, QK_CLEAR_EEPROM,
+                 KC_EXIT, RM_VALU, RM_VALD, RM_SATU, RM_SATD, KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
+                 KC_EXIT, RM_HUEU, RM_HUED, KC_EXIT, KC_EXIT, KC_PINWHEEL,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,
+                 KC_EXIT, KC_EXIT, KC_EXIT,
+                 KC_EXIT, KC_EXIT,
+                 KC_EXIT, KC_EXIT, KC_EXIT),
 };
 
 bool rgb_matrix_indicators_user(void) {
@@ -1543,17 +1586,10 @@ bool rgb_matrix_indicators_user(void) {
   switch (layer) {
   case 1: {
     // Numpad (Blue)
-    if (is_keyboard_left()) {
-      static const uint8_t left[] = {6,  9,  14, 17, 21, 5,  10, 13,
-                                     18, 22, 4,  11, 12, 19, 23};
-      for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 0, 0, 255);
-    }
-    if (!is_keyboard_left()) {
-      static const uint8_t right[] = {22, 2};
-      for (int i = 0; i < sizeof(right); i++)
-        rgb_matrix_set_color(right[i], 0, 0, 255);
-    }
+    static const uint8_t leds[] = {6,  9,  14, 17, 21, 5,  10, 13,
+                                   18, 22, 4,  11, 12, 19, 23};
+    for (int i = 0; i < sizeof(leds); i++)
+      rgb_matrix_set_color(leds[i], 0, 0, 255);
     break;
   }
   case 2: {
@@ -1593,6 +1629,22 @@ bool rgb_matrix_indicators_user(void) {
                                      11, 12, 19, 23, 26, 27, 28, 25, 24};
       for (int i = 0; i < sizeof(left); i++)
         rgb_matrix_set_color(left[i], 255, 0, 255);
+    }
+    break;
+  }
+  case 5: {
+    // Settings (Cyan)
+    if (is_keyboard_left()) {
+      // Left side: RGB control keys (Q, W, E, R positions + A, S, D, F + Z, X)
+      static const uint8_t left[] = {6, 9, 14, 17, 5, 10, 13, 18, 4, 11};
+      for (int i = 0; i < sizeof(left); i++)
+        rgb_matrix_set_color(left[i], 0, 255, 255);
+    }
+    if (!is_keyboard_left()) {
+      // Right side: Mouse setting keys (U, I, O positions + J, K, L)
+      static const uint8_t right[] = {17, 14, 9, 18, 13, 10};
+      for (int i = 0; i < sizeof(right); i++)
+        rgb_matrix_set_color(right[i], 0, 255, 255);
     }
     break;
   }
@@ -1689,8 +1741,8 @@ void keyboard_post_init_user(void) {
   // in start_show_mode() lands exactly on 'next_hue'.
   automatic_hue_tracker = saved_hue;
 
-  uprintf("Init: Next Theme=%d, Next Hue=%d. Saved=%u\n", next_theme, next_hue,
-          new_config);
+  uprintf("Init: Next Theme=%d, Next Hue=%d. Saved=%u. CPI: %u\n", next_theme, next_hue,
+          new_config, pointing_device_get_cpi());
 
   // Defer RGB mode application to matrix_scan for timing reliability
   master_rgb_init_mode = next_theme;
@@ -1791,8 +1843,12 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     // Filter out 1-unit orthogonal movements (jitter)
     // Keep diagonals (e.g. x=1, y=1) or larger movements
     if ((x == 0 && (y == 1 || y == -1)) || (y == 0 && (x == 1 || x == -1))) {
-      LOG_TIME();
-      uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d)\033[0m\n", x, y);
+      static uint32_t last_jitter_log = 0;
+      if (timer_elapsed32(last_jitter_log) > 1000) {
+        LOG_TIME();
+        uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d)\033[0m\n", x, y);
+        last_jitter_log = timer_read32();
+      }
       // Zero out the report so it's ignored by the host AND by the auto-layer logic below
       mouse_report.x = 0;
       mouse_report.y = 0;
@@ -1875,7 +1931,8 @@ void matrix_scan_user(void) {
 
   if (auto_mouse_on && !mouse_is_locked &&
       timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
-    layer_change_reason = "Auto Mouse Timeout";
+    snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "Auto Mouse Timeout (%u ms)", auto_mouse_timeout);
+    layer_change_reason = layer_reason_buffer;
     layer_off(3);
     auto_mouse_on = false;
   }
@@ -1954,6 +2011,18 @@ void matrix_scan_user(void) {
       layer_move(0);
     }
     k4_triggered = true;
+    rgb_matrix_indicators_user();
+  }
+  if (k5_held && !k5_triggered &&
+      timer_elapsed(k5_tap_timer) > MY_TAPPING_TERM) {
+    if (get_highest_layer(layer_state) == 0) {
+      layer_change_reason = "K5(Hold): Toggle L5 (ON)";
+      layer_move(5);
+    } else {
+      layer_change_reason = "K5(Hold): Toggle L5 (OFF)";
+      layer_move(0);
+    }
+    k5_triggered = true;
     rgb_matrix_indicators_user();
   }
 
