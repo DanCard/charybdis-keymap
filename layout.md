@@ -35,10 +35,10 @@ Ctrl      Home      PgUp      PgDn      End       Exit     |  Exit      Home    
 ### MOUSE (Layer 3)
 ```
 Esc       Exit      FastUp    Exit      Exit      Boot     |  Exit      RCtl      RAlt      RGui      Exit      Boot
-Exit      DiagUL    MsUp      DiagUR    Btn1      Exit     |  Exit      Exit      Snipe     Exit      Exit      Exit
+Exit      DiagUL    MsUp      DiagUR    Btn1      Exit     |  Exit      Exit      Snipe     Fast      Exit      Exit
 FastL     MsL       Btn1      MsR       FastR     Btn2     |  Exit      Btn1      DragScr   MsLock    Btn2      Exit
 Exit      DiagDL    MsDn      DiagDR    Btn3      Exit     |  Exit      Exit      Btn3      Btn3      Btn3      Shift
-                    Btn1      Btn2      Btn3               |  Exit      Btn1      Exit
+                    To L2     To L4     L1(Tog)            |  Exit      Exit      Exit
 ```
 *Note: This layer activates automatically on trackball movement.*
 
@@ -53,10 +53,10 @@ Shift     /(L3)     .         ,         M         N        |  N         M       
 
 ### SETTINGS (Layer 5)
 ```
-PScr      Exit      Exit      Exit      Exit      Exit     |  Exit      Exit      Exit      Exit      Exit      PScr
-Exit      RGB_Tog   RGB_Nxt   RGB_Prv   AutoRGB   P.Frac   |  Fire      DPI+      DPI-      Snipe     Exit      ClrEE
-Exit      Val+      Val-      Sat+      Sat-      Exit     |  Exit      Time+     Time-     Jitter    Exit      SyncDbg
-Exit      Hue+      Hue-      Exit      Exit      Pinwhl   |  Exit      Exit      Exit      Exit      Exit      Exit
+PScr      Exit      Exit      Exit      Exit      Exit     |  Exit      Hue+      Hue-      Sat+      Sat-      PScr
+Exit      RGB_Tog   RGB_Nxt   RGB_Prv   AutoRGB   P.Frac   |  Fire      Val+      Val-      Exit      Exit      ClrEE
+Exit      Exit      Exit      Day       Night     Exit     |  Exit      DPI+      DPI-      Jitter    Exit      SyncDbg
+Exit      Exit      Exit      Exit      Exit      Exit     |  Pinwhl    Time+     Time-     Exit      Exit      Exit
                     Exit      Exit      Exit               |  Exit      Exit      Exit
 ```
 *Note: Access via **Hold '5'**. Contains all RGB and mouse configuration settings.*
@@ -99,10 +99,11 @@ Simultaneous key presses for navigation and editing.
 
 ### 4. Settings Layer (Hold '5')
 All configuration settings are now on the Settings layer for easy access:
-- **RGB Controls:** Toggle, Next/Prev mode, Hue+/-, Saturation+/-, Value+/-, AutoRGB
+- **RGB Controls:** Toggle, Next/Prev mode, Hue+/- , Saturation+/-, Value+/-, AutoRGB
 - **RGB Animations:** Direct access to Fire, Pixel Fractal, and Pinwheel effects
 - **DPI Adjustment:** Press `DPI+`/`DPI-` to adjust mouse sensitivity.
 - **Snipe Mode:** Press `Snipe` to toggle low DPI (250) for precision. Also available on Layer 3 at 'I' position.
 - **Timeout Adjustment:** Press `Time+`/`Time-` to adjust auto-mouse timeout in 500ms increments (range: 0.5s - 10s). Default is 2.0s.
 - **Jitter Filter:** Press `Jitter` to toggle the mouse jitter filter (useful for high-DPI stability).
 - **Debug/Maintenance:** `ClrEE` (Clear EEPROM), `SyncDbg` (Debug sync state), `PScr` (Print Screen).
+- **Brightness Presets:** `Day` (High Brightness) and `Night` (Low Brightness) on 'D' and 'F' keys.

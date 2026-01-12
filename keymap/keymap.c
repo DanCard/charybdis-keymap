@@ -78,6 +78,7 @@ enum custom_keycodes {
   KC_ENT_TG2,
   KC_ENT_TG4,
   KC_SPC_TG2,
+  KC_SPC_TG4,
   KC_PMNS_TG4,
   KC_MINS_TG4,
   KC_F12_EXIT,
@@ -592,6 +593,9 @@ static bool ent_tg2_triggered = false;
 static uint16_t spc_tg2_timer = 0;
 static bool spc_tg2_held = false;
 static bool spc_tg2_triggered = false;
+static uint16_t spc_tg4_timer = 0;
+static bool spc_tg4_held = false;
+static bool spc_tg4_triggered = false;
 static uint16_t pmns_tg4_timer = 0;
 static bool pmns_tg4_held = false;
 static bool pmns_tg4_triggered = false;
@@ -788,7 +792,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_MS_FAST_UP:
     if (record->event.pressed) {
-      if (!is_sniping_active) tap_code(MS_ACL2); // Speed up only if not sniping
+      if (!is_sniping_active) tap_code(MS_ACL1); // Speed up only if not sniping
       register_code(MS_UP);
     } else {
       unregister_code(MS_UP);
@@ -797,7 +801,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_MS_FAST_DOWN:
     if (record->event.pressed) {
-      if (!is_sniping_active) tap_code(MS_ACL2);
+      if (!is_sniping_active) tap_code(MS_ACL1);
       register_code(MS_DOWN);
     } else {
       unregister_code(MS_DOWN);
@@ -806,7 +810,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_MS_FAST_LEFT:
     if (record->event.pressed) {
-      if (!is_sniping_active) tap_code(MS_ACL2);
+      if (!is_sniping_active) tap_code(MS_ACL1);
       register_code(MS_LEFT);
     } else {
       unregister_code(MS_LEFT);
@@ -815,7 +819,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_MS_FAST_RIGHT:
     if (record->event.pressed) {
-      if (!is_sniping_active) tap_code(MS_ACL2);
+      if (!is_sniping_active) tap_code(MS_ACL1);
       register_code(MS_RGHT);
     } else {
       unregister_code(MS_RGHT);
@@ -947,14 +951,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       l1_tap_timer = timer_read();
     } else {
       l1_held = false;
-      // If released quickly (Tap) -> Toggle L1
+      // If released quickly (Tap) -> Toggle L3 (Mouse)
       if (!l1_triggered) {
-        if (get_highest_layer(layer_state) > 0) {
+        if (get_highest_layer(layer_state) == 3) {
+          layer_change_reason = "L_TG1 (Tap): Toggle L3 (OFF)";
+          layer_off(3);
+        } else if (get_highest_layer(layer_state) > 0) {
           layer_change_reason = "L_TG1 (Tap): L0 (Reset)";
           layer_move(0);
         } else {
-          layer_change_reason = "L_TG1 (Tap): Toggle L1 (Numpad)";
-          layer_invert(1);
+          layer_change_reason = "L_TG1 (Tap): Toggle L3 (Mouse)";
+          layer_on(3);
         }
       }
       rgb_matrix_indicators_user();
@@ -1387,6 +1394,30 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
+  case KC_SPC_TG4:
+    if (record->event.pressed) {
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_SPC_TG4 Pressed\n", sec, ms);
+      spc_tg4_held = true;
+      spc_tg4_triggered = false;
+      spc_tg4_timer = timer_read();
+    } else {
+      uint32_t now = timer_read32();
+      uint32_t sec = now / 1000;
+      uint32_t ms = now % 1000;
+      uprintf("[%lu.%03lu] KC_SPC_TG4 Released. Duration: %u ms. Held: %d, "
+              "Triggered: %d. Action: %s\n",
+              sec, ms, timer_elapsed(spc_tg4_timer), spc_tg4_held,
+              spc_tg4_triggered,
+              (!spc_tg4_triggered) ? "Tap (Space)" : "None (Handled by Timer)");
+      spc_tg4_held = false;
+      if (!spc_tg4_triggered) {
+        tap_code(KC_SPC);
+      }
+    }
+    return false;
   case KC_PMNS_TG4:
     if (record->event.pressed) {
       pmns_tg4_held = true;
@@ -1557,19 +1588,18 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] =
-        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
-               KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
-               KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-               KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
-               KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2,
-               KC_LALT, KC_BSPC, KC_BSPC),
-               //QK_BOOT, KC_PSCR  , KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT, KC_SET_LEFT, KC_SET_RIGHT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
+        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
+               KC_TAB , KC_Q_TG4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+               KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+               KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
+                                        KC_SPC_TG4, KC_ENT_TG2, KC_L_TG1,   KC_DEL, KC_ENT_TG2,
+                                                        KC_LALT, KC_BSPC,   KC_BSPC),
     [1] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
-                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , S(KC_8),   KC_EXIT  , KC_LBRC  , KC_RBRC  , S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
-                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_SLSH,   KC_EXIT  , KC_LEFT  , KC_UP    , KC_DOWN   , KC_RGHT   , KC_EXIT,
-                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL,    KC_EXIT  , KC_EXIT  , KC_EXIT  , KC_EXIT   , KC_EXIT   , KC_EXIT,
-                 KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
-                 KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
+                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , KC_EXIT,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
+                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_EXIT,   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EXIT,
+                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_EXIT   , KC_EXIT,
+                                 KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,   KC_R_TG2, KC_ENT_EXIT,
+                                              KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
@@ -1580,22 +1610,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN1, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1 , MS_RGHT , KC_MS_FAST_RIGHT,   MS_BTN2, KC_EXIT , MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
                  KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    ,   KC_EXIT, KC_EXIT , KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
-                                          KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                                            TO(4), TO(2), TO(1),   KC_EXIT, KC_EXIT,
                                                                KC_EXIT, KC_EXIT,   KC_EXIT),
-    [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3  , KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
-                 KC_BSLS    , KC_P_TO0, KC_O    , KC_I      , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
-                 KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K      , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM   , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
-                                                    KC_SPC, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
-                                                    KC_LALT, KC_BSPC,               KC_BSPC),
+    [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
+                 KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+                 KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+                 KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
+                                                  KC_SPC, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
+                                                              KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
     [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, RM_HUEU, RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
                  KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, RM_VALU, RM_VALD, KC_EXIT , KC_EXIT  , QK_CLEAR_EEPROM,
                  KC_EXIT, KC_EXIT, KC_EXIT, KC_DAY, KC_NIGHT    , KC_EXIT  ,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
                  KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
-                 KC_EXIT, KC_EXIT, KC_EXIT,
-                 KC_EXIT, KC_EXIT,
-                 KC_EXIT, KC_EXIT, KC_EXIT),
+                                                  KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                                           KC_EXIT, KC_EXIT,   KC_EXIT),
 };
 
 bool rgb_matrix_indicators_user(void) {
@@ -1721,13 +1750,13 @@ bool rgb_matrix_indicators_user(void) {
     break;
   }
   case 4: {
-    // Left Side (Pink)
+    // Left Side (Orange)
     if (is_keyboard_left()) {
       static const uint8_t left[] = {0,  7,  8,  15, 16, 20, 1,  6,  9, 14,
                                      17, 21, 2,  5,  10, 13, 18, 22, 3, 4,
                                      11, 12, 19, 23, 26, 27, 28, 25, 24};
       for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 255, 0, 255);
+        rgb_matrix_set_color(left[i], 255, 127, 0);
     }
     break;
   }
@@ -2115,12 +2144,12 @@ void matrix_scan_user(void) {
     rgb_matrix_indicators_user();
   }
   if (l1_held && !l1_triggered && timer_elapsed(l1_tap_timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 3) {
-       layer_change_reason = "L_TG1(Hold): Toggle L3 (OFF)";
-       layer_off(3);
+    if (get_highest_layer(layer_state) == 1) {
+       layer_change_reason = "L_TG1(Hold): Toggle L1 (OFF)";
+       layer_invert(1);
     } else {
-       layer_change_reason = "L_TG1(Hold): Toggle L3 (ON)";
-       layer_on(3);
+       layer_change_reason = "L_TG1(Hold): Toggle L1 (ON)";
+       layer_invert(1);
     }
     l1_triggered = true;
     rgb_matrix_indicators_user();
@@ -2276,6 +2305,19 @@ void matrix_scan_user(void) {
       layer_move(2);
     }
     spc_tg2_triggered = true;
+    rgb_matrix_indicators_user();
+  }
+  if (spc_tg4_held && !spc_tg4_triggered &&
+      timer_elapsed(spc_tg4_timer) > MY_TAPPING_TERM) {
+    uprintf(">> Thumb Hold Triggered: SPC_TG4 -> Toggle Layer 4\n");
+    if (get_highest_layer(layer_state) == 4) {
+      layer_change_reason = "SPC(Hold): Toggle L4 (OFF)";
+      layer_move(0);
+    } else {
+      layer_change_reason = "SPC(Hold): Toggle L4 (ON)";
+      layer_move(4);
+    }
+    spc_tg4_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (f12_held && !f12_triggered &&

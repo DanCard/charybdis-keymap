@@ -20,8 +20,8 @@ LAYER_COLORS = {
     1: (0.7, 0.7, 1.0),      # Blue (Numpad)
     2: (0.7, 1.0, 0.7),      # Green (Arrow)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
-    4: (1.0, 0.7, 1.0),      # Pink (One-Hand)
-    5: (0.7, 1.0, 1.0),      # Cyan (Settings)
+    4: (1.0, 0.5, 0.0),      # Orange (One-Hand)
+    5: (1.0, 0.43, 0.59),    # Hot Pink (Settings)
 }
 
 LAYER_NAMES = {
@@ -315,7 +315,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_X_TG2': 'X\nTG2',
         'KC_V_TG5': 'V\nTG5',
         'KC_Q_TG4': 'Q\nL4',
-        'KC_L_TG1': 'L1\nL3',
+        'KC_L_TG1': 'L3\nL1',
         'KC_R_TG2': 'L2\nTgl',
         'KC_ENT_MO4': 'Enter\nL4',
         'KC_ENT_EXIT': 'Enter\nExit',
@@ -367,6 +367,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_7_TO0': '7\nExit',
         'KC_6_TO0': '6\nExit',
         'KC_SPC_TG2': 'Space\nL2',
+        'KC_SPC_TG4': 'Space\nL4',
         'KC_ENT_TG2': 'Enter\nL2',
         'KC_ENT_TG4': 'Enter\nL4',
         'KC_PMNS_TG4': 'Num -\nL4',
@@ -426,7 +427,7 @@ def draw_key(c, x, y, width, height, label, bg_color):
         l = len(line)
         if l <= 1:
             font_size = 16
-        elif l <= 2:
+        elif l <= 3:
             font_size = 14
         elif l <= 4:
             font_size = 10

@@ -23,7 +23,7 @@ LAYER_COLORS = {
     1: (130, 150, 255),    # Blue (Numpad)
     2: (130, 220, 130),    # Green (Arrow)
     3: (240, 220, 100),    # Yellow (Mouse)
-    4: (240, 150, 240),    # Pink (One-Hand)
+    4: (255, 150, 0),      # Orange (One-Hand)
     5: (255, 110, 150),    # Hot Pink (Settings)
 }
 
@@ -33,7 +33,7 @@ KEY_BORDER_COLORS = {
     1: (80, 100, 180),
     2: (80, 160, 80),
     3: (180, 160, 60),
-    4: (180, 100, 180),
+    4: (180, 80, 0),
     5: (180, 60, 90),
 }
 
@@ -108,7 +108,7 @@ def draw_key(draw, x, y, width, height, label, bg_color, border_color):
         l = len(line)
         if l <= 1:
             font_size = 42
-        elif l <= 2:
+        elif l <= 3:
             font_size = 34
         elif l <= 4:
             font_size = 24
