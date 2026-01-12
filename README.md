@@ -6,6 +6,9 @@ Touch the trackball and your keys become mouse buttons. Let go and you're back t
 
 **Built for developers who live in the terminal and hate reaching for a mouse.**
 
+Here is the keyboard I purchased and programmed extensively:
+https://www.aliexpress.us/item/3256809725543989.html
+
 ![Layout Overview](wallpaper.png)
 
 *Auto-generated from source. [Download the PDF](charybdis_layout.pdf) for print or set the wallpaper as your desktop background while you learn the layout.*
