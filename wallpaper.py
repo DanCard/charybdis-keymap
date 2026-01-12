@@ -196,8 +196,11 @@ def draw_combos(draw, start_x, start_y, width):
     col2_combos = COMBOS[third:2*third]
     col3_combos = COMBOS[2*third:]
 
-    # Column spacing - use the full width with generous spacing
-    col_content_width = width // 3
+    # Center the columns more tightly
+    col_content_width = 750  # Fixed width per column
+    total_combos_width = col_content_width * 3
+    combo_start_x = start_x + (width - total_combos_width) // 2
+    
     line_height = 42
     curr_y = start_y + 55
 
@@ -205,23 +208,23 @@ def draw_combos(draw, start_x, start_y, width):
     for i in range(max_rows):
         if i < len(col1_combos):
             keys, action = col1_combos[i]
-            draw.text((start_x + 40, curr_y), f"{keys}",
+            draw.text((combo_start_x + 40, curr_y), f"{keys}",
                      fill=(200, 200, 220), font=text_font)
-            draw.text((start_x + 260, curr_y), f": {action}",
+            draw.text((combo_start_x + 280, curr_y), f": {action}",
                      fill=(160, 160, 180), font=text_font)
 
         if i < len(col2_combos):
             keys, action = col2_combos[i]
-            draw.text((start_x + col_content_width + 40, curr_y), f"{keys}",
+            draw.text((combo_start_x + col_content_width + 40, curr_y), f"{keys}",
                      fill=(200, 200, 220), font=text_font)
-            draw.text((start_x + col_content_width + 80, curr_y), f": {action}",
+            draw.text((combo_start_x + col_content_width + 280, curr_y), f": {action}",
                      fill=(160, 160, 180), font=text_font)
 
         if i < len(col3_combos):
             keys, action = col3_combos[i]
-            draw.text((start_x + 2 * col_content_width + 40, curr_y), f"{keys}",
+            draw.text((combo_start_x + 2 * col_content_width + 40, curr_y), f"{keys}",
                      fill=(200, 200, 220), font=text_font)
-            draw.text((start_x + 2 * col_content_width + 80, curr_y), f": {action}",
+            draw.text((combo_start_x + 2 * col_content_width + 280, curr_y), f": {action}",
                      fill=(160, 160, 180), font=text_font)
 
         curr_y += line_height
