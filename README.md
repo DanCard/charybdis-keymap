@@ -1,6 +1,6 @@
 # Charybdis OS
 
-> **Firmware that thinks.** Auto-switching layers, modal workflows, auto generate wallpaper and PDF.
+Auto-switching layers, do everything with just your left hand, layers / modes color coded so you know where you are, extensive logging, auto generate wallpaper and PDF.
 
 Touch the trackball and your keys become mouse buttons. Let go and you're back to typing. No mode switching. No thinking.
 
@@ -22,6 +22,7 @@ Touch the trackball and your keys become mouse buttons. Let go and you're back t
 | **Layer-Coded RGB** | White/Blue/Green/Yellow/Pink tells you where you are at a glance. |
 | **Flashlight Mode** | Double-tap `Z` to blast 58 LEDs and find your coffee. |
 | **Split Sync** | Both halves stay perfectly in sync via custom transaction protocol. |
+| **Live Diagnostics** | Streams real-time matrix scans, trackball state, and internal logic to `qmk console`. |
 
 ---
 
