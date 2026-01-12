@@ -1,23 +1,37 @@
-# BastardKB Charybdis 4x6 - Custom Layout (Dcar)
+# Charybdis OS
 
-This project contains the QMK firmware and custom utilities for my BastardKB Charybdis 4x6 split mechanical keyboard.
+> **Firmware that thinks.** Auto-switching layers, modal workflows, auto generate wallpaper and PDF.
 
-## Hardware Setup
+Touch the trackball and your keys become mouse buttons. Let go and you're back to typing. No mode switching. No thinking.
+
+**Built for developers who live in the terminal and hate reaching for a mouse.**
+
+![Layout Overview](wallpaper.png)
+
+*Auto-generated from source. [Download the PDF](charybdis_layout.pdf) for print or set the wallpaper as your desktop background while you learn the layout.*
+
+---
+
+## Highlights
+
+| Feature | What it does |
+|:--------|:-------------|
+| **Auto-Mouse Layer** | Trackball movement activates mouse keys instantly. Release and you're back to typing. |
+| **Modal Layers** | Tap to type, hold to toggle. Work like Vim—enter a mode, do your thing, exit. |
+| **Sniper Mode** | One key drops DPI for pixel-perfect precision. |
+| **Layer-Coded RGB** | White/Blue/Green/Yellow/Pink tells you where you are at a glance. |
+| **Flashlight Mode** | Double-tap `Z` to blast 58 LEDs and find your coffee. |
+| **Split Sync** | Both halves stay perfectly in sync via custom transaction protocol. |
+
+---
+
+## Hardware
 - **Keyboard:** BastardKB Charybdis 4x6 (Nano)
 - **Controller:** Splinky (RP2040) / Elite-Pi (RP2040)
 - **Trackball:** Integrated Right-side Trackball (PMW3360 sensor)
 - **Switches:** (Add switch type if known, e.g., Silent Alpacas)
 
-## Features
-- **Auto-Mouse Layer:** Automatically switches to the Mouse layer (Layer 3) when the trackball is moved.
-- **Mouse Lock:** Toggleable layer for dedicated mouse usage.
-- **One-Handed Mode:** mirrored styling for typing with one hand (Layer 4).
-- **Split RGB Support:** Full RGB matrix on both halves with layer-specific colors.
-  - Uses RP2040 PIO driver (`WS2812_DRIVER = vendor`) for reliable LED control
-  - Layer state synced between halves for consistent colors
-  - 29 LEDs per side (58 total)
-
-## Keymap Layers & Colors
+## Layers
 The RGB matrix changes color based on the active layer:
 
 | Layer | Name | Color | Description |
@@ -30,11 +44,13 @@ The RGB matrix changes color based on the active layer:
 | **3** | **MOUSE LOCK** | Orange | Locked mouse layer (toggled via key). |
 | **-** | **FLASHLIGHT** | White | Max brightness white (Double-tap Z). |
 
-## Visualizing the Layout
-A Python script is included to print the current keymap layout in the terminal with color coding.
+## Generating Layout Docs
+
+The wallpaper and PDF are auto-generated from `keymap.c`. After editing your layout, regenerate them:
 
 ```bash
-python3 print_layout.py
+python3 generate_layout_pdf.py   # Creates charybdis_layout.pdf
+python3 wallpaper.py             # Creates wallpaper.png
 ```
 
 ## Keymap Files
