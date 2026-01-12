@@ -94,8 +94,7 @@ enum custom_keycodes {
   KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
   KC_DAY,         // Set brightness to Day level
   KC_NIGHT,       // Set brightness to Night level
-  KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
-  KC_TOG_L1_MODE  // Toggle KC_L_TG1 behavior (L1 vs L3)
+  KC_5_TG5        // Tap: 5, Hold: Toggle Layer 5 (Settings)
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -118,7 +117,6 @@ static uint16_t snipe_timer = 0;
 static uint16_t fast_mode_timer = 0;
 static bool mouse_is_locked = false;
 static bool is_jitter_filter_active = false; // Default: Filter OFF
-static bool l1_toggle_mode_is_l3 = true; // Default: Toggle L3 (Mouse)
 static uint8_t saved_rgb_mode;
 static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static uint8_t automatic_hue_tracker = 0;
@@ -131,6 +129,10 @@ static bool auto_mouse_on = false;
 static uint16_t q_tap_timer = 0;
 static bool q_held = false;
 static bool q_triggered = false;
+
+static uint16_t l1_tap_timer = 0;
+static bool l1_held = false;
+static bool l1_triggered = false;
 
 // Deferred EEPROM update to avoid USB timeout on boot
 static uint16_t pending_eeprom_config = 0;
@@ -191,7 +193,6 @@ typedef struct _user_sync_info_t {
   bool is_fast_mode_active;
   bool mouse_is_locked;
   bool is_jitter_filter_active;
-  bool l1_toggle_mode_is_l3;
   bool show_mode_active;
   bool is_caps_lock_on;
   uint8_t show_mode_digits[2];
@@ -233,7 +234,6 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   is_fast_mode_active = sync_data->is_fast_mode_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
-  l1_toggle_mode_is_l3 = sync_data->l1_toggle_mode_is_l3;
   show_mode_active = sync_data->show_mode_active;
   is_caps_lock_on = sync_data->is_caps_lock_on;
   show_mode_digits[0] = sync_data->show_mode_digits[0];
@@ -441,7 +441,6 @@ void debug_dump_sync_state(void) {
   uprintf("is_fast_mode_active: %s\n", is_fast_mode_active ? "YES" : "no");
   uprintf("mouse_is_locked: %s\n", mouse_is_locked ? "YES" : "no");
   uprintf("is_jitter_filter_active: %s\n", is_jitter_filter_active ? "YES" : "no");
-  uprintf("l1_toggle_mode_is_l3: %s\n", l1_toggle_mode_is_l3 ? "L3 (Mouse)" : "L1 (Numpad)");
   uprintf("is_caps_lock_on: %s\n", is_caps_lock_on ? "YES" : "no");
   uprintf("\033[95m======================================\033[0m\n\n");
 }
@@ -941,33 +940,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       rgb_matrix_indicators_user();
     }
     return false;
-  case KC_TOG_L1_MODE:
-    if (record->event.pressed) {
-      l1_toggle_mode_is_l3 = !l1_toggle_mode_is_l3;
-      sync_needed = true;
-      uprintf("KC_L_TG1 Mode Toggled: %s\n", l1_toggle_mode_is_l3 ? "L3 (Mouse)" : "L1 (Numpad)");
-
-      // Update EEPROM
-      uint16_t current_config = eeconfig_read_user();
-      if (l1_toggle_mode_is_l3) {
-        current_config |= 0x0040; // Set bit 6
-      } else {
-        current_config &= ~0x0040; // Clear bit 6
-      }
-      eeconfig_update_user(current_config);
-
-      rgb_matrix_indicators_user();
-    }
-    return false;
   case KC_L_TG1:
     if (record->event.pressed) {
-      if (get_highest_layer(layer_state) > 0) {
-        layer_change_reason = "L_TG1 (Tap): L0 (Reset)";
-        layer_move(0);
-      } else {
-        if (l1_toggle_mode_is_l3) {
-          layer_change_reason = "L_TG1 (Tap): Toggle L3 (Mouse)";
-          layer_invert(3);
+      l1_held = true;
+      l1_triggered = false;
+      l1_tap_timer = timer_read();
+    } else {
+      l1_held = false;
+      // If released quickly (Tap) -> Toggle L1
+      if (!l1_triggered) {
+        if (get_highest_layer(layer_state) > 0) {
+          layer_change_reason = "L_TG1 (Tap): L0 (Reset)";
+          layer_move(0);
         } else {
           layer_change_reason = "L_TG1 (Tap): Toggle L1 (Numpad)";
           layer_invert(1);
@@ -1586,17 +1570,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL,    KC_EXIT  , KC_EXIT  , KC_EXIT  , KC_EXIT   , KC_EXIT   , KC_EXIT,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(KC_EXIT, KC_F1         , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
-                 KC_PSCR, KC_EXIT       , KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
-                 KC_LSFT, KC_LEFT       , KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
+    [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
+                 KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
+                 KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
-                 KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
-                 KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
+                                         KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,   KC_EXIT, KC_ENT_EXIT,
+                                                      KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     [3] = LAYOUT(QK_GESC, KC_EXIT   , KC_MS_FAST_UP, KC_EXIT, KC_EXIT , QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI, KC_EXIT, QK_BOOT,
                  KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN1, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1 , MS_RGHT , KC_MS_FAST_RIGHT,   MS_BTN2, KC_EXIT , MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
                  KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    ,   KC_EXIT, KC_EXIT , KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
-                                                      KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                          KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                                KC_EXIT, KC_EXIT,   KC_EXIT),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3  , KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_BSLS    , KC_P_TO0, KC_O    , KC_I      , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
@@ -1605,10 +1589,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                     KC_SPC, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                     KC_LALT, KC_BSPC,               KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
-                 KC_EXIT, RM_VALU, RM_VALD, KC_DAY , KC_NIGHT   , KC_EXIT  ,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_TOG_L1_MODE, KC_DEBUG_SYNC,
-                 KC_EXIT, RM_HUEU, RM_HUED, RM_SATU, RM_SATD    , KC_EXIT  ,   KC_EXIT, KC_PINWHEEL, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, RM_HUEU, RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, RM_VALU, RM_VALD, KC_EXIT , KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, KC_EXIT, KC_EXIT, KC_DAY, KC_NIGHT    , KC_EXIT  ,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
+                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT, KC_EXIT),
@@ -1821,21 +1805,19 @@ void keyboard_post_init_user(void) {
 
   // Read user config from EEPROM
   // Bits 0-5: Theme Index (Max 63)
-  // Bit 6: L1 Toggle Mode (0=L1, 1=L3)
   // Bit 7: Jitter Filter Active
   // Upper 8 bits: Start Hue
   uint16_t user_config = eeconfig_read_user();
 
   // Restore State
   is_jitter_filter_active = (user_config & 0x0080) ? true : false;
-  l1_toggle_mode_is_l3 = (user_config & 0x0040) ? true : false;
 
   uint8_t saved_theme = (uint8_t)(user_config & 0x3F);
   uint8_t saved_hue = (uint8_t)((user_config >> 8) & 0xFF);
   uint8_t max_effects = RGB_MATRIX_EFFECT_MAX;
 
-  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d, L1TogL3 %d)\n", user_config, saved_theme,
-          saved_hue, is_jitter_filter_active, l1_toggle_mode_is_l3);
+  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d)\n", user_config, saved_theme,
+          saved_hue, is_jitter_filter_active);
 
   // Increment Theme (Cycle 1 to MAX-1)
   uint8_t next_theme = saved_theme + 1;
@@ -1851,9 +1833,6 @@ void keyboard_post_init_user(void) {
   uint16_t new_config = ((uint16_t)next_hue << 8) | (next_theme & 0x3F);
   if (is_jitter_filter_active) {
     new_config |= 0x0080;
-  }
-  if (l1_toggle_mode_is_l3) {
-    new_config |= 0x0040;
   }
   
   pending_eeprom_config = new_config;
@@ -1897,7 +1876,6 @@ void housekeeping_task_user(void) {
           .is_fast_mode_active = is_fast_mode_active,
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
-          .l1_toggle_mode_is_l3 = l1_toggle_mode_is_l3,
           .show_mode_active = show_mode_active,
           .is_caps_lock_on = is_caps_lock_on,
           .show_mode_digits = {show_mode_digits[0], show_mode_digits[1]},
@@ -2134,6 +2112,17 @@ void matrix_scan_user(void) {
     layer_change_reason = "Q(Hold): Exit to One-Hand (L4)";
     layer_move(4);
     q_triggered = true;
+    rgb_matrix_indicators_user();
+  }
+  if (l1_held && !l1_triggered && timer_elapsed(l1_tap_timer) > MY_TAPPING_TERM) {
+    if (get_highest_layer(layer_state) == 3) {
+       layer_change_reason = "L_TG1(Hold): Toggle L3 (OFF)";
+       layer_off(3);
+    } else {
+       layer_change_reason = "L_TG1(Hold): Toggle L3 (ON)";
+       layer_on(3);
+    }
+    l1_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (ent_mo_held && !ent_mo_triggered &&

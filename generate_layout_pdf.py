@@ -258,6 +258,10 @@ def simplify_key(key_code, layer_num=None):
     if layer_num == 2:
         if 'KC_X_TG2' == key_code: return 'Page\nUp'
 
+    if layer_num is not None and layer_num > 0:
+        if key_code == 'KC_L_TG1':
+            return 'Exit\nL3'
+
     # Special handling for other layer long press returns
     if layer_num is not None and layer_num > 1:
         if key_code == 'KC_1_TG1':
@@ -311,7 +315,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_X_TG2': 'X\nTG2',
         'KC_V_TG5': 'V\nTG5',
         'KC_Q_TG4': 'Q\nL4',
-        'KC_L_TG1': 'L1\nTgl',
+        'KC_L_TG1': 'L1\nL3',
         'KC_R_TG2': 'L2\nTgl',
         'KC_ENT_MO4': 'Enter\nL4',
         'KC_ENT_EXIT': 'Enter\nExit',
@@ -380,7 +384,6 @@ def simplify_key(key_code, layer_num=None):
         'KC_FIRE': 'Fire',
         'KC_DAY': 'Day\nBright',
         'KC_NIGHT': 'Night\nDim',
-        'KC_TOG_L1_MODE': 'L1/L3\nMode',
     }
     if key_code in custom_map:
         return custom_map[key_code]
