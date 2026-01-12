@@ -343,6 +343,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_FLASH': 'Flash',
         'KC_RAINBOW': 'Rain\nbow',
         'KC_SNIPE': 'Snipe',
+        'KC_FAST': 'Fast',
         'KC_SCR_LOCK': 'Scroll\nLock',
         'KC_RGB_AUTO': 'RGB\nAuto',
         'KC_PLUS_COLON': '+\n:',

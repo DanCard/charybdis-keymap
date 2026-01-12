@@ -82,6 +82,7 @@ enum custom_keycodes {
   KC_F12_EXIT,
   KC_FIRE,
   KC_SNIPE,
+  KC_FAST,
   KC_MS_TMO_INC,
   KC_MS_TMO_DEC,
   KC_SET_LEFT,
@@ -110,6 +111,9 @@ uint8_t cur_dance(tap_dance_state_t *state) {
 static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
 static bool is_flashlight = false;
 static bool is_sniping_active = false;
+static bool is_fast_mode_active = false;
+static uint16_t snipe_timer = 0;
+static uint16_t fast_mode_timer = 0;
 static bool mouse_is_locked = false;
 static bool is_jitter_filter_active = false; // Default: Filter OFF
 static uint8_t saved_rgb_mode;
@@ -121,7 +125,10 @@ static uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
 static uint16_t auto_mouse_timer = 0;
 static bool auto_mouse_on = false;
 
-
+// Mouse Key globals
+extern uint8_t mk_max_speed;
+extern uint8_t mk_time_to_max;
+extern uint8_t mk_interval;
 
 // Show mode state
 static bool show_mode_active = false;
@@ -169,6 +176,7 @@ static const uint8_t far_right_col[] = {0, 1, 2, 3};
 typedef struct _user_sync_info_t {
   bool is_flashlight;
   bool is_sniping_active;
+  bool is_fast_mode_active;
   bool mouse_is_locked;
   bool is_jitter_filter_active;
   bool show_mode_active;
@@ -207,6 +215,7 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
 
   is_flashlight = sync_data->is_flashlight;
   is_sniping_active = sync_data->is_sniping_active;
+  is_fast_mode_active = sync_data->is_fast_mode_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
   show_mode_active = sync_data->show_mode_active;
@@ -411,6 +420,7 @@ void debug_dump_sync_state(void) {
   uprintf("show_mode_active: %s\n", show_mode_active ? "YES" : "no");
   uprintf("is_flashlight: %s\n", is_flashlight ? "YES" : "no");
   uprintf("is_sniping_active: %s\n", is_sniping_active ? "YES" : "no");
+  uprintf("is_fast_mode_active: %s\n", is_fast_mode_active ? "YES" : "no");
   uprintf("mouse_is_locked: %s\n", mouse_is_locked ? "YES" : "no");
   uprintf("is_jitter_filter_active: %s\n", is_jitter_filter_active ? "YES" : "no");
   uprintf("is_caps_lock_on: %s\n", is_caps_lock_on ? "YES" : "no");
@@ -1011,16 +1021,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_SNIPE:
     if (record->event.pressed) {
-      is_sniping_active = !is_sniping_active;
+      is_sniping_active = true;
+      is_fast_mode_active = false;
+      snipe_timer = timer_read();
       sync_needed = true;
-      if (is_sniping_active) {
-        pointing_device_set_cpi(250);
-        uprintf("[%lu.%03lu] Snipe ON. CPI -> 250\n", sec, ms);
-      } else {
-        pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-        uprintf("[%lu.%03lu] Snipe OFF. CPI -> Default (%u)\n", sec, ms,
-                pointing_device_get_cpi());
-      }
+      pointing_device_set_cpi(250);
+      mk_max_speed = 4; // Slow mouse keys
+      mk_interval = 24;
+      uprintf("[%lu.%03lu] Snipe ON (2.5s). CPI -> 250, MK -> Slow\n", sec, ms);
+    }
+    return false;
+  case KC_FAST:
+    if (record->event.pressed) {
+      is_fast_mode_active = true;
+      is_sniping_active = false;
+      fast_mode_timer = timer_read();
+      sync_needed = true;
+      pointing_device_set_cpi(3000);
+      mk_max_speed = 30; // Fast mouse keys
+      mk_interval = 10;
+      uprintf("[%lu.%03lu] Fast Mode ON (2.5s). CPI -> 3000, MK -> Fast\n", sec, ms);
     }
     return false;
   case KC_ENT_L2_EXIT:
@@ -1505,12 +1525,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [3] = LAYOUT(QK_GESC, KC_EXIT   , KC_MS_FAST_UP, KC_EXIT, KC_EXIT  , QK_BOOT,   KC_EXIT, KC_RCTL, KC_RALT, KC_RGUI, KC_EXIT, QK_BOOT,
-                 KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN1, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT, KC_SNIPE, KC_EXIT, KC_EXIT,
-                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1 , MS_RGHT , KC_MS_FAST_RIGHT, MS_BTN2,   KC_EXIT, MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
-                 KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    , KC_EXIT,   KC_EXIT, KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
-                 MS_BTN1, MS_BTN2, MS_BTN3,
-                 KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
+    [3] = LAYOUT(QK_GESC, KC_EXIT   , KC_MS_FAST_UP, KC_EXIT, KC_EXIT , QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI, KC_EXIT, QK_BOOT,
+                 KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN1, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, KC_EXIT,
+                 KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1 , MS_RGHT , KC_MS_FAST_RIGHT,   MS_BTN2, KC_EXIT , MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
+                 KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    ,   KC_EXIT, KC_EXIT , KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
+                                                      KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                                               KC_EXIT, KC_EXIT,   KC_EXIT),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3  , KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_BSLS    , KC_P_TO0, KC_O    , KC_I      , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K      , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
@@ -1519,7 +1539,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                     KC_LALT, KC_BSPC,               KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
     [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, QK_CLEAR_EEPROM,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, DPI_MOD, DPI_RMOD, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
                  KC_EXIT, RM_VALU, RM_VALD, KC_DAY , KC_NIGHT   , KC_EXIT  ,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
                  KC_EXIT, RM_HUEU, RM_HUED, RM_SATU, RM_SATD    , KC_EXIT  ,   KC_EXIT, KC_PINWHEEL, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT, KC_EXIT,
@@ -1576,6 +1596,19 @@ bool rgb_matrix_indicators_user(void) {
         HSV hsv = {hue, 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
         rgb_matrix_set_color(far_right_col[i], rgb.r, rgb.g, rgb.b);
+      }
+    }
+    return false;
+  }
+
+  if (is_fast_mode_active) {
+    // Fast mode: Black out top row on RIGHT side, RED far right column
+    if (!is_keyboard_left()) {
+      for (int i = 0; i < sizeof(top_row_right); i++) {
+        rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
+      }
+      for (int i = 0; i < sizeof(far_right_col); i++) {
+        rgb_matrix_set_color(far_right_col[i], 255, 0, 0);
       }
     }
     return false;
@@ -1783,6 +1816,7 @@ void housekeeping_task_user(void) {
       user_sync_info_t sync_data = {
           .is_flashlight = is_flashlight,
           .is_sniping_active = is_sniping_active,
+          .is_fast_mode_active = is_fast_mode_active,
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
           .show_mode_active = show_mode_active,
@@ -1910,6 +1944,26 @@ void matrix_scan_user(void) {
       start_show_mode();
     }
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
+  }
+
+  // Timeout for Snipe Mode (2.5s)
+  if (is_sniping_active && timer_elapsed(snipe_timer) > 2500) {
+    is_sniping_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    mk_max_speed = 12; // Restore default
+    mk_interval = 16;
+    sync_needed = true;
+    uprintf("Snipe Mode Timeout. CPI -> Default\n");
+  }
+
+  // Timeout for Fast Mode (2.5s)
+  if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > 2500) {
+    is_fast_mode_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    mk_max_speed = 12; // Restore default
+    mk_interval = 16;
+    sync_needed = true;
+    uprintf("Fast Mode Timeout. CPI -> Default\n");
   }
 
   if (rgb_auto_cycle && timer_elapsed(rgb_auto_timer) > 30000) {

@@ -24,7 +24,7 @@ LAYER_COLORS = {
     2: (130, 220, 130),    # Green (Arrow)
     3: (240, 220, 100),    # Yellow (Mouse)
     4: (240, 150, 240),    # Pink (One-Hand)
-    5: (100, 220, 220),    # Cyan (Settings)
+    5: (255, 110, 150),    # Hot Pink (Settings)
 }
 
 # Key border colors (darker versions)
@@ -34,7 +34,7 @@ KEY_BORDER_COLORS = {
     2: (80, 160, 80),
     3: (180, 160, 60),
     4: (180, 100, 180),
-    5: (60, 160, 160),
+    5: (180, 60, 90),
 }
 
 def get_font(size, bold=False):
@@ -302,6 +302,38 @@ def generate_wallpaper(output_path, keymap_path, info_path):
     # Save
     img.save(output_path, 'PNG', quality=95)
     print(f"Wallpaper saved to: {output_path}")
+    
+    # Refresh XFCE wallpaper
+    refresh_xfce_wallpaper(output_path)
+
+
+def refresh_xfce_wallpaper(image_path):
+    """Force XFCE to refresh the wallpaper."""
+    try:
+        # Get all properties related to last-image
+        import subprocess
+        cmd = ["xfconf-query", "-c", "xfce4-desktop", "-l"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            return
+
+        properties = [p for p in result.stdout.splitlines() if p.endswith("last-image")]
+        
+        for prop in properties:
+            # Check if it's currently set to this image or if we should just update it anyway
+            check_cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop]
+            current = subprocess.run(check_cmd, capture_output=True, text=True).stdout.strip()
+            
+            if current == image_path or "mech-keyboard/wallpaper.png" in current:
+                # Setting it to the same value often doesn't trigger a refresh if the path hasn't changed.
+                # We can try to toggle it or just set it. 
+                # Sometimes setting it to the absolute path again works.
+                subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", ""], capture_output=True)
+                subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", image_path], capture_output=True)
+                print(f"Refreshed XFCE property: {prop}")
+
+    except Exception as e:
+        print(f"Failed to refresh XFCE wallpaper: {e}")
 
 
 def main():
