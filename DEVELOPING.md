@@ -76,7 +76,18 @@ Refer to existing implementations like `KC_ENT_TG2` in `keymap.c` for concrete e
 
 ---
 
-## 5. Mouse & Trackball Logic
+## 5. Tap Dance (Z Key)
+
+The `Z` key uses QMK's "Tap Dance" feature for complex multi-tap logic:
+- **Tap:** Send 'Z'.
+- **Hold:** Toggle **Layer 4** (One-Handed / Mirrored).
+- **Double Tap:** Toggle **Flashlight Mode** (All LEDs White Max Brightness).
+
+This is configured via `tap_dance_actions[]` and the `z_finished`/`z_reset` functions.
+
+---
+
+## 6. Mouse & Trackball Logic
 
 ### Auto-Mouse Layer
 The trackball automatically activates Layer 3 (Mouse) upon movement.
@@ -90,7 +101,7 @@ The trackball automatically activates Layer 3 (Mouse) upon movement.
 
 ---
 
-## 6. Split Sync Architecture
+## 7. Split Sync Architecture
 
 The left and right halves communicate via a custom RPC transaction (`USER_SYNC_INFO`).
 - **Master drives:** RGB modes, flashlight state, and "Show Mode" (flashing digits for mode indices).
@@ -99,7 +110,7 @@ The left and right halves communicate via a custom RPC transaction (`USER_SYNC_I
 
 ---
 
-## 7. Generating Documentation (PDF & Wallpaper)
+## 8. Generating Documentation (PDF & Wallpaper)
 
 The layout documentation is auto-generated from `keymap.c`.
 
