@@ -1,6 +1,6 @@
 # Developer Guide for Charybdis 4x6 (dcar layout)
 
-This document explains how to build the firmware and how to modify the keymap logic, including the custom "hold-to-toggle" features.
+This document explains how to build the firmware, modify the keymap logic, and use the diagnostic tools.
 
 ## 1. Keymap Source Files
 
@@ -11,157 +11,109 @@ The keymap source files are stored in the `keymap/` directory of this repository
 | `keymap/` | **Source of Truth** - Edit files here. |
 | `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/` | **Symlink** - Points back to `keymap/` so QMK can build it. |
 
-This setup ensures that your custom logic is part of this repository (`mech-keyboard`) and safe from changes/resets in the QMK submodule.
-
-### Workflow
-
-1. **Edit** files in `keymap/` (e.g., `keymap.c`).
-2. **Build** with `qmk compile` (see section 2).
-   - QMK will automatically follow the symlink and build your code.
-3. **Commit** changes to this repository:
-   ```bash
-   git add keymap/
-   git commit -m "Update keymap logic"
-   ```
-
 ### Files
+- `keymap.c` - Layer definitions, custom keycodes, and behavior logic.
+- `config.h` - Charybdis hardware configuration (DPI, offsets, etc).
+- `rules.mk` - QMK build rules and features.
 
-- `keymap.c` - Layer definitions, custom keycodes, and behavior logic
-- `config.h` - Charybdis hardware configuration
-- `rules.mk` - QMK build rules and features
+---
 
 ## 2. Building the Firmware
 
-The project uses QMK. The build command is specific to the hardware setup (Charybdis 4x6 with Elite-Pi/Splinky).
-
-**Command:**
+### Recommended: Quick Build
+Use the provided script in the root directory:
 ```bash
-# Run from the root of the repository or qmk_firmware directory
+./build.sh
+```
+
+### Manual Build
+If you need to pass extra flags:
+```bash
 cd qmk_firmware
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```
 
-**Artifact:**
-The compiled file is `bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2`.
+**Artifact:** The compiled file is `bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2`.
 
-## 3. Keymap Architecture
+---
 
-The core logic resides in `keymap/keymap.c` (source of truth) which gets copied to `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/keymap.c` for building.
+## 3. Live Diagnostics & Logging
 
-### A. Keymap Definitions
-The key layouts for all layers are defined in the `keymaps` array:
-```c
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(...), // Base Layer
-    [1] = LAYOUT(...), // Symbols
-    // ...
-};
+This layout includes extensive instrumentation for real-time debugging.
+
+### Viewing Logs
+Connect your keyboard and run:
+```bash
+qmk console
 ```
-To change a standard key, simply replace its keycode here (e.g., change `KC_A` to `KC_B`).
+You will see real-time output including:
+- **Matrix Scans:** Timestamped key presses/releases with millisecond precision.
+- **Layer Changes:** Every layer transition is logged with the specific logic reason (e.g., `Auto Mouse Movement`, `Thumb Hold Triggered`).
+- **Mouse Stats:** Current CPI, movement deltas, and auto-layer timeouts.
+- **Split Sync:** Heartbeat logs showing communication health between the left and right halves.
 
-### B. Custom Keycodes
-Custom behaviors (like "Hold Q to Toggle Layer 4") use custom keycodes defined in the `custom_keycodes` enum:
+### Custom Logging
+In `keymap.c`, use `uprintf()` to send messages to the console:
 ```c
-enum custom_keycodes {
-    KC_RAINBOW = QK_USER_0,
-    KC_PGUP_TG2,  // Custom code for PgUp / Layer 2 Toggle
-    // ...
-};
+uprintf("My custom event happened at %u ms\n", timer_read());
 ```
+
+---
 
 ## 4. Implementing "Hold-to-Toggle" Logic
 
-Standard QMK `LT(layer, key)` (Layer-Tap) functions require you to *hold* the key to keep the layer active. The custom logic implemented here allows you to *hold* the key briefly to **toggle** the layer permanently (on/off), while a quick *tap* sends the keycode.
+Standard QMK `LT(layer, key)` (Layer-Tap) functions require you to *hold* the key to keep the layer active. The custom logic implemented here allows you to *hold* the key briefly to **toggle** the layer permanently (on/off), while a quick *tap* sends a standard keycode.
 
 ### Components Required
-
 To add this behavior to a new key (e.g., Key `X` toggling Layer `Y`):
 
 1.  **Define Keycode:** Add `KC_X_TGY` to the `custom_keycodes` enum.
-2.  **State Variables:** Define static variables to track the key's state and timer:
-    ```c
-    static uint16_t x_tap_timer = 0;
-    static bool x_held = false;
-    static bool x_triggered = false;
-    ```
-3.  **Process Record (Key Press/Release):**
-    In `process_record_user`, handle the press and release events:
-    ```c
-    case KC_X_TGY:
-        if (record->event.pressed) {
-            x_held = true;            // Mark as held
-            x_triggered = false;      // Reset trigger flag
-            x_tap_timer = timer_read(); // Start timer
-        } else {
-            x_held = false;           // Mark as released
-            if (!x_triggered) {       // If we haven't toggled the layer yet...
-                tap_code(KC_X);       // ...it was just a tap. Send 'X'.
-            }
-        }
-        return false; // Tell QMK we handled this key manually
-    ```
-4.  **Matrix Scan (Time-based Trigger):**
-    In `matrix_scan_user` (which runs constantly), check if the key has been held long enough:
-    ```c
-    if (x_held && !x_triggered && timer_elapsed(x_tap_timer) > TAPPING_TERM) {
-        layer_invert(Y);     // Toggle Layer Y
-        x_triggered = true;  // Mark as triggered so we don't send 'X' on release
-    }
-    ```
+2.  **State Variables:** Define static variables to track the key's state and timer.
+3.  **Process Record:** Handle the press (start timer) and release (if not triggered, tap keycode).
+4.  **Matrix Scan:** Check if `timer_elapsed() > MY_TAPPING_TERM`. If so, toggle the layer and set `triggered = true`.
 
-## 5. Tap Dance (Z Key)
+Refer to existing implementations like `KC_ENT_TG2` in `keymap.c` for concrete examples.
 
-The `Z` key uses QMK's "Tap Dance" feature for more complex multi-tap logic:
-- **Tap:** Send 'Z'
-- **Hold:** Toggle Layer 3 (Mouse)
-- **Double Tap:** Toggle Flashlight Mode
+---
 
-This is configured via `tap_dance_actions[]` and the `z_finished`/`z_reset` functions.
+## 5. Mouse & Trackball Logic
 
-## 6. Mouse Logic
+### Auto-Mouse Layer
+The trackball automatically activates Layer 3 (Mouse) upon movement.
+- **Logic:** `pointing_device_task_user` detects movement and signals the master.
+- **Timeout:** `matrix_scan_user` turns off Layer 3 after a period of inactivity (default 1.5s), unless **Mouse Lock** is active.
 
-The trackball automatically switches to Layer 3 (Mouse) upon movement.
-- **Logic:** `pointing_device_task_user` detects movement and calls `layer_on(3)`.
-- **Timeout:** `matrix_scan_user` checks `auto_mouse_timer` and turns off Layer 3 after 650ms of inactivity, unless `mouse_is_locked` is true.
+### Sniper & Fast Modes
+- **Sniper Mode:** Drops CPI to 250 for precision.
+- **Fast Mode:** Boosts CPI to 3000 for large movements.
+- Both modes temporarily override Mouse Key speeds as well for consistent feel.
 
-## 7. Updating the Layout PDF
+---
 
-When you make changes to the keymap, you should regenerate the layout PDF documentation to reflect those changes.
+## 6. Split Sync Architecture
 
-### Prerequisites
+The left and right halves communicate via a custom RPC transaction (`USER_SYNC_INFO`).
+- **Master drives:** RGB modes, flashlight state, and "Show Mode" (flashing digits for mode indices).
+- **Slave reports:** Local trackball activity back to master to trigger auto-layering.
+- **Random Seeds:** The master shares a random seed every time an RGB effect changes to ensure both halves are perfectly synchronized (e.g., for `DIGITAL_RAIN` or `PIXEL_FRACTAL`).
+
+---
+
+## 7. Generating Documentation (PDF & Wallpaper)
+
+The layout documentation is auto-generated from `keymap.c`.
+
+### Update the PDF
 ```bash
-pip install reportlab
+python3 generate_layout_pdf.py
 ```
+Updates `charybdis_layout.pdf`. If you add new keycodes, update the `custom_map` dictionary in the script to provide a clean label.
 
-### Updating the PDF
-
-1. **Make your keymap changes** in `keymap/keymap.c`
-
-2. **If you added new custom keycodes**, update the key label mapping in `generate_layout_pdf.py`:
-   - Find the `custom_map` dictionary (around line 287)
-   - Add your keycode mapping, e.g.:
-     ```python
-     'KC_MY_KEY': 'My\nKey',
-     ```
-   - Use `\n` to split labels across multiple lines for better readability
-
-3. **Regenerate the PDF**:
-   ```bash
-   python3 generate_layout_pdf.py
-   ```
-
-   This will update `charybdis_layout.pdf` with the current keymap.
+### Update the Wallpaper
+```bash
+python3 wallpaper.py
+```
+Updates `wallpaper.png`. This script also attempts to refresh the XFCE desktop background automatically if you are on Linux.
 
 ### How it Works
-
-The script:
-- Parses `keymap/keymap.c` to extract all layer definitions
-- Reads the physical layout from `qmk_firmware/keyboards/bastardkb/charybdis/4x6/info.json`
-- Generates a visual PDF with color-coded layers matching the RGB indicators
-- Each layer is rendered on the PDF with simplified, readable key labels
-
-### Troubleshooting
-
-If keys show as raw keycodes (e.g., `KC_SCROLL_LOCK`) instead of friendly labels:
-1. Add a mapping in the `custom_map` dictionary in `generate_layout_pdf.py`
-2. Regenerate the PDF
+Both scripts parse `keymap.c` to extract the `keymaps` array. They use the `info.json` from QMK to determine the physical key positions for the 4x6 Charybdis.
