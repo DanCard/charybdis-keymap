@@ -63,6 +63,7 @@ enum custom_keycodes {
   KC_2_TG2,
   KC_3_TG3,
   KC_4_TG4,
+  KC_Q_TG4,
   KC_JELLY,
   KC_SPIRAL,
   KC_CHEVRON,
@@ -124,6 +125,10 @@ static uint16_t rgb_auto_timer = 0;
 static uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
 static uint16_t auto_mouse_timer = 0;
 static bool auto_mouse_on = false;
+
+static uint16_t q_tap_timer = 0;
+static bool q_held = false;
+static bool q_triggered = false;
 
 // Mouse Key globals
 extern uint8_t mk_max_speed;
@@ -196,6 +201,7 @@ typedef struct _user_sync_info_response_t {
   bool did_rgb_sync;
   uint8_t slave_rgb_mode;
   uint16_t slave_task_counter;
+  bool mouse_active;
 } user_sync_info_response_t;
 
 static bool sync_needed = false;
@@ -204,6 +210,7 @@ static bool master_rgb_init_pending = false;
 static uint8_t master_rgb_init_mode = 0;
 static uint16_t current_random_seed = 0;  // Shared random seed for RGB effects
 static uint16_t slave_task_counter = 0; // Running counter on slave
+static bool slave_mouse_active = false; // Flag for slave to report activity
 
 void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
                                   uint8_t out_buflen, void *out_data) {
@@ -261,6 +268,8 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
     response->did_rgb_sync = synced;
     response->slave_rgb_mode = rgb_matrix_get_mode();
     response->slave_task_counter = slave_task_counter;
+    response->mouse_active = slave_mouse_active;
+    slave_mouse_active = false; // Clear flag after reporting
   }
 }
 
@@ -958,6 +967,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
+  case KC_Q_TG4:
+    if (record->event.pressed) {
+      q_held = true;
+      q_triggered = false;
+      q_tap_timer = timer_read();
+    } else {
+      q_held = false;
+      if (!q_triggered) {
+        tap_code(KC_Q);
+      }
+    }
+    return false;
   case KC_PGUP_TO0:
     if (record->event.pressed) {
       pgup_held = true;
@@ -1391,6 +1412,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       start_show_mode();
     }
     return false;
+  case DPI_MOD:
+    if (record->event.pressed) {
+      // Allow core to handle it first (return true), but log current/new DPI?
+      // Actually, core handles it on press. We can log after?
+      // Or just log that we pressed it.
+      uprintf("DPI+ Pressed. Current CPI: %u\n", pointing_device_get_cpi());
+    }
+    return true; // Let core handle the DPI change
+  case DPI_RMOD:
+    if (record->event.pressed) {
+      uprintf("DPI- Pressed. Current CPI: %u\n", pointing_device_get_cpi());
+    }
+    return true; // Let core handle the DPI change
   case KC_MS_TMO_INC:
     if (record->event.pressed) {
       auto_mouse_timeout += 500;
@@ -1507,7 +1541,7 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] =
         LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
-               KC_TAB, KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+               KC_TAB, KC_Q_TG4, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                KC_LSFT, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                KC_SPC_TG2, KC_ENT_TG4, KC_L_TG1, KC_DEL, KC_ENT_TG2,
@@ -1519,8 +1553,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL,    KC_EXIT  , KC_EXIT  , KC_EXIT  , KC_EXIT   , KC_EXIT   , KC_EXIT,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
                  KC_LALT, KC_BSPC_EXIT, KC_BSPC_EXIT),
-    [2] = LAYOUT(QK_BOOT, KC_F1         , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
-                 KC_PSCR, KC_EXIT       , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
+    [2] = LAYOUT(KC_EXIT, KC_F1         , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
+                 KC_PSCR, KC_EXIT       , KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
                  KC_LSFT, KC_LEFT       , KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1, KC_R_TG2, KC_ENT_EXIT,
@@ -1681,18 +1715,18 @@ bool rgb_matrix_indicators_user(void) {
     break;
   }
   case 5: {
-    // Settings (Cyan)
+    // Settings (Hot Pink)
     if (is_keyboard_left()) {
       // Left side: RGB control keys (Q, W, E, R positions + A, S, D, F + Z, X)
       static const uint8_t left[] = {6, 9, 14, 17, 5, 10, 13, 18, 4, 11};
       for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 0, 255, 255);
+        rgb_matrix_set_color(left[i], 255, 110, 150);
     }
     if (!is_keyboard_left()) {
       // Right side: Mouse setting keys (U, I, O positions + J, K, L)
       static const uint8_t right[] = {17, 14, 9, 18, 13, 10};
       for (int i = 0; i < sizeof(right); i++)
-        rgb_matrix_set_color(right[i], 0, 255, 255);
+        rgb_matrix_set_color(right[i], 255, 110, 150);
     }
     break;
   }
@@ -1803,7 +1837,8 @@ void keyboard_post_init_user(void) {
 void housekeeping_task_user(void) {
   if (is_keyboard_master()) {
     static uint32_t last_sync = 0;
-    bool needs_periodic = timer_elapsed32(last_sync) > 250;
+    // Poll faster (50ms) to detect slave mouse movement for layer switching
+    bool needs_periodic = timer_elapsed32(last_sync) > 50;
 
     // Update caps lock state on master
     is_caps_lock_on = host_keyboard_led_state().caps_lock;
@@ -1844,6 +1879,19 @@ void housekeeping_task_user(void) {
           uprintf("\033[92mMaster: Slave synced RGB to mode %d (seed=%u)\033[0m\n", sync_data.rgb_mode, current_random_seed);
           last_synced_mode = sync_data.rgb_mode;
         }
+        
+        // Handle Slave Mouse Activity (Auto Layer 3)
+        if (response_data.mouse_active) {
+            if (!auto_mouse_on) {
+                layer_change_reason = "Slave Mouse Movement";
+                layer_on(3);
+                auto_mouse_on = true;
+                uprintf("Master: Activated Layer 3 due to Slave Mouse\n");
+            }
+            // Keep timer alive
+            auto_mouse_timer = timer_read();
+        }
+
         sync_needed = false;
       } else {
         sync_fail_count++;
@@ -1915,11 +1963,16 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
       movement_streak++;
       if (movement_streak > 1) { // Require 2 consecutive movement events
         // Only activate layer for significant movement
-        uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
-        layer_change_reason = "Auto Mouse Movement";
-        layer_on(3); // Switch to Mouse Layer (3)
-        auto_mouse_on = true;
-        auto_mouse_timer = timer_read();
+        if (is_keyboard_master()) {
+             uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
+             layer_change_reason = "Auto Mouse Movement";
+             layer_on(3); // Switch to Mouse Layer (3)
+             auto_mouse_on = true;
+             auto_mouse_timer = timer_read();
+        } else {
+             // Slave side: Signal master
+             slave_mouse_active = true;
+        }
         movement_streak = 0;
       }
     } else {
@@ -2024,6 +2077,12 @@ void matrix_scan_user(void) {
     layer_change_reason = "P(Hold): Exit to Base";
     layer_move(0);
     p_triggered = true;
+    rgb_matrix_indicators_user();
+  }
+  if (q_held && !q_triggered && timer_elapsed(q_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "Q(Hold): Exit to One-Hand (L4)";
+    layer_move(4);
+    q_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (ent_mo_held && !ent_mo_triggered &&

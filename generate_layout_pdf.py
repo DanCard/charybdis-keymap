@@ -310,6 +310,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_P_TO0': 'P\nExit',
         'KC_X_TG2': 'X\nTG2',
         'KC_V_TG5': 'V\nTG5',
+        'KC_Q_TG4': 'Q\nL4',
         'KC_L_TG1': 'L1\nTgl',
         'KC_R_TG2': 'L2\nTgl',
         'KC_ENT_MO4': 'Enter\nL4',
