@@ -90,6 +90,8 @@ enum custom_keycodes {
   KC_JITTER,      // Toggle Mouse Jitter Filter
   KC_P_FRAC,      // Set Pixel Fractal Theme (29)
   KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
+  KC_DAY,         // Set brightness to Day level
+  KC_NIGHT,       // Set brightness to Night level
   KC_5_TG5        // Tap: 5, Hold: Toggle Layer 5 (Settings)
 };
 
@@ -115,7 +117,7 @@ static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static uint8_t automatic_hue_tracker = 0;
 static bool rgb_auto_cycle = false;
 static uint16_t rgb_auto_timer = 0;
-static uint16_t auto_mouse_timeout = 2000; // Default 2 seconds, adjustable
+static uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
 static uint16_t auto_mouse_timer = 0;
 static bool auto_mouse_on = false;
 
@@ -367,7 +369,7 @@ void start_show_mode(void) {
   } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING) {
     // Increment hue for Solid Color and Breathing modes every time they activate
     automatic_hue_tracker += 42;
-    rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, 255, 255);
+    rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, rgb_matrix_get_sat(), rgb_matrix_get_val());
     uprintf("Solid/Breathing Activated: Mode=%d (SOLID=%d, BREATHING=%d) Hue=%d\n",
             mode, RGB_MATRIX_SOLID_COLOR, RGB_MATRIX_BREATHING, automatic_hue_tracker);
   }
@@ -1401,6 +1403,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       start_show_mode();
     }
     return false;
+  case KC_DAY:
+    if (record->event.pressed) {
+      // Set High Brightness (Day Mode)
+      // Keep current Hue/Sat, set Value to 225
+      rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 225);
+      uprintf("Day Mode: Brightness set to 225\n");
+    }
+    return false;
+  case KC_NIGHT:
+    if (record->event.pressed) {
+      // Set Low Brightness (Night Mode)
+      // Keep current Hue/Sat, set Value to 16
+      rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 16);
+      uprintf("Night Mode: Brightness set to 16\n");
+    }
+    return false;
   case KC_SET_LEFT:
     if (record->event.pressed) {
       eeconfig_update_handedness(true);  // true = left hand
@@ -1493,20 +1511,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    , KC_EXIT,   KC_EXIT, KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
                  MS_BTN1, MS_BTN2, MS_BTN3,
                  KC_EXIT, MS_BTN1, KC_EXIT, KC_EXIT, MS_BTN2),
-    [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,
-                 KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_BSLS, KC_P_TO0, KC_O,
-                 KC_I, KC_U, KC_Y, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
-                 KC_QUOT, KC_PLUS_COLON, KC_L, KC_K, KC_J, KC_H, KC_H, KC_J,
-                 KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM, KC_M, KC_N, KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
-                 KC_SPC, KC_ENT_EXIT, KC_LSFT,
-                 KC_R_TG2, KC_ENT_EXIT,
-                 KC_LALT, KC_BSPC, KC_BSPC),
+    [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3  , KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
+                 KC_BSLS    , KC_P_TO0, KC_O    , KC_I      , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+                 KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K      , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+                 KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM   , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
+                                                    KC_SPC, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
+                                                    KC_LALT, KC_BSPC,               KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR,
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR,
                  KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, DPI_MOD, DPI_RMOD, KC_SNIPE, KC_EXIT, QK_CLEAR_EEPROM,
-                 KC_EXIT, RM_VALU, RM_VALD, RM_SATU, RM_SATD, KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
-                 KC_EXIT, RM_HUEU, RM_HUED, KC_EXIT, KC_EXIT, KC_PINWHEEL,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,
+                 KC_EXIT, RM_VALU, RM_VALD, KC_DAY , KC_NIGHT   , KC_EXIT  ,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
+                 KC_EXIT, RM_HUEU, RM_HUED, RM_SATU, RM_SATD    , KC_EXIT  ,   KC_EXIT, KC_PINWHEEL, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT, KC_EXIT),

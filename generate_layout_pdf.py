@@ -376,6 +376,8 @@ def simplify_key(key_code, layer_num=None):
         'LALT(KC_HOME)': 'Alt\nHome',
         'KC_DEBUG_SYNC': 'Sync\nDbg',
         'KC_FIRE': 'Fire',
+        'KC_DAY': 'Day\nBright',
+        'KC_NIGHT': 'Night\nDim',
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -410,42 +412,52 @@ def draw_key(c, x, y, width, height, label, bg_color):
     # Split lines
     lines = label.split('\n')
     
-    # Determine max line length for font sizing
-    max_len = max(len(line) for line in lines)
+    # Calculate settings for each line
+    line_settings = []
+    total_text_height = 0
     
-    # Adjust font size based on label length
-    if max_len <= 2:
-        font_size = 14
-    elif max_len <= 4:
-        font_size = 12
-    elif max_len <= 7:
-        font_size = 10
-    elif max_len <= 10:
-        font_size = 8
-    else:
-        font_size = 6.5
+    for line in lines:
+        l = len(line)
+        if l <= 1:
+            font_size = 16
+        elif l <= 2:
+            font_size = 14
+        elif l <= 4:
+            font_size = 10
+        elif l <= 7:
+            font_size = 9
+        else:
+            font_size = 7
+            
+        line_height = font_size + 2  # Add some spacing
+        line_settings.append((line, font_size, line_height))
+        total_text_height += line_height
 
-    c.setFont("Helvetica-Bold", font_size)
+    # Remove spacing from last line for tighter bounding box
+    if line_settings:
+        total_text_height -= 2
+
+    # Vertical centering
+    # Start drawing from the top of the text block
+    # Canvas y is bottom-up
+    # Center of key is y + height/2
+    # Top of text block is center + total/2
     
-    # Calculate vertical starting position to center the block of text
-    line_height = font_size + 1
-    total_text_height = len(lines) * line_height
+    current_y = y + (height + total_text_height) / 2
 
-    start_text_y = y + (height + total_text_height) / 2 - line_height + 2
-
-    if len(lines) > 1:
-        # Tweak for multi-line to center better visually
-        start_text_y += 1
-
-    if len(lines) >= 3 and font_size >= 10:
-        # 3+ line labels with large font need to be lowered more
-        start_text_y -= 4 
-
-    for i, line in enumerate(lines):
+    for line, font_size, line_height in line_settings:
+        c.setFont("Helvetica-Bold", font_size)
         text_width = c.stringWidth(line, "Helvetica-Bold", font_size)
         text_x = x + (width - text_width) / 2
-        text_y = start_text_y - (i * line_height)
-        c.drawString(text_x, text_y, line)
+        
+        # Draw at baseline. A rough approximation for baseline shift is needed.
+        # current_y is the top of this line's space.
+        # We descend by font_size mostly.
+        draw_y = current_y - font_size
+        
+        c.drawString(text_x, draw_y, line)
+        
+        current_y -= line_height
 
 
 def draw_layer(c, layer_keys, layout_info, layer_num, start_x_arg, start_y, key_size=28):

@@ -99,41 +99,54 @@ def draw_key(draw, x, y, width, height, label, bg_color, border_color):
 
     # Draw label
     lines = label.split('\n')
-    max_len = max(len(line) for line in lines) if lines else 0
-    num_lines = len(lines)
-
-    # Adjust font size based on label length
-    if max_len <= 1:
-        font_size = 38
-    elif max_len <= 2:
-        font_size = 34
-    elif max_len <= 4:
-        font_size = 26
-    elif max_len <= 6:
-        font_size = 20
-    else:
-        font_size = 16
-
-    # Slight reduction for 3+ line labels
-    if num_lines >= 3:
-        font_size = min(font_size, 22)
-
-    font = get_font(font_size, bold=True)
     text_color = (30, 30, 40)  # Dark text for contrast
-
-    # Calculate total text height
-    line_height = font_size + 3
-    total_height = len(lines) * line_height
+    
+    line_configs = []
+    total_height = 0
+    
+    for line in lines:
+        l = len(line)
+        if l <= 1:
+            font_size = 42
+        elif l <= 2:
+            font_size = 34
+        elif l <= 4:
+            font_size = 24
+        elif l <= 6:
+            font_size = 20
+        else:
+            font_size = 16
+            
+        # Slight reduction for 3+ line labels if they are large
+        if len(lines) >= 3:
+            font_size = min(font_size, 22)
+            
+        font = get_font(font_size, bold=True)
+        
+        # Calculate height
+        bbox = draw.textbbox((0, 0), line, font=font)
+        # Height is bottom - top
+        h = bbox[3] - bbox[1] 
+        # Add some leading/spacing
+        h += 6
+        
+        line_configs.append((line, font, h))
+        total_height += h
+        
+    # Remove spacing from last line
+    if line_configs:
+        total_height -= 6
 
     # Start position for vertical centering
-    start_y = y + (height - total_height) // 2
+    current_y = y + (height - total_height) // 2
 
-    for i, line in enumerate(lines):
+    for line, font, h in line_configs:
         bbox = draw.textbbox((0, 0), line, font=font)
         text_width = bbox[2] - bbox[0]
         text_x = x + (width - text_width) // 2
-        text_y = start_y + i * line_height
-        draw.text((text_x, text_y), line, fill=text_color, font=font)
+        
+        draw.text((text_x, current_y), line, fill=text_color, font=font)
+        current_y += h
 
 
 def draw_layer(img, draw, layer_keys, layout_info, layer_num, start_x, start_y, key_width=88, key_height=88):

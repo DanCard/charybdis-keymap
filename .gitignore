@@ -32,6 +32,7 @@ Thumbs.db
 # Temporary files
 old/
 .claude/
+crap/
 *.tmp
 layout_clean.txt
 notes.txt
