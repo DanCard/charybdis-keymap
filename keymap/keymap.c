@@ -94,7 +94,8 @@ enum custom_keycodes {
   KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
   KC_DAY,         // Set brightness to Day level
   KC_NIGHT,       // Set brightness to Night level
-  KC_5_TG5        // Tap: 5, Hold: Toggle Layer 5 (Settings)
+  KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
+  KC_TOG_L1_MODE  // Toggle KC_L_TG1 behavior (L1 vs L3)
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -117,6 +118,7 @@ static uint16_t snipe_timer = 0;
 static uint16_t fast_mode_timer = 0;
 static bool mouse_is_locked = false;
 static bool is_jitter_filter_active = false; // Default: Filter OFF
+static bool l1_toggle_mode_is_l3 = true; // Default: Toggle L3 (Mouse)
 static uint8_t saved_rgb_mode;
 static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static uint8_t automatic_hue_tracker = 0;
@@ -129,6 +131,11 @@ static bool auto_mouse_on = false;
 static uint16_t q_tap_timer = 0;
 static bool q_held = false;
 static bool q_triggered = false;
+
+// Deferred EEPROM update to avoid USB timeout on boot
+static uint16_t pending_eeprom_config = 0;
+static bool eeprom_update_pending = false;
+static uint32_t eeprom_defer_timer = 0;
 
 // Mouse Key globals
 extern uint8_t mk_max_speed;
@@ -184,6 +191,7 @@ typedef struct _user_sync_info_t {
   bool is_fast_mode_active;
   bool mouse_is_locked;
   bool is_jitter_filter_active;
+  bool l1_toggle_mode_is_l3;
   bool show_mode_active;
   bool is_caps_lock_on;
   uint8_t show_mode_digits[2];
@@ -225,6 +233,7 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   is_fast_mode_active = sync_data->is_fast_mode_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
+  l1_toggle_mode_is_l3 = sync_data->l1_toggle_mode_is_l3;
   show_mode_active = sync_data->show_mode_active;
   is_caps_lock_on = sync_data->is_caps_lock_on;
   show_mode_digits[0] = sync_data->show_mode_digits[0];
@@ -432,6 +441,7 @@ void debug_dump_sync_state(void) {
   uprintf("is_fast_mode_active: %s\n", is_fast_mode_active ? "YES" : "no");
   uprintf("mouse_is_locked: %s\n", mouse_is_locked ? "YES" : "no");
   uprintf("is_jitter_filter_active: %s\n", is_jitter_filter_active ? "YES" : "no");
+  uprintf("l1_toggle_mode_is_l3: %s\n", l1_toggle_mode_is_l3 ? "L3 (Mouse)" : "L1 (Numpad)");
   uprintf("is_caps_lock_on: %s\n", is_caps_lock_on ? "YES" : "no");
   uprintf("\033[95m======================================\033[0m\n\n");
 }
@@ -779,38 +789,38 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_MS_FAST_UP:
     if (record->event.pressed) {
-      tap_code(MS_ACL2); // Speed up
+      if (!is_sniping_active) tap_code(MS_ACL2); // Speed up only if not sniping
       register_code(MS_UP);
     } else {
       unregister_code(MS_UP);
-      tap_code(MS_ACL0); // Reset speed
+      if (!is_sniping_active) tap_code(MS_ACL0); // Reset speed
     }
     return false;
   case KC_MS_FAST_DOWN:
     if (record->event.pressed) {
-      tap_code(MS_ACL2);
+      if (!is_sniping_active) tap_code(MS_ACL2);
       register_code(MS_DOWN);
     } else {
       unregister_code(MS_DOWN);
-      tap_code(MS_ACL0);
+      if (!is_sniping_active) tap_code(MS_ACL0);
     }
     return false;
   case KC_MS_FAST_LEFT:
     if (record->event.pressed) {
-      tap_code(MS_ACL2);
+      if (!is_sniping_active) tap_code(MS_ACL2);
       register_code(MS_LEFT);
     } else {
       unregister_code(MS_LEFT);
-      tap_code(MS_ACL0);
+      if (!is_sniping_active) tap_code(MS_ACL0);
     }
     return false;
   case KC_MS_FAST_RIGHT:
     if (record->event.pressed) {
-      tap_code(MS_ACL2);
+      if (!is_sniping_active) tap_code(MS_ACL2);
       register_code(MS_RGHT);
     } else {
       unregister_code(MS_RGHT);
-      tap_code(MS_ACL0);
+      if (!is_sniping_active) tap_code(MS_ACL0);
     }
     return false;
   case KC_MS_DIAG_UL:
@@ -931,14 +941,37 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       rgb_matrix_indicators_user();
     }
     return false;
+  case KC_TOG_L1_MODE:
+    if (record->event.pressed) {
+      l1_toggle_mode_is_l3 = !l1_toggle_mode_is_l3;
+      sync_needed = true;
+      uprintf("KC_L_TG1 Mode Toggled: %s\n", l1_toggle_mode_is_l3 ? "L3 (Mouse)" : "L1 (Numpad)");
+
+      // Update EEPROM
+      uint16_t current_config = eeconfig_read_user();
+      if (l1_toggle_mode_is_l3) {
+        current_config |= 0x0040; // Set bit 6
+      } else {
+        current_config &= ~0x0040; // Clear bit 6
+      }
+      eeconfig_update_user(current_config);
+
+      rgb_matrix_indicators_user();
+    }
+    return false;
   case KC_L_TG1:
     if (record->event.pressed) {
       if (get_highest_layer(layer_state) > 0) {
         layer_change_reason = "L_TG1 (Tap): L0 (Reset)";
         layer_move(0);
       } else {
-        layer_change_reason = "L_TG1 (Tap): Toggle L1 (Invert)";
-        layer_invert(1);
+        if (l1_toggle_mode_is_l3) {
+          layer_change_reason = "L_TG1 (Tap): Toggle L3 (Mouse)";
+          layer_invert(3);
+        } else {
+          layer_change_reason = "L_TG1 (Tap): Toggle L1 (Numpad)";
+          layer_invert(1);
+        }
       }
       rgb_matrix_indicators_user();
     }
@@ -1047,9 +1080,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       snipe_timer = timer_read();
       sync_needed = true;
       pointing_device_set_cpi(250);
-      mk_max_speed = 4; // Slow mouse keys
+      mk_max_speed = 1; // Very slow mouse keys
       mk_interval = 24;
-      uprintf("[%lu.%03lu] Snipe ON (2.5s). CPI -> 250, MK -> Slow\n", sec, ms);
+      uprintf("[%lu.%03lu] Snipe ON (2.5s). CPI -> 250, MK -> Slow(1)\n", sec, ms);
     }
     return false;
   case KC_FAST:
@@ -1573,8 +1606,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                     KC_LALT, KC_BSPC,               KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
     [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, DPI_MOD, DPI_RMOD, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
-                 KC_EXIT, RM_VALU, RM_VALD, KC_DAY , KC_NIGHT   , KC_EXIT  ,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
+                 KC_EXIT, RM_VALU, RM_VALD, KC_DAY , KC_NIGHT   , KC_EXIT  ,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_TOG_L1_MODE, KC_DEBUG_SYNC,
                  KC_EXIT, RM_HUEU, RM_HUED, RM_SATU, RM_SATD    , KC_EXIT  ,   KC_EXIT, KC_PINWHEEL, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_EXIT, KC_EXIT,
@@ -1787,20 +1820,22 @@ void keyboard_post_init_user(void) {
   }
 
   // Read user config from EEPROM
-  // Lower 7 bits: Theme Index
+  // Bits 0-5: Theme Index (Max 63)
+  // Bit 6: L1 Toggle Mode (0=L1, 1=L3)
   // Bit 7: Jitter Filter Active
   // Upper 8 bits: Start Hue
   uint16_t user_config = eeconfig_read_user();
 
-  // Restore Jitter State
+  // Restore State
   is_jitter_filter_active = (user_config & 0x0080) ? true : false;
+  l1_toggle_mode_is_l3 = (user_config & 0x0040) ? true : false;
 
-  uint8_t saved_theme = (uint8_t)(user_config & 0x7F);
+  uint8_t saved_theme = (uint8_t)(user_config & 0x3F);
   uint8_t saved_hue = (uint8_t)((user_config >> 8) & 0xFF);
   uint8_t max_effects = RGB_MATRIX_EFFECT_MAX;
 
-  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d)\n", user_config, saved_theme,
-          saved_hue, is_jitter_filter_active);
+  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d, L1TogL3 %d)\n", user_config, saved_theme,
+          saved_hue, is_jitter_filter_active, l1_toggle_mode_is_l3);
 
   // Increment Theme (Cycle 1 to MAX-1)
   uint8_t next_theme = saved_theme + 1;
@@ -1812,12 +1847,20 @@ void keyboard_post_init_user(void) {
   // 0=Red, 42=Yellow, 84=Green, 126=Cyan, 168=Blue, 210=Magenta
   uint8_t next_hue = saved_hue + 42;
 
-  // Save Combined (Preserve Jitter Bit)
-  uint16_t new_config = ((uint16_t)next_hue << 8) | (next_theme & 0x7F);
+  // Save Combined - Defer write to avoid USB timeout
+  uint16_t new_config = ((uint16_t)next_hue << 8) | (next_theme & 0x3F);
   if (is_jitter_filter_active) {
     new_config |= 0x0080;
   }
-  eeconfig_update_user(new_config);
+  if (l1_toggle_mode_is_l3) {
+    new_config |= 0x0040;
+  }
+  
+  pending_eeprom_config = new_config;
+  eeprom_update_pending = true;
+  eeprom_defer_timer = timer_read32();
+  
+  uprintf("Init: Deferred EEPROM write. Pending Config=%u\n", new_config);
 
   // Initialize the tracker with the OLD hue, so the first increment
   // in start_show_mode() lands exactly on 'next_hue'.
@@ -1854,6 +1897,7 @@ void housekeeping_task_user(void) {
           .is_fast_mode_active = is_fast_mode_active,
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
+          .l1_toggle_mode_is_l3 = l1_toggle_mode_is_l3,
           .show_mode_active = show_mode_active,
           .is_caps_lock_on = is_caps_lock_on,
           .show_mode_digits = {show_mode_digits[0], show_mode_digits[1]},
@@ -1989,6 +2033,13 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 }
 
 void matrix_scan_user(void) {
+  // Handle deferred EEPROM update (wait >1s after boot)
+  if (eeprom_update_pending && timer_elapsed32(eeprom_defer_timer) > 1500) {
+    eeconfig_update_user(pending_eeprom_config);
+    eeprom_update_pending = false;
+    uprintf("Deferred EEPROM update executed. Config=%u\n", pending_eeprom_config);
+  }
+
   // Deferred RGB init - apply after matrix is fully ready
   if (master_rgb_init_pending) {
     rgb_matrix_mode_noeeprom(master_rgb_init_mode);

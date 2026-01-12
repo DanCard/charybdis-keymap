@@ -380,6 +380,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_FIRE': 'Fire',
         'KC_DAY': 'Day\nBright',
         'KC_NIGHT': 'Night\nDim',
+        'KC_TOG_L1_MODE': 'L1/L3\nMode',
     }
     if key_code in custom_map:
         return custom_map[key_code]
