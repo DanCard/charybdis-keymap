@@ -38,3 +38,4 @@ layout_clean.txt
 notes.txt
 
 # PDF outputs (optional - remove this line if you want to commit PDFs)
+.aider*

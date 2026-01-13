@@ -118,28 +118,138 @@ KEY_LABELS = {
     'RM_VALD': 'Val -',
 }
 
-# Combos documentation
-COMBOS = [
-    ("A + S", "Left Arrow"),
-    ("S + D", "Up Arrow"),
-    ("D + F", "Down Arrow"),
-    ("F + G", "Right Arrow"),
-    ("A + F", "Right Arrow"),
-    ("A + D", "Delete"),
-    ("J + K", "Delete"),
+# Will be populated dynamically + manual entries
+COMBOS = []
+
+MANUAL_ACTIONS = [
     ("Z (Tap)", "Z"),
     ("Z (Hold)", "Layer 4"),
-    ("Z (Dbl-Tap)", "Flashlight (White)"),
-    ("Z + X", "Home"),
-    ("X + C", "Page Up"),
-    ("X + V", "Paste (Term)"),
-    ("C + V", "Page Down"),
-    ("V + B", "End"),
-    ("Z + V", "End"),
-    ("LShift + RShift", "Caps Lock"),
+    ("Z (Dbl-Tap)", "Flashlight"),
     ("Snipe Active", "Right Top Black"),
     ("Snipe Active", "R-Col Rainbow"),
 ]
+
+def readable_key(k):
+    """Convert a single keycode to a readable short string for combo listing."""
+    k = k.strip()
+    if k.startswith('KC_'):
+        k = k[3:]
+    
+    # Handle shifted keys like S(KC_V)
+    if 'S(' in k:
+        match = re.search(r'S\((?:KC_)?(\w+)\)', k)
+        if match:
+            return f"Shift+{match.group(1)}"
+    
+    # Handle Ctrl+Shift like C(S(KC_V))
+    if 'C(S(' in k:
+        match = re.search(r'C\(S\((?:KC_)?(\w+)\)\)', k)
+        if match:
+            return f"Ctrl+Shift+{match.group(1)}"
+            
+    # Handle Tap Dance
+    if 'TD(' in k:
+        return 'Z' # Special case for TD(TD_Z_LAYER)
+
+    # Dictionary for common abbreviations
+    lookup = {
+        'LSFT': 'LShift', 'RSFT': 'RShift',
+        'LCTL': 'Ctrl', 'RCTL': 'Ctrl',
+        'LALT': 'Alt', 'RALT': 'Alt',
+        'LGUI': 'Win', 'RGUI': 'Win',
+        'BSPC': 'Bksp', 'DEL': 'Del',
+        'PGUP': 'PgUp', 'PGDN': 'PgDn',
+        'MINS': '-', 'EQL': '=',
+        'LBRC': '[', 'RBRC': ']',
+        'BSLS': '\\', 'SCLN': ';',
+        'QUOT': "'", 'GRV': '`',
+        'COMM': ',', 'DOT': '.',
+        'SLSH': '/', 'SPC': 'Space',
+        'ENT': 'Enter'
+    }
+    return lookup.get(k, k)
+
+def extract_combos_from_keymap(file_path):
+    """Parse keymap.c to find all combos defined in key_combos array."""
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+
+        # 1. Parse PROGMEM combo definitions: const uint16_t PROGMEM name[] = {K1, K2, COMBO_END};
+        combo_defs = {}
+        # Regex handles multiline definitions if needed, assuming brace closure
+        # Fix: Escape brackets \[\]
+        matches = re.finditer(r'const uint16_t PROGMEM (\w+)\[\]\s*=\s*\{([^}]+)\};', content)
+        for match in matches:
+            name = match.group(1)
+            keys_str = match.group(2)
+            # Filter out COMBO_END and whitespace
+            keys = [k.strip() for k in keys_str.split(',') if 'COMBO_END' not in k and k.strip()]
+            combo_defs[name] = keys
+
+        # 2. Parse combo_t array: combo_t key_combos[] = { COMBO(name, action), ... };
+        found_combos = []
+        
+        # Find the block
+        match_block = re.search(r'combo_t\s+key_combos\[\]\s*=\s*\{([^;]+)\};', content, re.DOTALL)
+        if match_block:
+            block = match_block.group(1)
+            
+            # Simple parser for COMBO(name, action)
+            # We iterate through the block string to handle nested parentheses in 'action'
+            idx = 0
+            while True:
+                # Find next COMBO(
+                start = block.find('COMBO(', idx)
+                if start == -1:
+                    break
+                
+                idx = start + 6 # Skip 'COMBO('
+                depth = 1
+                args_start = idx
+                args_end = -1
+                
+                while idx < len(block) and depth > 0:
+                    if block[idx] == '(':
+                        depth += 1
+                    elif block[idx] == ')':
+                        depth -= 1
+                        if depth == 0:
+                            args_end = idx
+                    idx += 1
+                
+                if args_end != -1:
+                    args_str = block[args_start:args_end]
+                    # args_str should be "name, action"
+                    # Split by comma. name shouldn't have parens, so simple split is safe enough
+                    # providing we strip whitespace
+                    parts = args_str.split(',', 1)
+                    if len(parts) == 2:
+                        name = parts[0].strip()
+                        action = parts[1].strip()
+                        
+                        if name in combo_defs:
+                            # Convert keys to readable string
+                            readable_keys = " + ".join([readable_key(k) for k in combo_defs[name]])
+                            
+                            # Convert action to readable string
+                            readable_action = readable_key(action)
+                            
+                            # Heuristic for Ctrl+Shift+V
+                            if 'Paste' in readable_action:
+                                readable_action = 'Ctrl+Shift+V'
+                            elif ('V' in readable_action or 'v' in readable_action) and \
+                                 ('Shift' in readable_action or 'S(' in action) and \
+                                 ('Ctrl' in readable_action or 'C(' in action):
+                                 readable_action = 'Ctrl+Shift+V'
+
+                            found_combos.append((readable_keys, readable_action))
+        
+        return found_combos
+
+    except Exception as e:
+        print(f"Error extracting combos: {e}")
+        return []
 
 def parse_keymap(file_path):
     with open(file_path, 'r') as f:
@@ -186,7 +296,7 @@ def parse_keymap(file_path):
         current_key = ""
         depth = 0
         for char in layout_str:
-            if char == '(': 
+            if char == '(':
                 depth += 1
                 current_key += char
             elif char == ')':
@@ -324,7 +434,7 @@ def simplify_key(key_code, layer_num=None):
         'KC_EXIT': 'Exit',
         'KC_TURBO': 'Temp\nTurbo',
         'KC_RAINBOW': 'Rain\nbow',
-        'KC_REACTIVE': 'Reac\ntive',
+        'KC_REACTIVE': 'Reac\nctive',
         'KC_MOUSE_LOCK': 'Layer\nLock',
         'KC_MS_FAST_UP': 'Mouse\nUp+',
         'KC_MS_FAST_DOWN': 'Mouse\nDown+',
@@ -351,14 +461,14 @@ def simplify_key(key_code, layer_num=None):
         'KC_FAST': 'Fast',
         'KC_SCR_LOCK': 'Scroll\nLock',
         'KC_RGB_AUTO': 'RGB\nAuto',
-        'KC_PLUS_COLON': '+\n:',
+        'KC_PLUS_COLON': '+ \n:',
         'RM_HUEU': 'Hue\n+',
         'RM_HUED': 'Hue\n-',
         'RM_SATU': 'Sat\n+',
         'RM_SATD': 'Sat\n-',
         'RM_VALU': 'Brt\n+',
         'RM_VALD': 'Brt\n-',
-        'KC_MINS_TO0': '-\nExit',
+        'KC_MINS_TO0': '- \nExit',
         'KC_0_TG1': '0\nL1',
         'KC_9_TG2': '9\nL2',
         'KC_8_TG3': '8\nL3',
@@ -556,8 +666,14 @@ def draw_combos(c, start_y):
 
 def generate_pdf(output_path, keymap_path, info_path):
     """Generate the PDF with all layers."""
+    global COMBOS
+    
     layers = parse_keymap(keymap_path)
     layout_info = parse_info_json(info_path)
+    
+    # Extract combos dynamically
+    extracted_combos = extract_combos_from_keymap(keymap_path)
+    COMBOS = extracted_combos + MANUAL_ACTIONS
 
     if not layers:
         print("No layers found!")

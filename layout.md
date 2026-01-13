@@ -80,14 +80,12 @@ Simultaneous key presses for navigation and editing.
 | **A + S** | Left Arrow |
 | **S + D** | Up Arrow |
 | **D + F** | Down Arrow |
-| **F + G** | Right Arrow |
 | **A + F** | Right Arrow |
-| **J + K** | Delete |
+| **A + D** | Delete |
 | **Z + X** | Home |
 | **X + C** | Page Up |
-| **X + V** | Paste (Term) |
+| **X + V** | Ctrl + Shift + V |
 | **C + V** | Page Down |
-| **V + B** | End |
 | **Z + V** | End |
 | **LShift + RShift** | Caps Lock |
 

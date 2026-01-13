@@ -9,15 +9,7 @@ import re
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-# Import key parsing from existing script
-from generate_layout_pdf import parse_keymap, parse_info_json, simplify_key, LAYER_NAMES, COMBOS
-
-# Wallpaper settings
-WALLPAPER_WIDTH = 3840
-WALLPAPER_HEIGHT = 2160
-BACKGROUND_COLOR = (26, 26, 46)  # Dark blue-gray
-
-# Dark theme layer colors (more saturated for visibility on dark bg)
+# Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (200, 200, 210),    # Light gray (Base)
     1: (130, 150, 255),    # Blue (Numpad)
@@ -25,6 +17,15 @@ LAYER_COLORS = {
     3: (240, 220, 100),    # Yellow (Mouse)
     4: (255, 150, 0),      # Orange (One-Hand)
     5: (255, 110, 150),    # Hot Pink (Settings)
+}
+
+LAYER_NAMES = {
+    0: "BASE",
+    1: "NUMPAD",
+    2: "ARROW",
+    3: "MOUSE",
+    4: "ONE-HAND",
+    5: "SETTINGS",
 }
 
 # Key border colors (darker versions)
@@ -36,6 +37,223 @@ KEY_BORDER_COLORS = {
     4: (180, 80, 0),
     5: (180, 60, 90),
 }
+
+# Key label simplifications
+KEY_LABELS = {
+    'KC_ESC': 'Escape',
+    'KC_TAB': 'Tab',
+    'KC_LSFT': 'Shift',
+    'KC_RSFT': 'Shift',
+    'KC_LCTL': 'Ctrl',
+    'KC_RCTL': 'Ctrl',
+    'KC_LALT': 'Alt',
+    'KC_RALT': 'Alt',
+    'KC_LGUI': 'Win',
+    'KC_RGUI': 'Win',
+    'KC_SPC': 'Space',
+    'KC_BSPC': 'Back\nSpace',
+    'KC_ENT': 'Enter',
+    'KC_DEL': 'Delete',
+    'KC_MINS': '-',
+    'KC_EQL': '=',
+    'KC_LBRC': '[',
+    'KC_RBRC': ']',
+    'KC_BSLS': '\\',
+    'KC_SCLN': ';',
+    'KC_QUOT': "'",
+    'KC_GRV': '`',
+    'KC_COMM': ',',
+    'KC_DOT': '.',
+    'KC_SLSH': '/',
+    'KC_CAPS': 'Caps\nLock',
+    'KC_HOME': 'Home',
+    'KC_END': 'End',
+    'KC_PGUP': 'Page\nUp',
+    'KC_PGDN': 'Page\nDown',
+    'KC_UP': 'Up',
+    'KC_DOWN': 'Down',
+    'KC_LEFT': 'Left',
+    'KC_RGHT': 'Right',
+    'KC_TRNS': '',
+    'KC_NO': '',
+    'KC_MPLY': 'Play',
+    'KC_MNXT': 'Next',
+    'KC_MPRV': 'Prev',
+    'KC_VOLU': 'Vol\nUp',
+    'KC_VOLD': 'Vol\nDown',
+    'KC_MUTE': 'Mute',
+    'KC_PPLS': 'Num +',
+    'KC_PMNS': 'Num -',
+    'KC_PAST': 'Num *',
+    'KC_PSLS': 'Num /',
+    'KC_PEQL': 'Num =',
+    'KC_PDOT': 'Num .',
+    'KC_P0': 'Num 0',
+    'KC_P1': 'Num 1',
+    'KC_P2': 'Num 2',
+    'KC_P3': 'Num 3',
+    'KC_P4': 'Num 4',
+    'KC_P5': 'Num 5',
+    'KC_P6': 'Num 6',
+    'KC_P7': 'Num 7',
+    'KC_P8': 'Num 8',
+    'KC_P9': 'Num 9',
+    'QK_BOOT': 'BOOT',
+    'QK_CLEAR_EEPROM': 'EE\nCLR',
+    'QK_GESC': 'Esc\n~\n`',
+    'MS_BTN1': 'Left\nClick',
+    'MS_BTN2': 'Right\nClick',
+    'MS_BTN3': 'Middle\nClick',
+    'MS_UP': 'Mouse\nUp',
+    'MS_DOWN': 'Mouse\nDown',
+    'MS_LEFT': 'Mouse\nLeft',
+    'MS_RGHT': 'Mouse\nRight',
+    'SNIPING': 'Snipe',
+    'DRGSCRL': 'Scroll',
+    'DPI_MOD': 'DPI+',
+    'DPI_RMOD': 'DPI-',
+    'S_D_MOD': 'S-DPI',
+    'RM_NEXT': 'rgb +',
+    'RM_PREV': 'rgb -',
+    'RM_HUEU': 'Hue +',
+    'RM_HUED': 'Hue -',
+    'RM_SATU': 'Sat +',
+    'RM_SATD': 'Sat -',
+    'RM_VALU': 'Val +',
+    'RM_VALD': 'Val -',
+}
+
+COMBOS = []
+MANUAL_ACTIONS = [
+    ("Z (Tap)", "Z"),
+    ("Z (Hold)", "Layer 4"),
+    ("Z (Dbl-Tap)", "Flashlight"),
+    ("Snipe Active", "Right Top Black"),
+    ("Snipe Active", "R-Col Rainbow"),
+]
+
+# Wallpaper settings
+WALLPAPER_WIDTH = 3840
+WALLPAPER_HEIGHT = 2160
+BACKGROUND_COLOR = (26, 26, 46)  # Dark blue-gray
+
+def readable_key(k):
+    """Convert a single keycode to a readable short string for combo listing."""
+    k = k.strip()
+    if k.startswith('KC_'):
+        k = k[3:]
+    
+    # Handle shifted keys like S(KC_V)
+    if 'S(' in k:
+        match = re.search(r'S\((?:KC_)?(\w+)\)', k)
+        if match:
+            return f"Shift+{match.group(1)}"
+    
+    # Handle Ctrl+Shift like C(S(KC_V))
+    if 'C(S(' in k:
+        match = re.search(r'C\(S\((?:KC_)?(\w+)\)\)', k)
+        if match:
+            return f"Ctrl+Shift+{match.group(1)}"
+            
+    # Handle Tap Dance
+    if 'TD(' in k:
+        return 'Z' # Special case for TD(TD_Z_LAYER)
+
+    # Dictionary for common abbreviations
+    lookup = {
+        'LSFT': 'LShift', 'RSFT': 'RShift',
+        'LCTL': 'Ctrl', 'RCTL': 'Ctrl',
+        'LALT': 'Alt', 'RALT': 'Alt',
+        'LGUI': 'Win', 'RGUI': 'Win',
+        'BSPC': 'Bksp', 'DEL': 'Del',
+        'PGUP': 'PgUp', 'PGDN': 'PgDn',
+        'MINS': '-', 'EQL': '=',
+        'LBRC': '[', 'RBRC': ']',
+        'BSLS': '\\', 'SCLN': ';',
+        'QUOT': "'", 'GRV': '`',
+        'COMM': ',', 'DOT': '.',
+        'SLSH': '/', 'SPC': 'Space',
+        'ENT': 'Enter'
+    }
+    return lookup.get(k, k)
+
+def extract_combos_from_keymap(file_path):
+    """Parse keymap.c to find all combos defined in key_combos array."""
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+
+        # 1. Parse PROGMEM combo definitions: const uint16_t PROGMEM name[] = {K1, K2, COMBO_END};
+        combo_defs = {}
+        # Regex handles multiline definitions if needed, assuming brace closure
+        matches = re.finditer(r'const uint16_t PROGMEM (\w+)\[\]\s*=\s*\{([^}]+)\};', content)
+        for match in matches:
+            name = match.group(1)
+            keys_str = match.group(2)
+            # Filter out COMBO_END and whitespace
+            keys = [k.strip() for k in keys_str.split(',') if 'COMBO_END' not in k and k.strip()]
+            combo_defs[name] = keys
+
+        # 2. Parse combo_t array: combo_t key_combos[] = { COMBO(name, action), ... };
+        found_combos = []
+        
+        # Find the block
+        match_block = re.search(r'combo_t\s+key_combos\[\]\s*=\s*\{([^;]+)\};', content, re.DOTALL)
+        if match_block:
+            block = match_block.group(1)
+            
+            # Simple parser for COMBO(name, action)
+            idx = 0
+            while True:
+                # Find next COMBO(
+                start = block.find('COMBO(', idx)
+                if start == -1:
+                    break
+                
+                idx = start + 6 # Skip 'COMBO('
+                depth = 1
+                args_start = idx
+                args_end = -1
+                
+                while idx < len(block) and depth > 0:
+                    if block[idx] == '(': 
+                        depth += 1
+                    elif block[idx] == ')':
+                        depth -= 1
+                        if depth == 0:
+                            args_end = idx
+                    idx += 1
+                
+                if args_end != -1:
+                    args_str = block[args_start:args_end]
+                    # args_str should be "name, action"
+                    parts = args_str.split(',', 1)
+                    if len(parts) == 2:
+                        name = parts[0].strip()
+                        action = parts[1].strip()
+                        
+                        if name in combo_defs:
+                            # Convert keys to readable string
+                            readable_keys = " + ".join([readable_key(k) for k in combo_defs[name]])
+                            
+                            # Convert action to readable string
+                            readable_action = readable_key(action)
+                            
+                            # Heuristic for Ctrl+Shift+V
+                            if 'Paste' in readable_action:
+                                readable_action = 'Ctrl+Shift+V'
+                            elif ('V' in readable_action or 'v' in readable_action) and \
+                                 ('Shift' in readable_action or 'S(' in action) and \
+                                 ('Ctrl' in readable_action or 'C(' in action):
+                                 readable_action = 'Ctrl+Shift+V'
+
+                            found_combos.append((readable_keys, readable_action))
+        
+        return found_combos
+
+    except Exception as e:
+        print(f"Error extracting combos: {e}")
+        return []
 
 def get_font(size, bold=False):
     """Get a font, falling back to default if custom fonts unavailable."""
@@ -148,6 +366,269 @@ def draw_key(draw, x, y, width, height, label, bg_color, border_color):
         draw.text((text_x, current_y), line, fill=text_color, font=font)
         current_y += h
 
+def simplify_key(key_code, layer_num=None):
+    """Convert QMK keycode to readable label."""
+    # Tap Dance Z-Layer Handling
+    if 'TD_Z_LAYER' in key_code:
+        if layer_num == 0: return 'Z\nL4\nLight'
+        if layer_num == 1: return 'Num 0\nExit\nLight'
+        if layer_num == 2: return 'Home\nExit\nLight'
+        if layer_num == 3: return 'Z\nExit\nLight'
+        if layer_num == 4: return '/\nExit\nLight'
+        return 'Z\nTD'
+
+    # Special handling for Layer 0 Long Press
+    if layer_num == 0:
+        if key_code == 'KC_1_TG1': return '1\nL1'
+        if key_code == 'KC_2_TG2': return '2\nL2'
+        if key_code == 'KC_3_TG3': return '3\nL3'
+        if key_code == 'KC_4_TG4': return '4\nL4'
+        if key_code == 'KC_5_TG5': return '5\nL5'
+
+    # Special handling for Layer 1
+    if layer_num == 1:
+        if key_code == 'KC_1_TG1': return '1\nL0'
+        if key_code == 'KC_2_TG2': return '2\nL0'
+        if key_code == 'KC_3_TG3': return '3\nL0'
+        if key_code == 'KC_4_TG4': return '4\nL0'
+
+    # Special handling for Layer 2
+    if layer_num == 2:
+        if 'KC_X_TG2' == key_code: return 'Page\nUp'
+
+    if layer_num is not None and layer_num > 0:
+        if key_code == 'KC_L_TG1':
+            return 'Exit\nL3'
+
+    # Special handling for other layer long press returns
+    if layer_num is not None and layer_num > 1:
+        if key_code == 'KC_1_TG1':
+            label = 'F1' if layer_num == 2 else ('Rainb' if layer_num == 3 else '0')
+            return f'{label}\nL0'
+        if key_code == 'KC_2_TG2':
+            label = 'F2' if layer_num == 2 else ('Next' if layer_num == 3 else '9')
+            return f'{label}\nL0'
+        if key_code == 'KC_3_TG3':
+            label = 'F3' if layer_num == 2 else '3'
+            return f'{label}\nExit'
+        if key_code == 'KC_4_TG4':
+            label = 'F4' if layer_num == 2 else '4'
+            return f'{label}\nExit'
+
+    if key_code in KEY_LABELS:
+        return KEY_LABELS[key_code]
+
+    # Handle S(KC_X) for shifted keys
+    shift_match = re.match(r'S\(KC_(\w+)\)', key_code)
+    if shift_match:
+        char = shift_match.group(1)
+        shift_map = {
+            '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+            '6': '^', '7': '&', '8': '*', '9': '(', '0': ')',
+            'MINS': '_', 'EQL': '+', 'GRV': '~',
+            'LBRC': '{', 'RBRC': '}', 'BSLS': '|',
+            'SCLN': ':', 'QUOT': '"', 'COMM': '<', 'DOT': '>', 'SLSH': '?',
+        }
+        return shift_map.get(char, f'S-{char}')
+
+    # Handle LT(layer, key)
+    lt_match = re.match(r'LT\((\d+),\s*KC_(\w+)\)', key_code)
+    if lt_match:
+        layer = lt_match.group(1)
+        key = lt_match.group(2)
+        # Simplify the inner key if possible
+        inner_key_code = f'KC_{key}'
+        label = KEY_LABELS.get(inner_key_code, key)
+        return f'{label}\nL{layer}'
+
+    # Handle TD(...)
+    td_match = re.match(r'TD\((\w+)\)', key_code)
+    if td_match:
+        return 'TD'
+
+    # Handle custom keycodes
+    custom_map = {
+    'KC_X': 'X',
+        'KC_P_TO0': 'P\nExit',
+        'KC_X_TG2': 'X\nTG2',
+        'KC_V_TG5': 'V\nTG5',
+        'KC_Q_TG4': 'Q\nL4',
+        'KC_L_TG1': 'L3\nL1',
+        'KC_R_TG2': 'L2\nTgl',
+        'KC_ENT_MO4': 'Enter\nL4',
+        'KC_ENT_EXIT': 'Enter\nExit',
+        'KC_SPC_EXIT': 'Space\nExit',
+        'KC_BSPC_EXIT': 'Back\nExit',
+        'KC_EXIT': 'Exit',
+        'KC_TURBO': 'Temp\nTurbo',
+        'KC_RAINBOW': 'Rain\nbow',
+        'KC_REACTIVE': 'Reac\ntive',
+        'KC_MOUSE_LOCK': 'Layer\nLock',
+        'KC_MS_FAST_UP': 'Mouse\nUp+',
+        'KC_MS_FAST_DOWN': 'Mouse\nDown+',
+        'KC_MS_FAST_LEFT': 'Mouse\nLeft+',
+        'KC_MS_FAST_RIGHT': 'Mouse\nRight+',
+        'KC_MS_DIAG_UL': 'Up\nLeft',
+        'KC_MS_DIAG_UR': 'Up\nRight',
+        'KC_MS_DIAG_DL': 'Down\nLeft',
+        'KC_MS_DIAG_DR': 'Down\nRight',
+        'KC_SCR_MODE': 'Scr\nMod',
+        'KC_1_TG1': '1\nL1',
+        'KC_2_TG2': '2\nL2',
+        'KC_3_TG3': '3\nL3',
+        'KC_4_TG4': '4\nL4',
+        'KC_5_TG5': '5\nL5',
+        'RM_TOGG': 'RGB\nToggle',
+        'KC_JELLY': 'Jelly',
+        'KC_SPIRAL': 'Spiral',
+        'KC_CHEVRON': 'Chev\nron',
+        'KC_LR_TOGGLE': 'LR\nToggle',
+        'KC_FLASH': 'Flash',
+        'KC_RAINBOW': 'Rain\nbow',
+        'KC_SNIPE': 'Snipe',
+        'KC_FAST': 'Fast',
+        'KC_SCR_LOCK': 'Scroll\nLock',
+        'KC_RGB_AUTO': 'RGB\nAuto',
+        'KC_PLUS_COLON': '+ \n:',
+        'RM_HUEU': 'Hue\n+',
+        'RM_HUED': 'Hue\n-',
+        'RM_SATU': 'Sat\n+',
+        'RM_SATD': 'Sat\n-',
+        'RM_VALU': 'Brt\n+',
+        'RM_VALD': 'Brt\n-',
+        'KC_MINS_TO0': '- \nExit',
+        'KC_0_TG1': '0\nL1',
+        'KC_9_TG2': '9\nL2',
+        'KC_8_TG3': '8\nL3',
+        'KC_P_FRAC': 'Pixel\nFrac',
+        'KC_PINWHEEL': 'Pin\nwheel',
+        'KC_7_TO0': '7\nExit',
+        'KC_6_TO0': '6\nExit',
+        'KC_SPC_TG2': 'Space\nL2',
+        'KC_SPC_TG4': 'Space\nL4',
+        'KC_ENT_TG2': 'Enter\nL2',
+        'KC_ENT_TG4': 'Enter\nL4',
+        'KC_PMNS_TG4': 'Num -\nL4',
+        'KC_F12_EXIT': 'F12\nExit',
+        'KC_MS_TMO_INC': 'Time\nout +',
+        'KC_MS_TMO_DEC': 'Time\nout -',
+        'KC_P_FRAC': 'Pixel\nFractal',
+        'HYPR(KC_N)': 'New\nGdoc',
+        'KC_JITTER': 'Jitter',
+        'JITTER': 'Jitter',
+        'PSCR': 'Save\nScreen',
+        'KC_PSCR': 'Save\nScreen',
+        'LALT(KC_HOME)': 'Alt\nHome',
+        'KC_DEBUG_SYNC': 'Sync\nDbg',
+        'KC_FIRE': 'Fire',
+        'KC_DAY': 'Day\nBright',
+        'KC_NIGHT': 'Night\nDim',
+    }
+    if key_code in custom_map:
+        return custom_map[key_code]
+
+    # Strip KC_ prefix for simple keys
+    if key_code.startswith('KC_'):
+        rest = key_code[3:]
+        if len(rest) == 1:
+            return rest
+        if rest.startswith('F') and rest[1:].isdigit():
+            return rest
+        # Split on underscore and join with newline for multi-part names
+        if '_' in rest:
+            return '\n'.join(rest.split('_'))
+        return rest
+
+    # Handle any remaining codes with underscores
+    if '_' in key_code:
+        return '\n'.join(key_code.split('_'))
+    return key_code[:10]
+
+def parse_keymap(file_path):
+    with open(file_path, 'r') as f:
+        content = f.read()
+
+    keymaps_match = re.search(
+        r'const uint16_t PROGMEM keymaps\[\]\[MATRIX_ROWS\]\[MATRIX_COLS\] = \{(.*?)\};',
+        content, re.DOTALL
+    )
+    if not keymaps_match:
+        return {}
+
+    keymaps_str = keymaps_match.group(1)
+    layers = {}
+    search_start = 0
+
+    while True:
+        match = re.search(r'\[(\d+)\]\s*=\s*LAYOUT\(', keymaps_str[search_start:])
+        if not match:
+            break
+
+        layer_num = int(match.group(1))
+        start_index = search_start + match.end()
+
+        paren_depth = 1
+        current_index = start_index
+        layout_content = ""
+
+        while current_index < len(keymaps_str) and paren_depth > 0:
+            char = keymaps_str[current_index]
+            if char == '(': 
+                paren_depth += 1
+            elif char == ')':
+                paren_depth -= 1
+            if paren_depth > 0:
+                layout_content += char
+            current_index += 1
+
+        layout_str = re.sub(r'//.*', '', layout_content)
+        layout_str = re.sub(r'/\*.*?\*/', '', layout_str, flags=re.DOTALL)
+        layout_str = " ".join(layout_str.split())
+
+        keys = []
+        current_key = ""
+        depth = 0
+        for char in layout_str:
+            if char == '(': 
+                depth += 1
+                current_key += char
+            elif char == ')':
+                depth -= 1
+                current_key += char
+            elif char == ',' and depth == 0:
+                keys.append(current_key.strip())
+                current_key = ""
+            else:
+                current_key += char
+        if current_key:
+            keys.append(current_key.strip())
+
+        layers[layer_num] = keys
+        search_start = current_index
+
+    return layers
+
+
+def parse_info_json(file_path):
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    layout = data['layouts']['LAYOUT']['layout']
+
+    # Adjust layout to minimize whitespace and center thumbs
+    for key in layout:
+        # Right Main (rows 0-3, x >= 11) -> Shift Left by 4
+        if key['y'] < 4 and key['x'] >= 11:
+            key['x'] -= 4.0
+        
+        # Left Thumbs (y >= 4, x < 9) -> Shift Left by 2 (Center under Left Main)
+        elif key['y'] >= 4 and key['x'] < 9:
+            key['x'] -= 2.0
+            
+        # Right Thumbs (y >= 4, x >= 9) -> Shift Left by 1 (Center under Right Main)
+        elif key['y'] >= 4 and key['x'] >= 9:
+            key['x'] -= 1.0
+
+    return layout
 
 def draw_layer(img, draw, layer_keys, layout_info, layer_num, start_x, start_y, key_width=88, key_height=88):
     """Draw a complete layer at the specified position."""
@@ -161,7 +642,7 @@ def draw_layer(img, draw, layer_keys, layout_info, layer_num, start_x, start_y, 
     max_x = max(k['x'] for k in layout_info)
     max_y = max(k['y'] for k in layout_info)
 
-    layout_width = (max_x + 1) * (key_width + key_gap)
+    layout_width = int((max_x + 1) * (key_width + key_gap))
 
     # Draw title
     title_font = get_font(44, bold=True)
@@ -245,8 +726,14 @@ def draw_combos(draw, start_x, start_y, width):
 
 def generate_wallpaper(output_path, keymap_path, info_path):
     """Generate the wallpaper with all layers in a 2x3 grid."""
+    global COMBOS
+    
     layers = parse_keymap(keymap_path)
     layout_info = parse_info_json(info_path)
+    
+    # Extract combos dynamically
+    extracted_combos = extract_combos_from_keymap(keymap_path)
+    COMBOS = extracted_combos + MANUAL_ACTIONS
 
     if not layers:
         print("No layers found!")
