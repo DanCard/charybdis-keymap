@@ -83,6 +83,7 @@ enum custom_keycodes {
   KC_MINS_TG4,
   KC_F12_EXIT,
   KC_FIRE,
+  KC_CPFR,
   KC_SNIPE,
   KC_FAST,
   KC_MS_TMO_INC,
@@ -374,6 +375,8 @@ const char *get_rgb_mode_name(uint8_t mode) {
     return "SOLID_MULTISPLASH";
   case RGB_MATRIX_CUSTOM_fire:
     return "FIRE";
+  case RGB_MATRIX_CUSTOM_campfire:
+    return "CAMPFIRE";
   default:
     return "UNKNOWN";
   }
@@ -1454,12 +1457,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
-  case KC_FIRE:
-    if (record->event.pressed) {
-      rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_fire);
-      start_show_mode();
-    }
-    return false;
+      case KC_FIRE:
+        if (record->event.pressed) {
+          rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_fire);
+        }
+        return false;
+      case KC_CPFR:
+        if (record->event.pressed) {
+          rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_campfire);
+        }
+        return false;
   case DPI_MOD:
     if (record->event.pressed) {
       // Allow core to handle it first (return true), but log current/new DPI?
@@ -1620,7 +1627,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
     [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, RM_HUEU, RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, RM_VALU, RM_VALD, KC_EXIT , KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_CPFR, RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
                  KC_EXIT, KC_EXIT, KC_EXIT, KC_DAY, KC_NIGHT    , KC_EXIT  ,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
                  KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
