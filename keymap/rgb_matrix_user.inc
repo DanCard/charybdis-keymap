@@ -78,76 +78,64 @@ static bool campfire(effect_params_t* params) {
         uint8_t y = g_led_config.point[i].y;
         uint8_t x = g_led_config.point[i].x;
 
-        // Turbulence/Flicker phases
-        // Use prime numbers for phase offsets to avoid patterns aligning too often
-        uint8_t flicker_phase = (time * 3 + i * 17) % 256; 
-        uint8_t spark_phase = (time + i * 137) % 256;
+        // --- HEAT MAP ALGORITHM ---
+        
+        // 1. Vertical Heat: 
+        // Base heat starts high at bottom (y=64) and decreases upwards.
+        // Increased base heat at y=0 from 60 to 80 to fill top half.
+        int16_t heat = 80 + (y * 3); 
 
-        uint8_t hue = 0;
-        uint8_t sat = 255;
-        uint16_t val = 0;
-
-        // --- ZONING ---
-        if (y >= 55) {
-             // BASE: Blue/Purple Core + Deep Red
-             if (y >= 60) {
-                 hue = 195 + (sin8(time) / 6); // Shifting Blue/Purple/Pink
-                 sat = 255;
-             } else {
-                 hue = 0; // Red
-                 sat = 255;
-             }
-             val = 200 + (sin8(flicker_phase) / 6); 
-        } else if (y >= 30) {
-             // MID: Red to Yellow transition
-             // y=55 -> 0 (Red), y=30 -> 35 (Yellow)
-             hue = ((55 - y) * 35) / 25;
-             sat = 255;
-             val = 255; // Brightest part
-        } else {
-             // TOP: Embers/Smoke
-             hue = 35; // Yellow/Orange
-             sat = 255 - ((30 - y) * 5); // Desaturate slightly as it goes up
-             val = 50; // Dim default
-             
-             // Random Sparks
-             if (spark_phase > 250) {
-                 val = 255;
-                 sat = 0; // White hot spark
-             }
-        }
-
-        // --- SHAPE & FLICKER ---
-        // Horizontal swaying center
-        uint8_t sway = sin8(time / 2) / 8; // +/- 32/8 = +/-4 sway
-        int16_t center_x = 112 + (sway - 16); // Center around 112
-
+        // 2. Horizontal Cooling (Shape)
+        // Center moves with sine wave sway
+        // Sway magnitude increases with height (more sway at top/low y)
+        uint8_t sway_mag = (70 - y) / 2; // ~35 at top, ~3 at bottom
+        int8_t sway = (sin8(time / 2) - 128) * sway_mag / 128;
+        int16_t center_x = 112 + sway;
         int16_t dist_x = (x > center_x) ? (x - center_x) : (center_x - x);
-        
-        // Width tapers with height
-        uint8_t visible_width = 20 + (y * 40) / 64;
-        
-        if (dist_x > visible_width) {
-             // Fade out based on distance
-             uint16_t fade = (dist_x - visible_width) * 10;
-             if (val > fade) val -= fade;
-             else val = 0;
+
+        // Cooling: reduce heat as we get further from center
+        // Taper: flames are wider at bottom
+        heat -= (dist_x * 2);
+
+        // 3. Turbulence/Flicker
+        // Add dynamic noise to make it organic
+        int8_t noise = (sin8(time * 3 + y * 12) / 4) + (sin8(time + i * 7) / 4);
+        heat += noise;
+
+        // Clamp Heat
+        if (heat < 0) heat = 0;
+        if (heat > 255) heat = 255;
+
+        // 4. Heat -> Color Mapping
+        uint8_t hue;
+        uint8_t sat = 255;
+        uint8_t val = heat;
+
+        if (heat > 215) {
+            // CORE: Bright Yellow -> White
+            hue = 35 + ((heat - 215) / 3); // 35..48
+            if (hue > 55) hue = 55;
+            sat = 255 - ((heat - 215) * 4); // Desaturate to white
+        } else if (heat > 160) {
+            // BODY: Red -> Orange -> Yellow
+            // Map 160..215 to Hue 0..35
+            hue = ((heat - 160) * 35) / 55;
+        } else if (heat > 60) {
+            // TIPS: Pink/Purple -> Red
+            // Map 60..160 to Hue 190..255(0)
+            // 190 + range(100) -> 190..290. (256 wrap -> 34)
+            // We want roughly 190 (Purple) to 255 (Red).
+            hue = 190 + ((heat - 60) * 65) / 100;
+        } else {
+            // FADE: Deep Blue/Fade
+            hue = 170 + (heat / 3); 
+            val = heat; // Allow dimming
         }
 
-        // Apply flickering modulation to value
-        int8_t mod = (sin8(flicker_phase) / 4) - 32; // +/- 32 range
-        if (val > 0) {
-            int16_t new_val = val + mod;
-             if (new_val < 0) new_val = 0;
-             if (new_val > 255) new_val = 255;
-             val = new_val;
-        }
-
-        // Apply final color
-        if (val < 10) {
+        if (val < 15) {
              rgb_matrix_set_color(i, 0, 0, 0);
         } else {
-             HSV hsv = { hue, sat, (uint8_t)val };
+             HSV hsv = { hue, sat, val };
              RGB rgb = hsv_to_rgb(hsv);
              rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
