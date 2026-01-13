@@ -375,6 +375,8 @@ const char *get_rgb_mode_name(uint8_t mode) {
     return "SOLID_MULTISPLASH";
   case RGB_MATRIX_CUSTOM_fire:
     return "FIRE";
+  case RGB_MATRIX_CUSTOM_wildfire:
+    return "WILDFIRE";
   case RGB_MATRIX_CUSTOM_campfire:
     return "CAMPFIRE";
   default:
