@@ -97,6 +97,7 @@ enum custom_keycodes {
   KC_DAY,         // Set brightness to Day level
   KC_NIGHT,       // Set brightness to Night level
   KC_FLASHLIGHT,  // Toggle Flashlight mode
+  KC_SLSH_TO0,    // Tap: /, Hold: Temporary Layer 0
   KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
   KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
   KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
@@ -525,10 +526,13 @@ combo_t key_combos[] = {
 static uint16_t pgup_tap_timer = 0;
 static bool pgup_held = false;
 static bool pgup_triggered = false;
-static uint16_t p_tap_timer = 0;
-static bool p_held = false;
-static bool p_triggered = false;
-static uint16_t home_tap_timer = 0;
+  static uint16_t p_tap_timer = 0;
+  static bool p_held = false;
+  static bool p_triggered = false;
+  static uint16_t slsh_tap_timer = 0;
+  static bool slsh_held = false;
+  static bool slsh_triggered = false;
+  static uint16_t home_tap_timer = 0;
 static bool home_held = false;
 static bool home_triggered = false;
 static uint16_t ent_mo_timer = 0;
@@ -1251,15 +1255,31 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
-  case KC_MINS_TO0:
+   case KC_MINS_TO0:
+     if (record->event.pressed) {
+       mins_held = true;
+       mins_triggered = false;
+       mins_tap_timer = timer_read();
+     } else {
+       mins_held = false;
+       if (!mins_triggered) {
+         tap_code(KC_MINS);
+       }
+     }
+     return false;
+  case KC_SLSH_TO0:
     if (record->event.pressed) {
-      mins_held = true;
-      mins_triggered = false;
-      mins_tap_timer = timer_read();
+      slsh_held = true;
+      slsh_triggered = false;
+      slsh_tap_timer = timer_read();
     } else {
-      mins_held = false;
-      if (!mins_triggered) {
-        tap_code(KC_MINS);
+      slsh_held = false;
+      if (!slsh_triggered) {
+        tap_code(KC_SLSH);
+      } else {
+        // Hold was triggered, restore layer 4
+        layer_change_reason = "/ (Hold Release): L4";
+        layer_move(4);
       }
     }
     return false;
@@ -1691,7 +1711,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
+                  KC_LCTL, KC_SLSH_TO0, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH_TO0, KC_RCTL,
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
@@ -2211,6 +2231,12 @@ void matrix_scan_user(void) {
     layer_change_reason = "P(Hold): Peek at Base";
     layer_state_set(0); // Peek at base layer
     p_triggered = true;
+    rgb_matrix_indicators_user();
+  }
+  if (slsh_held && !slsh_triggered && timer_elapsed(slsh_tap_timer) > MY_TAPPING_TERM) {
+    layer_change_reason = "/(Hold): Peek at Base";
+    layer_state_set(0); // Peek at base layer
+    slsh_triggered = true;
     rgb_matrix_indicators_user();
   }
   if (q_held && !q_triggered && timer_elapsed(q_tap_timer) > MY_TAPPING_TERM) {

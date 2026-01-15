@@ -48,7 +48,7 @@ Exit      DiagDL    MsDn      DiagDR    Btn3      Exit     |  Exit      Exit    
 -/Base    0/L1      9/L2      8/L3      7/Base    6/Base   |  6         7         8         9         0         -
  \         P/L0      O         I         U         Y        |  Y         U         I         O         P         \
 '         +/:       L         K         J         H        |  H         J         K         L         +/:       '
-Shift     /(L3)     .         ,         M         N        |  N         M         ,         .         /(L3)     RCtl
+ Shift     / L0       .         ,         M         N        |  N         M         ,         .         / L0      RCtl
                     Space     Ent/Exit  Shift              |  R_TG2     Ent/Exit  Alt
 ```
 
