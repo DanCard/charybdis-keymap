@@ -542,7 +542,7 @@ def simplify_key(key_code, layer_num=None):
     # Handle custom keycodes
     custom_map = {
         "KC_X": "X",
-        "KC_P_TO0": "P\nExit",
+        "KC_P_TO0": "P\nL0",
         "KC_X_TG2": "X\nTG2",
         "KC_V_TG5": "V\nTG5",
         "KC_Q_TG4": "Q\nL4",
