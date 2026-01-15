@@ -765,7 +765,7 @@ def generate_pdf(output_path, keymap_path, info_path):
     key_size = 38  # Sized to fit 3 layers per page
 
     for i in range(0, len(layer_nums), 3):
-        current_y = page_height - margin - key_size - 20  # Account for title above keys
+        current_y = page_height - margin - key_size  # Account for title above keys
 
         # Draw up to 3 layers on this page
         for j in range(3):
@@ -782,7 +782,7 @@ def generate_pdf(output_path, keymap_path, info_path):
                 current_y,
                 key_size=key_size,
             )
-            current_y -= height_used  # No extra space between layers
+            current_y -= height_used + 8  # Add spacing between layers
 
         # Check if there's room for combos on this page (last page with < 3 layers)
         layers_on_this_page = min(3, len(layer_nums) - i)

@@ -1728,10 +1728,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, RM_HUEU, RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_EXIT, RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
-                 KC_EXIT, KC_EXIT, KC_FLASHLIGHT, KC_EXIT, KC_DAY, KC_NIGHT,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
-                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE    , KC_EXIT     , RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, KC_EXIT, KC_FLASHLIGHT, KC_EXIT, KC_DAY, KC_NIGHT,   KC_EXIT    , DPI_MOD     , DPI_RMOD, KC_JITTER, KC_EXIT, KC_EXIT,
+                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT     , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                            KC_EXIT, KC_EXIT,   KC_EXIT),
 };
