@@ -96,7 +96,11 @@ enum custom_keycodes {
   KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
   KC_DAY,         // Set brightness to Day level
   KC_NIGHT,       // Set brightness to Night level
-  KC_5_TG5        // Tap: 5, Hold: Toggle Layer 5 (Settings)
+  KC_FLASHLIGHT,  // Toggle Flashlight mode
+  KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
+  KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
+  KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
+  KC_L3_EXT_TO1   // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
 };
 
 uint8_t cur_dance(tap_dance_state_t *state) {
@@ -475,22 +479,6 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
     }
     rgb_matrix_indicators_user();
     break;
-  case DOUBLE_TAP:
-    if (!is_flashlight) {
-      saved_rgb_mode = rgb_matrix_get_mode();
-      saved_rgb_h = rgb_matrix_get_hue();
-      saved_rgb_s = rgb_matrix_get_sat();
-      saved_rgb_v = rgb_matrix_get_val();
-      rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
-      rgb_matrix_sethsv_noeeprom(HSV_WHITE);
-      is_flashlight = true;
-    } else {
-      rgb_matrix_mode_noeeprom(saved_rgb_mode);
-      rgb_matrix_sethsv_noeeprom(saved_rgb_h, saved_rgb_s, saved_rgb_v);
-      is_flashlight = false;
-    }
-    sync_needed = true;
-    break;
   }
 }
 
@@ -604,6 +592,14 @@ static bool pmns_tg4_triggered = false;
 static uint16_t f12_tap_timer = 0;
 static bool f12_held = false;
 static bool f12_triggered = false;
+
+// Variables for Layer 3 Thumb Keys (Tap Exit / Hold TO)
+static uint16_t l3_to4_timer = 0;
+static bool l3_to4_held = false;
+static uint16_t l3_to2_timer = 0;
+static bool l3_to2_held = false;
+static uint16_t l3_to1_timer = 0;
+static bool l3_to1_held = false;
 
 #define MY_TAPPING_TERM 250
 
@@ -1526,6 +1522,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uprintf("Night Mode: Brightness set to 16\n");
     }
     return false;
+  case KC_FLASHLIGHT:
+    if (record->event.pressed) {
+      if (!is_flashlight) {
+        saved_rgb_mode = rgb_matrix_get_mode();
+        saved_rgb_h = rgb_matrix_get_hue();
+        saved_rgb_s = rgb_matrix_get_sat();
+        saved_rgb_v = rgb_matrix_get_val();
+        rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+        rgb_matrix_sethsv_noeeprom(HSV_WHITE);
+        is_flashlight = true;
+        uprintf("Flashlight ON\n");
+      } else {
+        rgb_matrix_mode_noeeprom(saved_rgb_mode);
+        rgb_matrix_sethsv_noeeprom(saved_rgb_h, saved_rgb_s, saved_rgb_v);
+        is_flashlight = false;
+        uprintf("Flashlight OFF\n");
+      }
+      sync_needed = true;
+    }
+    return false;
   case KC_SET_LEFT:
     if (record->event.pressed) {
       eeconfig_update_handedness(true);  // true = left hand
@@ -1559,6 +1575,57 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_DEBUG_SYNC:
     if (record->event.pressed) {
       debug_dump_sync_state();
+    }
+    return false;
+  // Layer 3 Thumb Logic: Tap = Exit, Hold = Switch Layer
+  case KC_L3_EXT_TO4:
+    if (record->event.pressed) {
+      l3_to4_held = true;
+      l3_to4_timer = timer_read();
+    } else {
+      l3_to4_held = false;
+      if (timer_elapsed(l3_to4_timer) < MY_TAPPING_TERM) {
+        // Tap: Exit to Layer 0
+        layer_change_reason = "L3 Thumb Tap (Exit)";
+        layer_move(0);
+      } else {
+        // Hold: Switch to Layer 4
+        layer_change_reason = "L3 Thumb Hold (TO 4)";
+        layer_move(4);
+      }
+      rgb_matrix_indicators_user();
+    }
+    return false;
+  case KC_L3_EXT_TO2:
+    if (record->event.pressed) {
+      l3_to2_held = true;
+      l3_to2_timer = timer_read();
+    } else {
+      l3_to2_held = false;
+      if (timer_elapsed(l3_to2_timer) < MY_TAPPING_TERM) {
+        layer_change_reason = "L3 Thumb Tap (Exit)";
+        layer_move(0);
+      } else {
+        layer_change_reason = "L3 Thumb Hold (TO 2)";
+        layer_move(2);
+      }
+      rgb_matrix_indicators_user();
+    }
+    return false;
+  case KC_L3_EXT_TO1:
+    if (record->event.pressed) {
+      l3_to1_held = true;
+      l3_to1_timer = timer_read();
+    } else {
+      l3_to1_held = false;
+      if (timer_elapsed(l3_to1_timer) < MY_TAPPING_TERM) {
+        layer_change_reason = "L3 Thumb Tap (Exit)";
+        layer_move(0);
+      } else {
+        layer_change_reason = "L3 Thumb Hold (TO 1)";
+        layer_move(1);
+      }
+      rgb_matrix_indicators_user();
     }
     return false;
   }
@@ -1615,18 +1682,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_EXIT, KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN1, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, KC_EXIT,
                  KC_MS_FAST_LEFT, MS_LEFT, MS_BTN1 , MS_RGHT , KC_MS_FAST_RIGHT,   MS_BTN2, KC_EXIT , MS_BTN1, DRGSCRL, KC_MOUSE_LOCK, MS_BTN2, KC_EXIT,
                  KC_EXIT, KC_MS_DIAG_DL  , MS_DOWN , KC_MS_DIAG_DR, MS_BTN3    ,   KC_EXIT, KC_EXIT , KC_EXIT, MS_BTN3, MS_BTN3, MS_BTN3, KC_RSFT,
-                                                            TO(4), TO(2), TO(1),   KC_EXIT, KC_EXIT,
+                                           KC_L3_EXT_TO4, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_EXIT, KC_EXIT,
                                                                KC_EXIT, KC_EXIT,   KC_EXIT),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_TG1, KC_9_TG2, KC_8_TG3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, LT(3, KC_SLSH), KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RCTL,
-                                                  KC_SPC, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
+                                                  KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
     [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, RM_HUEU, RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_CPFR, RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
-                 KC_EXIT, KC_EXIT, KC_EXIT, KC_DAY, KC_NIGHT    , KC_EXIT  ,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
+                  KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_EXIT, RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
+                  KC_EXIT, KC_EXIT, KC_EXIT, KC_DAY, KC_FLASHLIGHT, KC_NIGHT,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
                  KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                            KC_EXIT, KC_EXIT,   KC_EXIT),

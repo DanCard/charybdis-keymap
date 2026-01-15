@@ -10,9 +10,10 @@ Esc       1/L1      2/L2      3/L3      4/L4      5/L5     |  6         7       
 Tab       Q         W         E         R         T        |  Y         U         I         O         P         \
 Shift     A         S         D         F         G        |  H         J         K         L         +/:       '
 Ctrl      Z(TD)     X         C         V         B        |  N         M         ,         .         /(L3)     Shift
-                    Space/L2  Ent/L4    L1(Tog)            |  Del       Ent/L2    Alt
+                     Space/L2  Ent/L4    L1(Tog)            |  Del       Ent/L2    Alt
+                    Alt       Bspc
 ```
-*Note: TD(Z) = Tap: Z, Hold: Layer 4. Double Tap: Flashlight.*
+*Note: TD(Z) = Tap: Z, Hold: Layer 4.*
 
 ### NUMPAD (Layer 1)
 ```
@@ -54,8 +55,8 @@ Shift     /(L3)     .         ,         M         N        |  N         M       
 ### SETTINGS (Layer 5)
 ```
 PScr      Exit      Exit      Exit      Exit      Exit     |  Exit      Hue+      Hue-      Sat+      Sat-      PScr
-Exit      RGB_Tog   RGB_Nxt   RGB_Prv   AutoRGB   P.Frac   |  Fire      Val+      Val-      Exit      Exit      ClrEE
-Exit      Exit      Exit      Day       Night     Exit     |  Exit      DPI+      DPI-      Jitter    Exit      SyncDbg
+ Exit      RGB_Tog   RGB_Nxt   RGB_Prv   AutoRGB   P.Frac   |  Fire      Val+      Val-      Exit      Exit      ClrEE
+ Exit      Exit      Exit      Day       FlashLt   Night    |  Exit      DPI+      DPI-      Jitter    Exit      SyncDbg
 Exit      Exit      Exit      Exit      Exit      Exit     |  Pinwhl    Time+     Time-     Exit      Exit      Exit
                     Exit      Exit      Exit               |  Exit      Exit      Exit
 ```
@@ -67,12 +68,18 @@ Exit      Exit      Exit      Exit      Exit      Exit     |  Pinwhl    Time+   
 - **Base (0):** Standard QWERTY layout.
 - **Numpad (1):** Blue RGB. Access via **Left Outer Thumb** (Toggle) or **Hold '1'**. Contains Numpad (Left hand) and Navigation (Right hand).
 - **Arrow (2):** Green RGB. Access via **Right Middle Thumb** (Enter/Toggle L2) or **Hold '2'**. Contains F-keys, Arrow keys, and navigation.
-- **Mouse (3):** Yellow RGB. **Automatically activates** when you move the trackball. Also accessible via **Hold '/'**.
-- **One-Hand (4):** Pink RGB. Access via **Hold '4'**, **Hold Left Middle Thumb (Enter)**, or **Hold 'Z'**. Mirrored layout for typing with one hand.
-- **Settings (5):** Cyan RGB. Access via **Hold '5'**. Contains all RGB controls (Hue, Saturation, Value, Mode) and mouse settings (DPI, Snipe, Timeout, Jitter).
-- **Flashlight:** White RGB. Double-tap **'Z'** (Layer 0) to toggle max brightness white light.
+ - **Mouse (3):** Yellow RGB. **Automatically activates** when you move the trackball. Also accessible via **Hold '/'**.
+ - **One-Hand (4):** Pink RGB. Access via **Hold '4'**, **Hold Left Middle Thumb (Enter)**, or **Hold 'Z'**. Mirrored layout for typing with one hand.
+ - **Settings (5):** Cyan RGB. Access via **Hold '5'**. Contains all RGB controls (Hue, Saturation, Value, Mode) and mouse settings (DPI, Snipe, Timeout, Jitter). Flashlight is also on this layer.
+ - **Flashlight:** White RGB. Access on **Settings layer (Hold '5')** at the 'F' position. Toggles max brightness white light.
 
-### 2. Combos
+### 2. Thumb Key Behavior
+The thumb keys on the bottom row have dual functions:
+- **Tap:** Executes the top function (e.g., Space, Enter, Backspace).
+- **Hold:** Executes the mode/layer change (e.g., Toggle Layer 2, Toggle Layer 4).
+*Note: This allows seamless switching between typing and navigating without moving your hands.*
+
+### 3. Combos
 Simultaneous key presses for navigation and editing.
 
 | Keys (Hold Together) | Result |
@@ -89,13 +96,13 @@ Simultaneous key presses for navigation and editing.
 | **Z + V** | End |
 | **LShift + RShift** | Caps Lock |
 
-### 3. Mouse Features
+### 4. Mouse Features
 - **Auto-Mouse:** Moving the trackball switches to Layer 3 (Yellow). Activates on movement > threshold. Reverts to previous layer after timeout period (unless Locked).
 - **Mouse Lock:** Press `MsLock` (Layer 3, 'L' position) to lock the mouse layer.
 - **Drag Scroll:** Press `DragScr` (Layer 3, 'K' position) to turn trackball into a scroll wheel.
 - **Snipe Mode:** Press `Snipe` (Layer 3, 'I' position) to lower DPI for precision aiming.
 
-### 4. Settings Layer (Hold '5')
+### 5. Settings Layer (Hold '5')
 All configuration settings are now on the Settings layer for easy access:
 - **RGB Controls:** Toggle, Next/Prev mode, Hue+/- , Saturation+/-, Value+/-, AutoRGB
 - **RGB Animations:** Direct access to Fire, Pixel Fractal, and Pinwheel effects
@@ -103,5 +110,5 @@ All configuration settings are now on the Settings layer for easy access:
 - **Snipe Mode:** Press `Snipe` to toggle low DPI (250) for precision. Also available on Layer 3 at 'I' position.
 - **Timeout Adjustment:** Press `Time+`/`Time-` to adjust auto-mouse timeout in 500ms increments (range: 0.5s - 10s). Default is 2.0s.
 - **Jitter Filter:** Press `Jitter` to toggle the mouse jitter filter (useful for high-DPI stability).
-- **Debug/Maintenance:** `ClrEE` (Clear EEPROM), `SyncDbg` (Debug sync state), `PScr` (Print Screen).
-- **Brightness Presets:** `Day` (High Brightness) and `Night` (Low Brightness) on 'D' and 'F' keys.
+ - **Debug/Maintenance:** `ClrEE` (Clear EEPROM), `SyncDbg` (Debug sync state), `PScr` (Print Screen).
+ - **Brightness Presets:** `Day` (High Brightness), `FlashLt` (Flashlight mode - white RGB), and `Night` (Low Brightness) on 'D', 'F', and 'G' keys respectively.
