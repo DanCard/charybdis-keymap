@@ -520,6 +520,7 @@ def simplify_key(key_code, layer_num=None):
         "KC_CHEVRON": "Chev\nron",
         "KC_LR_TOGGLE": "LR\nToggle",
         "KC_FLASH": "Flash",
+        "KC_FLASHLIGHT": "Light",
         "KC_RAINBOW": "Rain\nbow",
         "KC_SNIPE": "Snipe",
         "KC_FAST": "Fast",
