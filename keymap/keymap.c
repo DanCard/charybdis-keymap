@@ -985,6 +985,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       p_held = false;
       if (!p_triggered) {
         tap_code(KC_P);
+      } else {
+        // Hold was triggered, restore layer 4
+        layer_change_reason = "P(Hold Release): L4";
+        layer_move(4);
       }
     }
     return false;
@@ -1692,8 +1696,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
     [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_EXIT, RM_HUEU, RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
-                  KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_EXIT, RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
-                  KC_EXIT, KC_EXIT, KC_EXIT, KC_DAY, KC_FLASHLIGHT, KC_NIGHT,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE, KC_EXIT, RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, KC_EXIT, KC_FLASHLIGHT, KC_EXIT, KC_DAY, KC_NIGHT,   KC_EXIT, DPI_MOD, DPI_RMOD, KC_JITTER, KC_EXIT, KC_DEBUG_SYNC,
                  KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                            KC_EXIT, KC_EXIT,   KC_EXIT),
@@ -2204,8 +2208,8 @@ void matrix_scan_user(void) {
     rgb_matrix_indicators_user();
   }
   if (p_held && !p_triggered && timer_elapsed(p_tap_timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "P(Hold): Exit to Base";
-    layer_move(0);
+    layer_change_reason = "P(Hold): Peek at Base";
+    layer_state_set(0); // Peek at base layer
     p_triggered = true;
     rgb_matrix_indicators_user();
   }
