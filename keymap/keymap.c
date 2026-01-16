@@ -477,8 +477,8 @@ const char *get_rgb_mode_name(uint8_t mode) {
     return "UNKNOWN";
 }
 
-void handle_rgb_mode_change(void) {
-  uint8_t mode = rgb_matrix_get_mode();
+void handle_rgb_mode_change(uint8_t mode) {
+  rgb_matrix_mode_noeeprom(mode);
   LOG_TIME();
   uprintf("\033[93mRGB Mode Changed: %d (%s)\033[0m\n", mode, get_rgb_mode_name(mode));
 
@@ -627,7 +627,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
   // Force RGB refresh when returning to layer 0 to clear stale indicator colors
   if (layer == 0 && prev_layer != 0) {
-    rgb_matrix_mode_noeeprom(rgb_matrix_get_mode());
+    handle_rgb_mode_change(rgb_matrix_get_mode());
   }
   if (layer == 3) {
     uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
@@ -792,8 +792,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (record->event.pressed) {
     for (size_t i = 0; i < RGB_MODE_KEY_COUNT; i++) {
       if (keycode == rgb_mode_keys[i].keycode) {
-        rgb_matrix_mode_noeeprom(rgb_mode_keys[i].rgb_mode);
-        handle_rgb_mode_change();
+        handle_rgb_mode_change(rgb_mode_keys[i].rgb_mode);
         return false;
       }
     }
@@ -949,13 +948,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case RM_NEXT:
     if (record->event.pressed) {
       rgb_matrix_step_noeeprom();
-      handle_rgb_mode_change();
+      handle_rgb_mode_change(rgb_matrix_get_mode());
     }
     return false;
   case RM_PREV:
     if (record->event.pressed) {
       rgb_matrix_step_reverse_noeeprom();
-      handle_rgb_mode_change();
+      handle_rgb_mode_change(rgb_matrix_get_mode());
     }
     return false;
   case KC_MOUSE_LOCK:
@@ -1015,8 +1014,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (layer == 2)
           tap_code(KC_F1);
         else if (layer == 3) {
-          rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
-          handle_rgb_mode_change();
+          handle_rgb_mode_change(RGB_MATRIX_CYCLE_LEFT_RIGHT);
         } else if (layer == 4)
           tap_code(KC_0);
         else
@@ -1037,7 +1035,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           tap_code(KC_F2);
         else if (layer == 3) {
           rgb_matrix_step_noeeprom();
-          handle_rgb_mode_change();
+          handle_rgb_mode_change(rgb_matrix_get_mode());
         } else if (layer == 4)
           tap_code(KC_9);
         else
@@ -1118,7 +1116,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint8_t mode = rgb_matrix_get_mode();
       if (mode == RGB_MATRIX_CYCLE_LEFT_RIGHT || mode == RGB_MATRIX_CYCLE_ALL ||
           mode == RGB_MATRIX_CYCLE_SPIRAL) {
-        rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+        handle_rgb_mode_change(RGB_MATRIX_SOLID_COLOR);
       }
     }
     return true;
@@ -1177,12 +1175,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_FIRE:
         if (record->event.pressed) {
-          rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_fire);
+          handle_rgb_mode_change(RGB_MATRIX_CUSTOM_fire);
         }
         return false;
       case KC_CPFR:
         if (record->event.pressed) {
-          rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_campfire);
+          handle_rgb_mode_change(RGB_MATRIX_CUSTOM_campfire);
         }
         return false;
   case DPI_MOD:
@@ -1242,12 +1240,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         saved_rgb_h = rgb_matrix_get_hue();
         saved_rgb_s = rgb_matrix_get_sat();
         saved_rgb_v = rgb_matrix_get_val();
-        rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+        handle_rgb_mode_change(RGB_MATRIX_SOLID_COLOR);
         rgb_matrix_sethsv_noeeprom(HSV_WHITE);
         is_flashlight = true;
         uprintf("Flashlight ON\n");
       } else {
-        rgb_matrix_mode_noeeprom(saved_rgb_mode);
+        handle_rgb_mode_change(saved_rgb_mode);
         rgb_matrix_sethsv_noeeprom(saved_rgb_h, saved_rgb_s, saved_rgb_v);
         is_flashlight = false;
         uprintf("Flashlight OFF\n");
@@ -1760,11 +1758,12 @@ void matrix_scan_user(void) {
 
   // Deferred RGB init - apply after matrix is fully ready
   if (master_rgb_init_pending) {
-    rgb_matrix_mode_noeeprom(master_rgb_init_mode);
-    master_rgb_init_pending = false;
     if (is_keyboard_master()) {
-      handle_rgb_mode_change();
+      handle_rgb_mode_change(master_rgb_init_mode);
+    } else {
+      rgb_matrix_mode_noeeprom(master_rgb_init_mode);
     }
+    master_rgb_init_pending = false;
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
   }
 
@@ -1792,7 +1791,7 @@ void matrix_scan_user(void) {
     rgb_matrix_step_noeeprom();
     rgb_auto_timer = timer_read();
     if (is_keyboard_master()) {
-      handle_rgb_mode_change();
+      handle_rgb_mode_change(rgb_matrix_get_mode());
     }
   }
 
