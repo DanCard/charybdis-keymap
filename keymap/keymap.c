@@ -132,7 +132,6 @@ static uint16_t rgb_auto_timer = 0;
 static uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
 static uint16_t auto_mouse_timer = 0;
 static bool auto_mouse_on = false;
-static layer_state_t layer_state_to_restore = 0;
 
 #define MY_TAPPING_TERM 250
 
@@ -234,7 +233,6 @@ static bool handle_diag_mouse(uint16_t dir1, uint16_t dir2, bool pressed) {
 // Exit key helper (SPC_EXIT, ENT_EXIT, BSPC_EXIT)
 static bool handle_exit_key(uint16_t tap_key, bool pressed) {
     if (pressed) {
-        layer_state_to_restore = layer_state;
         layer_change_reason = "Exit Key: L0";
         layer_state_set(0);
         rgb_matrix_indicators_user();
@@ -857,7 +855,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint32_t ms = now % 1000;
       uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n", sec, ms,
               (unsigned long)layer_state);
-      layer_state_to_restore = layer_state;
       layer_change_reason = "ENT_EXIT (Tap): L0";
       layer_state_set(0); // Clear all layers (peek at base)
       rgb_matrix_indicators_user();
@@ -872,7 +869,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         // Tap = Permanent Exit. We stay at layer 0.
       } else {
         // Hold = Momentary Peek. Restore the full layer state.
-        // layer_state_set(layer_state_to_restore);
       }
       rgb_matrix_indicators_user();
     }
