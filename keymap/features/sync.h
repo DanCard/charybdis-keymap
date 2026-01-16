@@ -19,6 +19,7 @@ typedef struct _user_sync_info_t {
   bool mouse_is_locked;
   bool is_jitter_filter_active;
   bool is_caps_lock_on;
+  bool is_day_mode;
   uint8_t rgb_mode;
   bool is_left_hand;
   uint16_t random_seed;  // Sync random seed for effects like PIXEL_RAIN/PIXEL_FLOW
@@ -38,6 +39,7 @@ extern bool is_fast_mode_active;
 extern bool mouse_is_locked;
 extern bool is_jitter_filter_active;
 extern bool is_caps_lock_on;
+extern bool is_day_mode;
 extern bool sync_needed;
 extern bool slave_first_sync;
 extern uint16_t current_random_seed;

@@ -1,4 +1,5 @@
 #include "sync.h"
+#include "logging.h"
 #include <lib/lib8tion/lib8tion.h>
 
 // Sync statistics tracking
@@ -18,12 +19,6 @@ bool is_caps_lock_on = false;
 // External function required for logging
 extern const char *get_rgb_mode_name(uint8_t mode);
 
-// Helper for logging time (copied from keymap.c to avoid dependency on it for now)
-#define LOG_TIME() do { \
-    uint32_t _t = timer_read32(); \
-    uprintf("[%lu.%03lu] ", (unsigned long)(_t / 1000), (unsigned long)(_t % 1000)); \
-} while(0)
-
 void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
                                   uint8_t out_buflen, void *out_data) {
   const user_sync_info_t *sync_data = (const user_sync_info_t *)in_data;
@@ -38,6 +33,7 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
   is_caps_lock_on = sync_data->is_caps_lock_on;
+  is_day_mode = sync_data->is_day_mode;
 
   // Send slave's handedness back to master via response (not used currently, just stored locally)
 
@@ -98,6 +94,7 @@ void housekeeping_task_sync(void) {
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
           .is_caps_lock_on = is_caps_lock_on,
+          .is_day_mode = is_day_mode,
           .rgb_mode = rgb_matrix_get_mode(),
           .is_left_hand = is_keyboard_left(),
           .random_seed = current_random_seed};
@@ -141,8 +138,9 @@ void housekeeping_task_sync(void) {
       last_heartbeat_time = timer_read32();
       uint32_t since_sync = timer_elapsed32(last_sync_time);
       LOG_TIME();
-      uprintf("\033[36m[Heartbeat] Mode=%d (%s) Seed=%u Syncs=%lu/%lu LastSync=%lu.%03lus ago Slave(Mode=%d Ctr=%u)\033[0m\n",
+      uprintf("\033[36m[Heartbeat] Mode=%d (%s) %s Seed=%u Syncs=%lu/%lu LastSync=%lu.%03lus ago Slave(Mode=%d Ctr=%u)\033[0m\n",
               rgb_matrix_get_mode(), get_rgb_mode_name(rgb_matrix_get_mode()),
+              is_day_mode ? "DAY" : "NIGHT",
               current_random_seed, (unsigned long)sync_success_count, (unsigned long)sync_fail_count,
               (unsigned long)(since_sync / 1000), (unsigned long)(since_sync % 1000),
               last_slave_response.slave_rgb_mode, last_slave_response.slave_task_counter);
@@ -160,6 +158,7 @@ void debug_dump_sync_state(void) {
   uprintf("Hand: %s\n", is_keyboard_left() ? "LEFT" : "RIGHT");
   uprintf("\n\033[96m--- RGB State ---\033[0m\n");
   uprintf("Mode: %d (%s)\n", rgb_matrix_get_mode(), get_rgb_mode_name(rgb_matrix_get_mode()));
+  uprintf("Brightness: %s (V=%d)\n", is_day_mode ? "DAY" : "NIGHT", rgb_matrix_get_val());
   uprintf("Random Seed: %u\n", current_random_seed);
   uprintf("HSV: H=%d S=%d V=%d\n", rgb_matrix_get_hue(), rgb_matrix_get_sat(), rgb_matrix_get_val());
   uprintf("\n\033[96m--- Sync Stats ---\033[0m\n");
@@ -175,5 +174,6 @@ void debug_dump_sync_state(void) {
   uprintf("mouse_is_locked: %s\n", mouse_is_locked ? "YES" : "no");
   uprintf("is_jitter_filter_active: %s\n", is_jitter_filter_active ? "YES" : "no");
   uprintf("is_caps_lock_on: %s\n", is_caps_lock_on ? "YES" : "no");
+  uprintf("is_day_mode: %s\n", is_day_mode ? "YES" : "no");
   uprintf("\033[95m======================================\033[0m\n\n");
 }

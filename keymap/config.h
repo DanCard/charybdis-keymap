@@ -18,7 +18,7 @@
 
 /* Auto Mouse Configuration */
 #define AUTO_MOUSE_DEFAULT_LAYER 3    // Switch to Layer 3 (MOUSE)
-#define AUTO_MOUSE_TIME 650           // Return to base layer after 650ms of inactivity
+#define AUTO_MOUSE_TIME 1500          // Return to base layer after 1.5s of inactivity
 #define AUTO_MOUSE_DEBOUNCE 10        // Ignore small accidental movements
 
 #define RGB_MATRIX_KEYPRESSES

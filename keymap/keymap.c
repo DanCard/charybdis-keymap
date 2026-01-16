@@ -6,12 +6,7 @@
 #include "features/mouse.h"
 #include "features/rgb.h"
 #include "features/tap_hold.h"
-
-// Timestamp logging helper - prints [seconds.milliseconds]
-#define LOG_TIME() do { \
-    uint32_t _t = timer_read32(); \
-    uprintf("[%lu.%03lu] ", (unsigned long)(_t / 1000), (unsigned long)(_t % 1000)); \
-} while(0)
+#include "features/logging.h"
 
 const char *layer_change_reason = NULL;
 static char layer_reason_buffer[64];
@@ -429,9 +424,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_ENT_EXIT:
     if (record->event.pressed) {
-      uint32_t now = timer_read32();
-      uint32_t sec = now / 1000;
-      uint32_t ms = now % 1000;
+      uint32_t ent_exit_now = timer_read32();
+      uint32_t sec = ent_exit_now / 1000;
+      uint32_t ms = ent_exit_now % 1000;
       uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n", sec, ms,
               (unsigned long)layer_state);
       layer_change_reason = "ENT_EXIT (Tap): L0";
@@ -693,10 +688,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_PLUS_COLON:
     if (record->event.pressed) {
       if (get_mods() & MOD_MASK_SHIFT) {
-        // Shift held: send colon (shift is already active)
+        // Shift already held by user: send colon directly
         tap_code(KC_SCLN);
       } else {
-        // No shift: send plus
+        // Shift not held: send plus (shifted equals sign)
         tap_code16(S(KC_EQL));
       }
     }
@@ -737,15 +732,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return false;
   case KC_FIRE:
-        if (record->event.pressed) {
-          handle_rgb_mode_change(RGB_MATRIX_CUSTOM_fire);
-        }
-        return false;
-      case KC_CPFR:
-        if (record->event.pressed) {
-          handle_rgb_mode_change(RGB_MATRIX_CUSTOM_campfire);
-        }
-        return false;
+    if (record->event.pressed) {
+      handle_rgb_mode_change(RGB_MATRIX_CUSTOM_fire);
+    }
+    return false;
+  case KC_CPFR:
+    if (record->event.pressed) {
+      handle_rgb_mode_change(RGB_MATRIX_CUSTOM_campfire);
+    }
+    return false;
   case DPI_MOD:
     if (record->event.pressed) {
       // Allow core to handle it first (return true), but log current/new DPI?
@@ -785,6 +780,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       // Set High Brightness (Day Mode)
       // Keep current Hue/Sat, set Value to 225
       rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 225);
+      is_day_mode = true;
+      sync_needed = true;
       uprintf("Day Mode: Brightness set to 225\n");
     }
     return false;
@@ -793,6 +790,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       // Set Low Brightness (Night Mode)
       // Keep current Hue/Sat, set Value to 16
       rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 16);
+      is_day_mode = false;
+      sync_needed = true;
       uprintf("Night Mode: Brightness set to 16\n");
     }
     return false;
@@ -918,10 +917,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE    , KC_EXIT     , RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
-                 KC_EXIT, KC_EXIT, KC_FLASHLIGHT, KC_EXIT, KC_DAY, KC_NIGHT,   KC_EXIT    , DPI_MOD     , DPI_RMOD, KC_JITTER, KC_EXIT, KC_EXIT,
-                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT     , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_EXIT    , KC_EXIT  , KC_EXIT  , KC_EXIT  , KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE      , KC_EXIT    , KC_EXIT  , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
+                 KC_EXIT, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                            KC_EXIT, KC_EXIT,   KC_EXIT),
 };
@@ -947,7 +946,8 @@ void keyboard_post_init_user(void) {
   uint16_t user_config = eeconfig_read_user();
 
   // Restore State
-  is_jitter_filter_active = (user_config & 0x0080) ? true : false;
+  is_jitter_filter_active = (user_config & 0x0080);
+  is_day_mode = rgb_matrix_get_val() > 100;
 
   uint8_t saved_theme = (uint8_t)(user_config & 0x3F);
   uint8_t saved_hue = (uint8_t)((user_config >> 8) & 0xFF);

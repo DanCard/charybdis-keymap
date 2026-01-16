@@ -4,6 +4,7 @@
 
 // RGB state variables
 extern bool is_flashlight;
+extern bool is_day_mode;
 extern uint8_t automatic_hue_tracker;
 extern bool rgb_auto_cycle;
 extern uint16_t rgb_auto_timer;

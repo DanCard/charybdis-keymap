@@ -6,6 +6,7 @@
 
 // RGB state variables
 bool is_flashlight = false;
+bool is_day_mode = false;
 uint8_t automatic_hue_tracker = 0;
 bool rgb_auto_cycle = false;
 uint16_t rgb_auto_timer = 0;

@@ -2,16 +2,11 @@
 #include "rgb.h"
 #include "sync.h"
 #include "keycodes.h"
+#include "logging.h"
 #include <lib/lib8tion/lib8tion.h>
 
 // Tap/Hold Key State
 tap_hold_t th[TH_COUNT] = {0};
-
-// Helper for logging (temporary)
-#define LOG_TIME() do { \
-    uint32_t _t = timer_read32(); \
-    uprintf("[%lu.%03lu] ", (unsigned long)(_t / 1000), (unsigned long)(_t % 1000)); \
-} while(0)
 
 // Simple tap-hold key table
 static const simple_tap_hold_t simple_tap_holds[] = {

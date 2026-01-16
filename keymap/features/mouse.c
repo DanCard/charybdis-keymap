@@ -1,5 +1,6 @@
 #include "mouse.h"
 #include "sync.h"
+#include "logging.h"
 #include <lib/lib8tion/lib8tion.h>
 
 // Mouse state definitions
@@ -9,13 +10,7 @@ bool mouse_is_locked = false;
 bool is_jitter_filter_active = false;
 bool auto_mouse_on = false;
 uint16_t auto_mouse_timer = 0;
-uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
-
-// Helper for logging (temporary duplication until a common logger is established)
-#define LOG_TIME() do { \
-    uint32_t _t = timer_read32(); \
-    uprintf("[%lu.%03lu] ", (unsigned long)(_t / 1000), (unsigned long)(_t % 1000)); \
-} while(0)
+uint16_t auto_mouse_timeout = 1500; // Default (matches AUTO_MOUSE_TIME in config.h)
 
 // Internal timers
 static uint16_t snipe_timer = 0;
