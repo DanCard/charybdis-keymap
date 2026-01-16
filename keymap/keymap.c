@@ -473,10 +473,10 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
   case SINGLE_HOLD:
     if (get_highest_layer(layer_state) == 4) {
       layer_change_reason = "Tap Dance Z Hold";
-      layer_state_set(0); // Peek at base layer
+      layer_move(0); // Peek at base layer
     } else {
       layer_change_reason = "Tap Dance Z Hold";
-      layer_state_set(4); // Peek at layer 4
+      layer_move(4); // Peek at layer 4
     }
     rgb_matrix_indicators_user();
     break;
@@ -493,13 +493,13 @@ void z_reset(tap_dance_state_t *state, void *user_data) {
   } break;
   case SINGLE_HOLD:
     if (get_highest_layer(layer_state) == 4) {
-      // Was peeking at base layer, restore layer 4
-      layer_change_reason = "Z(Hold Release): L4";
-      layer_move(4);
-    } else {
       // Was peeking at layer 4, restore base layer
       layer_change_reason = "Z(Hold Release): Base";
       layer_move(0);
+    } else {
+      // Was peeking at base layer, restore layer 4
+      layer_change_reason = "Z(Hold Release): L4";
+      layer_move(4);
     }
     break;
   }
@@ -2254,7 +2254,7 @@ void matrix_scan_user(void) {
   }
   if (q_held && !q_triggered && timer_elapsed(q_tap_timer) > MY_TAPPING_TERM) {
     layer_change_reason = "Q(Hold): Peek at One-Hand (L4)";
-    layer_state_set(4); // Peek at layer 4
+    layer_move(4); // Peek at layer 4
     q_triggered = true;
     rgb_matrix_indicators_user();
   }
