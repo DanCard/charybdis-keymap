@@ -4,6 +4,65 @@ RGB_MATRIX_EFFECT(campfire)
 
 #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
+// =============================================================================
+// Fire Effect Constants
+// =============================================================================
+
+// LED matrix geometry (from Charybdis 4x6 layout)
+#define MATRIX_HEIGHT           64      // Y range: 0 (top) to 64 (bottom/thumb)
+#define MATRIX_CENTER_X         112     // Horizontal center point
+#define MAX_COLOR_VAL           255     // Maximum RGB/HSV value
+
+// Phase multipliers for flicker randomization (using primes for variation)
+#define PHASE_VAL_MULT          37      // Brightness phase offset per LED
+#define PHASE_HUE_MULT          53      // Hue phase offset per LED
+
+// Fire effect: flame shape and intensity
+#define FIRE_SWAY_MAX           25      // Maximum horizontal sway at flame tips
+#define FIRE_EDGE_FADE_FACTOR   80      // How quickly flames fade at edges
+#define FIRE_INTENSITY_DIV      200     // Base intensity divisor (lower = brighter)
+#define FIRE_MIN_BRIGHTNESS     15      // Below this, LED is turned off
+#define FIRE_HUE_RANGE          35      // Base hue range (red to orange)
+#define FIRE_HUE_MAX            45      // Cap at yellow (don't go green)
+#define FIRE_SAT_REDUCTION      150     // Saturation reduction at top (white-hot)
+#define FIRE_FLICKER_RANGE      80      // Brightness flicker modulo range
+
+// Wildfire effect: chaos generator multipliers (primes for pseudo-randomness)
+#define CHAOS_MULT_1            47
+#define CHAOS_MULT_2            113
+#define CHAOS_MULT_3            61
+#define CHAOS_MULT_4            173
+
+// Wildfire effect: zone thresholds
+#define WILDFIRE_ZONE1_BASE     48      // Bottom zone (deep reds)
+#define WILDFIRE_ZONE2_BASE     25      // Middle zone (reds/oranges)
+#define WILDFIRE_TURBULENCE     16      // Y-axis turbulence range
+
+// Wildfire effect: special triggers
+#define WILDFIRE_HEATWAVE_THRESH 200    // Heat wave activation threshold
+#define WILDFIRE_CORE_THRESH    248     // Hot core flare threshold
+#define WILDFIRE_EMBER_THRESH   252     // Ember pop threshold
+#define WILDFIRE_HUE_BOOST      8       // Hue shift during heat waves
+
+// Campfire effect: heat zones
+#define CAMPFIRE_HEAT_BASE      130     // Minimum heat at top
+#define CAMPFIRE_SWAY_Y_THRESH  70      // Y threshold for sway calculation
+#define CAMPFIRE_SPARK_THRESH   100     // Heat threshold for spark chance
+#define CAMPFIRE_CORE_HEAT      210     // Pure red zone threshold
+#define CAMPFIRE_BODY_HEAT      140     // Red-to-orange zone threshold
+#define CAMPFIRE_TIPS_HEAT      60      // Orange-to-purple zone threshold
+#define CAMPFIRE_MIN_EMBER_VAL  40      // Minimum brightness for embers
+
+// Hue values (0-255 HSV wheel)
+#define HUE_RED                 0
+#define HUE_ORANGE              25
+#define HUE_YELLOW              38
+#define HUE_BLUE                155
+#define HUE_PURPLE              190
+#define HUE_PINK                235
+
+// =============================================================================
+
 static bool fire(effect_params_t* params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
@@ -13,54 +72,54 @@ static bool fire(effect_params_t* params) {
     for (uint8_t i = led_min; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
 
-        // Get LED position (y: 0=top, 64=bottom thumb cluster)
+        // Get LED position (y: 0=top, MATRIX_HEIGHT=bottom thumb cluster)
         uint8_t y = g_led_config.point[i].y;
         uint8_t x = g_led_config.point[i].x;
 
         // Two phase offsets for independent hue and brightness flicker
-        uint8_t phase_val = (time + i * 37) % 256;
-        uint8_t phase_hue = (time / 2 + i * 53) % 256;
+        uint8_t phase_val = (time + i * PHASE_VAL_MULT) % 256;
+        uint8_t phase_hue = (time / 2 + i * PHASE_HUE_MULT) % 256;
 
         // Base intensity from vertical position (bottom = bright, top = dim)
-        uint8_t y_intensity = (y * 255) / 64;
+        uint8_t y_intensity = (y * MAX_COLOR_VAL) / MATRIX_HEIGHT;
 
         // Horizontal sway: flames drift left/right over time
         // Sway is stronger at top (tips move more), weaker at bottom (base is stable)
-        uint8_t sway_amount = ((64 - y) * 25) / 64; // 0 at bottom, 25 at top
+        uint8_t sway_amount = ((MATRIX_HEIGHT - y) * FIRE_SWAY_MAX) / MATRIX_HEIGHT;
         int16_t sway_offset = ((int16_t)((time / 3) % 256) - 128) * sway_amount / 128;
 
-        // Edge fade: x ranges 0-224, center is 112 (shifted by sway)
-        int16_t shifted_center = 112 + sway_offset;
+        // Edge fade: center is MATRIX_CENTER_X (shifted by sway)
+        int16_t shifted_center = MATRIX_CENTER_X + sway_offset;
         int16_t x_center_dist = (x > shifted_center) ? (x - shifted_center) : (shifted_center - x);
         if (x_center_dist < 0) x_center_dist = 0;
-        uint8_t edge_fade = 255 - (x_center_dist * 80 / 112);
-        if (edge_fade > 255) edge_fade = 255; // clamp overflow from uint8
+        uint8_t edge_fade = MAX_COLOR_VAL - (x_center_dist * FIRE_EDGE_FADE_FACTOR / MATRIX_CENTER_X);
+        if (edge_fade > MAX_COLOR_VAL) edge_fade = MAX_COLOR_VAL; // clamp overflow from uint8
 
         // Combine position-based intensity (boosted ~25% for brighter flames)
-        uint16_t base_val = ((uint16_t)y_intensity * edge_fade) / 200;
+        uint16_t base_val = ((uint16_t)y_intensity * edge_fade) / FIRE_INTENSITY_DIV;
 
         // Brightness flicker (+-40%)
-        int16_t flicker = ((phase_val % 80) - 40) * 2;
+        int16_t flicker = ((phase_val % FIRE_FLICKER_RANGE) - (FIRE_FLICKER_RANGE / 2)) * 2;
         int16_t val = base_val + flicker;
         if (val < 0) val = 0;
-        if (val > 255) val = 255;
+        if (val > MAX_COLOR_VAL) val = MAX_COLOR_VAL;
 
-        // Per-key hue variation within warm range (0-45: red to yellow)
+        // Per-key hue variation within warm range (0-FIRE_HUE_MAX: red to yellow)
         // Base hue from position (deep red at bottom, yellow toward top)
-        uint8_t base_hue = ((64 - y) * 35) / 64; // 0-35 based on height
+        uint8_t base_hue = ((MATRIX_HEIGHT - y) * FIRE_HUE_RANGE) / MATRIX_HEIGHT;
         // Add per-key hue flicker within warm range
-        uint8_t hue_variation = (phase_hue % 15); // 0-14 variation
+        uint8_t hue_variation = (phase_hue % 15);
         uint8_t hue = base_hue + hue_variation;
-        if (hue > 45) hue = 45; // cap at yellow, don't go green
+        if (hue > FIRE_HUE_MAX) hue = FIRE_HUE_MAX; // cap at yellow, don't go green
 
         // Saturation: high at bottom (deep red), low at top (white-hot tips)
-        uint8_t sat = 255 - ((64 - y) * 150 / 64); // ~255 at bottom, ~105 at top
+        uint8_t sat = MAX_COLOR_VAL - ((MATRIX_HEIGHT - y) * FIRE_SAT_REDUCTION / MATRIX_HEIGHT);
 
         // Skip very dim LEDs (top edges)
-        if (val < 15) {
+        if (val < FIRE_MIN_BRIGHTNESS) {
             rgb_matrix_set_color(i, 0, 0, 0);
         } else {
-            HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / 255) };
+            HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / MAX_COLOR_VAL) };
             RGB rgb = hsv_to_rgb(hsv);
             rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
@@ -82,24 +141,24 @@ static bool wildfire(effect_params_t* params) {
 
         // --- CHAOS GENERATORS (multiple overlapping waves) ---
         // Each LED gets unique, time-varying offsets using prime multipliers
-        uint8_t chaos1 = sin8(time * 3 + i * 47);
-        uint8_t chaos2 = sin8(time * 5 + i * 113 + x * 7);
-        uint8_t chaos3 = sin8(time * 2 + i * 61 + y * 11);
-        uint8_t chaos4 = sin8(time * 7 + i * 173);
+        uint8_t chaos1 = sin8(time * 3 + i * CHAOS_MULT_1);
+        uint8_t chaos2 = sin8(time * 5 + i * CHAOS_MULT_2 + x * 7);
+        uint8_t chaos3 = sin8(time * 2 + i * CHAOS_MULT_3 + y * 11);
+        uint8_t chaos4 = sin8(time * 7 + i * CHAOS_MULT_4);
 
         // Per-key turbulence that shifts zone boundaries
-        int8_t y_turbulence = ((chaos1 + chaos2) / 16) - 16;  // +-16 range
+        int8_t y_turbulence = ((chaos1 + chaos2) / 16) - WILDFIRE_TURBULENCE;
         int16_t effective_y = y + y_turbulence;
         if (effective_y < 0) effective_y = 0;
-        if (effective_y > 64) effective_y = 64;
+        if (effective_y > MATRIX_HEIGHT) effective_y = MATRIX_HEIGHT;
 
         // --- DYNAMIC ZONING with turbulent boundaries ---
         uint8_t hue, sat;
         int16_t val;
 
         // Zone thresholds shift per-key based on chaos
-        int16_t zone1_thresh = 48 + (chaos3 / 16) - 8;  // ~40-56
-        int16_t zone2_thresh = 25 + (chaos4 / 20) - 6;  // ~19-31
+        int16_t zone1_thresh = WILDFIRE_ZONE1_BASE + (chaos3 / 16) - 8;
+        int16_t zone2_thresh = WILDFIRE_ZONE2_BASE + (chaos4 / 20) - 6;
 
         if (effective_y >= zone1_thresh) {
             // BOTTOM: Deep reds and occasional brown
@@ -169,14 +228,14 @@ static bool wildfire(effect_params_t* params) {
 
         // --- ROLLING HEAT WAVES: Diagonal patterns ---
         uint8_t heat_wave = sin8(x * 2 + y * 3 + time * 4);
-        if (heat_wave > 200) {
+        if (heat_wave > WILDFIRE_HEATWAVE_THRESH) {
             val += 40;
-            if (hue < 45) hue += 8;  // Push toward yellow during heat wave
+            if (hue < FIRE_HUE_MAX) hue += WILDFIRE_HUE_BOOST;  // Push toward yellow during heat wave
         }
 
         // --- HOT CORES: Random bright flares ---
         uint8_t core_chance = (chaos1 + chaos4) / 2;
-        if (core_chance > 248) {
+        if (core_chance > WILDFIRE_CORE_THRESH) {
             uint8_t flare_type = chaos2 % 100;
             if (flare_type < 40) {
                 hue = 0 + (chaos3 / 50);  // Deep red
@@ -192,7 +251,7 @@ static bool wildfire(effect_params_t* params) {
         }
 
         // --- EMBER POPS: Varied color sparks ---
-        if (chaos4 > 252) {
+        if (chaos4 > WILDFIRE_EMBER_THRESH) {
             uint8_t spark_type = chaos1 % 100;
             if (spark_type < 30) {
                 hue = 0 + (chaos2 / 40);  // Red
@@ -241,74 +300,71 @@ static bool campfire(effect_params_t* params) {
         uint8_t x = g_led_config.point[i].x;
 
         // --- INFERNO HEAT MAP ---
-        
-        // 1. Vertical Heat: 
+
+        // 1. Vertical Heat:
         // Base heat higher overall to avoid black corners.
-        // y=64 (bottom) -> 258. y=0 (top) -> 130.
-        int16_t heat = 130 + (y * 2); 
+        // y=MATRIX_HEIGHT (bottom) -> 258. y=0 (top) -> CAMPFIRE_HEAT_BASE.
+        int16_t heat = CAMPFIRE_HEAT_BASE + (y * 2);
 
         // 2. Chaotic Turbulence (Explosive)
         // High frequency noise for roaring fire
         uint8_t chaos1 = sin8(time * 4 + i * 23);
         uint8_t chaos2 = sin8(time * 6 + x * 9 + y * 13);
         uint8_t chaos3 = sin8(time * 2 + y * 41); // Slow rise
-        
+
         // Turbulence: -40 to +40 range
-        int16_t turbulence = ((chaos1 + chaos2) / 6) - 42; 
+        int16_t turbulence = ((chaos1 + chaos2) / 6) - 42;
         heat += turbulence;
 
         // 3. Horizontal Sway (Wide Column)
-        uint8_t sway_mag = (70 - y) / 4; 
+        uint8_t sway_mag = (CAMPFIRE_SWAY_Y_THRESH - y) / 4;
         int8_t sway = (sin8(time / 2) - 128) * sway_mag / 128;
-        int16_t center_x = 112 + sway;
+        int16_t center_x = MATRIX_CENTER_X + sway;
         int16_t dist_x = (x > center_x) ? (x - center_x) : (center_x - x);
-        
+
         // Reduced cooling factor (0.8 instead of 1.5) to widen flame
-        heat -= (dist_x * 4 / 5); 
+        heat -= (dist_x * 4 / 5);
 
         // 4. Embers / Sparks (Chaos Injection)
         // Occasional intense pops in low-heat areas
-        if (heat < 100) {
+        if (heat < CAMPFIRE_SPARK_THRESH) {
             // If chaos3 (slow rise) lines up with chaos1 (fast), trigger spark
-            if (chaos1 > 240 && chaos3 > 200) {
-                heat = 220; // Instant hot spark
+            if (chaos1 > 240 && chaos3 > WILDFIRE_HEATWAVE_THRESH) {
+                heat = CAMPFIRE_CORE_HEAT + 10; // Instant hot spark
             }
         }
 
         // Clamp Heat
         if (heat < 0) heat = 0;
-        if (heat > 255) heat = 255;
+        if (heat > MAX_COLOR_VAL) heat = MAX_COLOR_VAL;
 
         // 5. Heat -> Color Mapping (Deep Red Focus)
         uint8_t hue;
-        uint8_t sat = 255;
+        uint8_t sat = MAX_COLOR_VAL;
         uint8_t val = heat;
 
-        if (heat > 210) {
+        if (heat > CAMPFIRE_CORE_HEAT) {
             // CORE: Pure Deep Red
-            hue = 0; 
-            sat = 255;
-        } else if (heat > 140) {
+            hue = HUE_RED;
+            sat = MAX_COLOR_VAL;
+        } else if (heat > CAMPFIRE_BODY_HEAT) {
             // BODY: Red -> Orange
-            // 140..210 -> Hue 0..25
-            hue = ((210 - heat) * 25) / 70;
-            // Invert logic: 210 is Red(0), 140 is Orange(25)
-            hue = 25 - hue;
-        } else if (heat > 60) {
-            // TIPS: Orange -> Yellow -> Purple
-            // 60..140 -> Hue 25..45..190? 
-            // Let's go Orange(25) -> Purple(190)
-            hue = 25 + ((140 - heat) * 165 / 80);
+            hue = ((CAMPFIRE_CORE_HEAT - heat) * HUE_ORANGE) / (CAMPFIRE_CORE_HEAT - CAMPFIRE_BODY_HEAT);
+            // Invert logic: CAMPFIRE_CORE_HEAT is Red(0), CAMPFIRE_BODY_HEAT is Orange(25)
+            hue = HUE_ORANGE - hue;
+        } else if (heat > CAMPFIRE_TIPS_HEAT) {
+            // TIPS: Orange -> Purple
+            hue = HUE_ORANGE + ((CAMPFIRE_BODY_HEAT - heat) * (HUE_PURPLE - HUE_ORANGE) / (CAMPFIRE_BODY_HEAT - CAMPFIRE_TIPS_HEAT));
         } else {
             // ASH/FADE: Purple -> Blue/Black
-            hue = 190 + ((60 - heat)); 
-            if (val < 40) val = 40; // Maintain some visibility for dim embers
+            hue = HUE_PURPLE + ((CAMPFIRE_TIPS_HEAT - heat));
+            if (val < CAMPFIRE_MIN_EMBER_VAL) val = CAMPFIRE_MIN_EMBER_VAL; // Maintain some visibility for dim embers
         }
 
-        if (val < 15) {
+        if (val < FIRE_MIN_BRIGHTNESS) {
              rgb_matrix_set_color(i, 0, 0, 0);
         } else {
-             HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / 255) };
+             HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / MAX_COLOR_VAL) };
              RGB rgb = hsv_to_rgb(hsv);
              rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
