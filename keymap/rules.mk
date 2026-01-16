@@ -7,3 +7,4 @@ WS2812_DRIVER = vendor
 CONSOLE_ENABLE = yes
 
 SRC += features/sync.c
+SRC += features/mouse.c

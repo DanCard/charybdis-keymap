@@ -3,6 +3,7 @@
 #include "transactions.h"
 #include <lib/lib8tion/lib8tion.h>
 #include "features/sync.h"
+#include "features/mouse.h"
 
 // Timestamp logging helper - prints [seconds.milliseconds]
 #define LOG_TIME() do { \
@@ -114,8 +115,6 @@ static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
 bool is_flashlight = false;
 bool is_sniping_active = false;
 bool is_fast_mode_active = false;
-static uint16_t snipe_timer = 0;
-static uint16_t fast_mode_timer = 0;
 bool mouse_is_locked = false;
 bool is_jitter_filter_active = false; // Default: Filter OFF
 static uint8_t saved_rgb_mode;
@@ -123,7 +122,7 @@ static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 static uint8_t automatic_hue_tracker = 0;
 static bool rgb_auto_cycle = false;
 static uint16_t rgb_auto_timer = 0;
-static uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
+uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
 uint16_t auto_mouse_timer = 0;
 bool auto_mouse_on = false;
 
@@ -199,30 +198,6 @@ static const rgb_mode_key_t rgb_mode_keys[] = {
     {KC_PINWHEEL, RGB_MATRIX_CYCLE_PINWHEEL},
 };
 #define RGB_MODE_KEY_COUNT (sizeof(rgb_mode_keys) / sizeof(rgb_mode_keys[0]))
-
-// Fast mouse movement helper
-static bool handle_fast_mouse(uint16_t direction, bool pressed) {
-    if (pressed) {
-        if (!is_sniping_active) tap_code(MS_ACL1);
-        register_code(direction);
-    } else {
-        unregister_code(direction);
-        if (!is_sniping_active) tap_code(MS_ACL0);
-    }
-    return false;
-}
-
-// Diagonal mouse movement helper
-static bool handle_diag_mouse(uint16_t dir1, uint16_t dir2, bool pressed) {
-    if (pressed) {
-        register_code(dir1);
-        register_code(dir2);
-    } else {
-        unregister_code(dir1);
-        unregister_code(dir2);
-    }
-    return false;
-}
 
 // Exit key helper (SPC_EXIT, ENT_EXIT, BSPC_EXIT)
 static bool handle_exit_key(uint16_t tap_key, bool pressed) {
@@ -856,26 +831,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_SNIPE:
     if (record->event.pressed) {
-      is_sniping_active = true;
-      is_fast_mode_active = false;
-      snipe_timer = timer_read();
-      sync_needed = true;
-      pointing_device_set_cpi(250);
-      mk_max_speed = 1; // Very slow mouse keys
-      mk_interval = 24;
-      uprintf("[%lu.%03lu] Snipe ON (2.5s). CPI -> 250, MK -> Slow(1)\n", sec, ms);
+      activate_snipe_mode();
     }
     return false;
   case KC_FAST:
     if (record->event.pressed) {
-      is_fast_mode_active = true;
-      is_sniping_active = false;
-      fast_mode_timer = timer_read();
-      sync_needed = true;
-      pointing_device_set_cpi(3000);
-      mk_max_speed = 30; // Fast mouse keys
-      mk_interval = 10;
-      uprintf("[%lu.%03lu] Fast Mode ON (2.5s). CPI -> 3000, MK -> Fast\n", sec, ms);
+      activate_fast_mode();
     }
     return false;
   case KC_ENT_L2_EXIT:
@@ -1488,79 +1449,7 @@ void housekeeping_task_user(void) {
 }
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
-  int8_t x = mouse_report.x;
-  int8_t y = mouse_report.y;
-  uint32_t now = timer_read32();
-  uint32_t sec = now / 1000;
-  uint32_t ms = now % 1000;
-
-  if (get_highest_layer(layer_state) == 3 && (x != 0 || y != 0)) {
-    static uint16_t last_cpi = 0;
-    static uint32_t last_cpi_print = 0;
-    uint16_t current_cpi = pointing_device_get_cpi();
-
-    // Log if CPI changed OR if it's been > 2 seconds since last log
-    if (current_cpi != last_cpi || timer_elapsed32(last_cpi_print) > 2000) {
-      uprintf("[%lu.%03lu] Mouse L3 Move. CPI: %u (x=%d, y=%d)\n", sec, ms,
-              current_cpi, x, y);
-      last_cpi = current_cpi;
-      last_cpi_print = now;
-    }
-  }
-
-  int8_t threshold = 0; // Respond to any movement (threshold 0)
-  static uint8_t movement_streak = 0;
-
-  if (is_jitter_filter_active) {
-    // Filter out 1-unit orthogonal movements (jitter)
-    // Keep diagonals (e.g. x=1, y=1) or larger movements
-    if ((x == 0 && (y == 1 || y == -1)) || (y == 0 && (x == 1 || x == -1))) {
-      static uint32_t last_jitter_log = 0;
-      if (timer_elapsed32(last_jitter_log) > 1000) {
-        LOG_TIME();
-        uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d)\033[0m\n", x, y);
-        last_jitter_log = timer_read32();
-      }
-      // Zero out the report so it's ignored by the host AND by the auto-layer logic below
-      mouse_report.x = 0;
-      mouse_report.y = 0;
-      x = 0;
-      y = 0;
-    }
-  }
-
-  if (x != 0 || y != 0) {
-    if (auto_mouse_on) {
-      // Any movement resets the timer to allow fine precision without timeout
-      auto_mouse_timer = timer_read();
-    } else if (x > threshold || x < -threshold || y > threshold ||
-               y < -threshold) {
-      movement_streak++;
-      if (movement_streak > 1) { // Require 2 consecutive movement events
-        // Only activate layer for significant movement
-        if (is_keyboard_master()) {
-             uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
-             layer_change_reason = "Auto Mouse Movement";
-             layer_on(3); // Switch to Mouse Layer (3)
-             auto_mouse_on = true;
-             auto_mouse_timer = timer_read();
-        } else {
-             // Slave side: Signal master
-             slave_mouse_active = true;
-        }
-        movement_streak = 0;
-      }
-    } else {
-      // Only log jitter if it's above 0 to reduce console noise
-      if (x != 0 || y != 0) {
-        uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
-      }
-      movement_streak = 0;
-    }
-  } else {
-    movement_streak = 0;
-  }
-  return mouse_report;
+  return housekeeping_mouse_task(mouse_report);
 }
 
 void matrix_scan_user(void) {
@@ -1578,25 +1467,8 @@ void matrix_scan_user(void) {
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
   }
 
-  // Timeout for Snipe Mode (2.5s)
-  if (is_sniping_active && timer_elapsed(snipe_timer) > 2500) {
-    is_sniping_active = false;
-    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-    mk_max_speed = 12; // Restore default
-    mk_interval = 16;
-    sync_needed = true;
-    uprintf("Snipe Mode Timeout. CPI -> Default\n");
-  }
-
-  // Timeout for Fast Mode (2.5s)
-  if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > 2500) {
-    is_fast_mode_active = false;
-    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-    mk_max_speed = 12; // Restore default
-    mk_interval = 16;
-    sync_needed = true;
-    uprintf("Fast Mode Timeout. CPI -> Default\n");
-  }
+  // Process mouse-related timeouts (Snipe, Fast Mode, Auto Mouse)
+  process_mouse_timeouts();
 
   if (rgb_auto_cycle && timer_elapsed(rgb_auto_timer) > 30000) {
     rgb_matrix_step_noeeprom();
@@ -1604,14 +1476,6 @@ void matrix_scan_user(void) {
     if (is_keyboard_master()) {
       handle_rgb_mode_change(rgb_matrix_get_mode());
     }
-  }
-
-  if (auto_mouse_on && !mouse_is_locked &&
-      timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
-    snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "Auto Mouse Timeout (%u ms)", auto_mouse_timeout);
-    layer_change_reason = layer_reason_buffer;
-    layer_off(3);
-    auto_mouse_on = false;
   }
 
   if (th[TH_PGUP].held && !th[TH_PGUP].triggered &&
