@@ -482,25 +482,27 @@ void handle_rgb_mode_change(uint8_t mode) {
   LOG_TIME();
   uprintf("\033[93mRGB Mode Changed: %d (%s)\033[0m\n", mode, get_rgb_mode_name(mode));
 
-  // Generate new random seed for effects like PIXEL_RAIN/PIXEL_FLOW
-  // This ensures both halves of split keyboard show same random pattern
-  current_random_seed = timer_read();
-  random16_set_seed(current_random_seed);
+  if (is_keyboard_master()) {
+    // Generate new random seed for effects like PIXEL_RAIN/PIXEL_FLOW
+    // This ensures both halves of split keyboard show same random pattern
+    current_random_seed = timer_read();
+    random16_set_seed(current_random_seed);
 
-  // If entering Hue Breathing, pick a random base hue
-  if (mode == RGB_MATRIX_HUE_BREATHING) {
-    uint8_t random_hue = timer_read() % 256;
-    rgb_matrix_sethsv_noeeprom(random_hue, rgb_matrix_get_sat(),
-                               rgb_matrix_get_val());
-  } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING) {
-    // Increment hue for Solid Color and Breathing modes every time they activate
-    automatic_hue_tracker += 42;
-    rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, rgb_matrix_get_sat(), rgb_matrix_get_val());
-    uprintf("Solid/Breathing Activated: Mode=%d (SOLID=%d, BREATHING=%d) Hue=%d\n",
-            mode, RGB_MATRIX_SOLID_COLOR, RGB_MATRIX_BREATHING, automatic_hue_tracker);
+    // If entering Hue Breathing, pick a random base hue
+    if (mode == RGB_MATRIX_HUE_BREATHING) {
+      uint8_t random_hue = timer_read() % 256;
+      rgb_matrix_sethsv_noeeprom(random_hue, rgb_matrix_get_sat(),
+                                 rgb_matrix_get_val());
+    } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING) {
+      // Increment hue for Solid Color and Breathing modes every time they activate
+      automatic_hue_tracker += 42;
+      rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, rgb_matrix_get_sat(), rgb_matrix_get_val());
+      uprintf("Solid/Breathing Activated: Mode=%d (SOLID=%d, BREATHING=%d) Hue=%d\n",
+              mode, RGB_MATRIX_SOLID_COLOR, RGB_MATRIX_BREATHING, automatic_hue_tracker);
+    }
+
+    sync_needed = true;
   }
-
-  sync_needed = true;
 }
 
 // Debug function to dump full sync state
@@ -1758,11 +1760,7 @@ void matrix_scan_user(void) {
 
   // Deferred RGB init - apply after matrix is fully ready
   if (master_rgb_init_pending) {
-    if (is_keyboard_master()) {
-      handle_rgb_mode_change(master_rgb_init_mode);
-    } else {
-      rgb_matrix_mode_noeeprom(master_rgb_init_mode);
-    }
+    handle_rgb_mode_change(master_rgb_init_mode);
     master_rgb_init_pending = false;
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
   }
