@@ -4,6 +4,7 @@
 #include <lib/lib8tion/lib8tion.h>
 #include "features/sync.h"
 #include "features/mouse.h"
+#include "features/rgb.h"
 
 // Timestamp logging helper - prints [seconds.milliseconds]
 #define LOG_TIME() do { \
@@ -112,19 +113,6 @@ uint8_t cur_dance(tap_dance_state_t *state) {
 }
 
 static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
-bool is_flashlight = false;
-bool is_sniping_active = false;
-bool is_fast_mode_active = false;
-bool mouse_is_locked = false;
-bool is_jitter_filter_active = false; // Default: Filter OFF
-static uint8_t saved_rgb_mode;
-static uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
-static uint8_t automatic_hue_tracker = 0;
-static bool rgb_auto_cycle = false;
-static uint16_t rgb_auto_timer = 0;
-uint16_t auto_mouse_timeout = 1500; // Default 1.5 seconds, adjustable
-uint16_t auto_mouse_timer = 0;
-bool auto_mouse_on = false;
 
 #define MY_TAPPING_TERM 250
 
@@ -301,98 +289,10 @@ static const uint8_t far_left_col[] = {0, 1, 2, 3};
 // Far right column LEDs (right keyboard, local: Minus, Backslash, Quote, RShift)
 static const uint8_t far_right_col[] = {0, 1, 2, 3};
 
-// RGB mode name lookup table (index = mode enum value)
-// Standard modes are contiguous from 1, custom modes handled separately
-static const char* const rgb_mode_names[] PROGMEM = {
-    [0] = "NONE",
-    [RGB_MATRIX_SOLID_COLOR] = "SOLID_COLOR",
-    [RGB_MATRIX_ALPHAS_MODS] = "ALPHA_MODS",
-    [RGB_MATRIX_GRADIENT_UP_DOWN] = "GRADIENT_UP_DOWN",
-    [RGB_MATRIX_GRADIENT_LEFT_RIGHT] = "GRADIENT_LEFT_RIGHT",
-    [RGB_MATRIX_BREATHING] = "BREATHING",
-    [RGB_MATRIX_BAND_SAT] = "COLORBAND_SAT",
-    [RGB_MATRIX_BAND_VAL] = "COLORBAND_VAL",
-    [RGB_MATRIX_BAND_PINWHEEL_SAT] = "COLORBAND_PINWHEEL_SAT",
-    [RGB_MATRIX_BAND_PINWHEEL_VAL] = "COLORBAND_PINWHEEL_VAL",
-    [RGB_MATRIX_BAND_SPIRAL_SAT] = "COLORBAND_SPIRAL_SAT",
-    [RGB_MATRIX_BAND_SPIRAL_VAL] = "COLORBAND_SPIRAL_VAL",
-    [RGB_MATRIX_CYCLE_ALL] = "CYCLE_ALL",
-    [RGB_MATRIX_CYCLE_LEFT_RIGHT] = "CYCLE_LEFT_RIGHT",
-    [RGB_MATRIX_CYCLE_UP_DOWN] = "CYCLE_UP_DOWN",
-    [RGB_MATRIX_CYCLE_OUT_IN] = "CYCLE_OUT_IN",
-    [RGB_MATRIX_CYCLE_OUT_IN_DUAL] = "CYCLE_OUT_IN_DUAL",
-    [RGB_MATRIX_RAINBOW_MOVING_CHEVRON] = "RAINBOW_MOVING_CHEVRON",
-    [RGB_MATRIX_CYCLE_PINWHEEL] = "CYCLE_PINWHEEL",
-    [RGB_MATRIX_CYCLE_SPIRAL] = "CYCLE_SPIRAL",
-    [RGB_MATRIX_DUAL_BEACON] = "DUAL_BEACON",
-    [RGB_MATRIX_RAINBOW_BEACON] = "RAINBOW_BEACON",
-    [RGB_MATRIX_RAINBOW_PINWHEELS] = "RAINBOW_PINWHEELS",
-    [RGB_MATRIX_RAINDROPS] = "RAINDROPS",
-    [RGB_MATRIX_JELLYBEAN_RAINDROPS] = "JELLYBEAN_RAINDROPS",
-    [RGB_MATRIX_HUE_BREATHING] = "HUE_BREATHING",
-    [RGB_MATRIX_HUE_PENDULUM] = "HUE_PENDULUM",
-    [RGB_MATRIX_HUE_WAVE] = "HUE_WAVE",
-    [RGB_MATRIX_PIXEL_FRACTAL] = "PIXEL_FRACTAL",
-    [RGB_MATRIX_PIXEL_FLOW] = "PIXEL_FLOW",
-    [RGB_MATRIX_PIXEL_RAIN] = "PIXEL_RAIN",
-    [RGB_MATRIX_TYPING_HEATMAP] = "TYPING_HEATMAP",
-    [RGB_MATRIX_DIGITAL_RAIN] = "DIGITAL_RAIN",
-    [RGB_MATRIX_SOLID_REACTIVE_SIMPLE] = "SOLID_REACTIVE_SIMPLE",
-    [RGB_MATRIX_SOLID_REACTIVE] = "SOLID_REACTIVE",
-    [RGB_MATRIX_SOLID_REACTIVE_WIDE] = "SOLID_REACTIVE_WIDE",
-    [RGB_MATRIX_SOLID_REACTIVE_CROSS] = "SOLID_REACTIVE_CROSS",
-    [RGB_MATRIX_SOLID_REACTIVE_MULTICROSS] = "SOLID_REACTIVE_MULTICROSS",
-    [RGB_MATRIX_SOLID_REACTIVE_NEXUS] = "SOLID_REACTIVE_NEXUS",
-    [RGB_MATRIX_SOLID_REACTIVE_MULTINEXUS] = "SOLID_REACTIVE_MULTINEXUS",
-    [RGB_MATRIX_SPLASH] = "SPLASH",
-    [RGB_MATRIX_MULTISPLASH] = "MULTISPLASH",
-    [RGB_MATRIX_SOLID_SPLASH] = "SOLID_SPLASH",
-    [RGB_MATRIX_SOLID_MULTISPLASH] = "SOLID_MULTISPLASH",
-    // Custom effects (indices start at RGB_MATRIX_EFFECT_MAX)
-    [RGB_MATRIX_CUSTOM_fire] = "FIRE",
-    [RGB_MATRIX_CUSTOM_wildfire] = "WILDFIRE",
-    [RGB_MATRIX_CUSTOM_campfire] = "CAMPFIRE",
-};
-
-// Helper to get mode name via lookup table
-const char *get_rgb_mode_name(uint8_t mode) {
-    if (mode < sizeof(rgb_mode_names) / sizeof(rgb_mode_names[0]) && rgb_mode_names[mode]) {
-        return rgb_mode_names[mode];
-    }
-    return "UNKNOWN";
-}
-
-void handle_rgb_mode_change(uint8_t mode) {
-  rgb_matrix_mode_noeeprom(mode);
-  LOG_TIME();
-  uprintf("\033[93mRGB Mode Changed: %d (%s)\033[0m\n", mode, get_rgb_mode_name(mode));
-
-  if (is_keyboard_master()) {
-    // Generate new random seed for effects like PIXEL_RAIN/PIXEL_FLOW
-    // This ensures both halves of split keyboard show same random pattern
-    current_random_seed = timer_read();
-    random16_set_seed(current_random_seed);
-
-    // If entering Hue Breathing, pick a random base hue
-    if (mode == RGB_MATRIX_HUE_BREATHING) {
-      uint8_t random_hue = timer_read() % 256;
-      rgb_matrix_sethsv_noeeprom(random_hue, rgb_matrix_get_sat(),
-                                 rgb_matrix_get_val());
-    } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING) {
-      // Increment hue for Solid Color and Breathing modes every time they activate
-      automatic_hue_tracker += 42;
-      rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, rgb_matrix_get_sat(), rgb_matrix_get_val());
-      uprintf("Solid/Breathing Activated: Mode=%d (SOLID=%d, BREATHING=%d) Hue=%d\n",
-              mode, RGB_MATRIX_SOLID_COLOR, RGB_MATRIX_BREATHING, automatic_hue_tracker);
-    }
-
-    sync_needed = true;
-  }
-}
-
-// Debug function to dump full sync state - Removed (in features/sync.c)
+// RGB mode name lookup table - Removed (in features/rgb.c)
 
 void z_finished(tap_dance_state_t *state, void *user_data) {
+
   z_tap_state.state = cur_dance(state);
   switch (z_tap_state.state) {
   case SINGLE_TAP: {
@@ -1209,176 +1109,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool rgb_matrix_indicators_user(void) {
-  if (is_flashlight) {
-    rgb_matrix_set_color_all(255, 255, 255);
-    return false;
-  }
-
-  // Caps Lock indicator: alternating blink on top-left and top-right keys
-  if (is_caps_lock_on) {
-    bool phase = (timer_read() / 300) % 2; // Alternates every 300ms
-    bool am_i_left = is_keyboard_left();
-
-    if (am_i_left) {
-      // Top-left key (LED 0 = Escape) on left half
-      if (phase) {
-        rgb_matrix_set_color(far_left_col[0], 255, 255, 255);
-      } else {
-        rgb_matrix_set_color(far_left_col[0], 0, 0, 0);
-      }
-    } else {
-      // Top-right key (Minus) on right half - use same index pattern as snipe mode
-      if (!phase) {
-        rgb_matrix_set_color(far_right_col[0], 255, 255, 255);
-      } else {
-        rgb_matrix_set_color(far_right_col[0], 0, 0, 0);
-      }
-    }
-  }
-
-  if (is_jitter_filter_active) {
-    if (!is_keyboard_left()) {
-      // Trackball underglow LEDs (Right Side) -> Cyan for Stability
-      rgb_matrix_set_color(27, 0, 255, 255);
-      rgb_matrix_set_color(28, 0, 255, 255);
-    }
-  }
-
-  bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
-
-  if (is_sniping_active) {
-    // Snipe mode: Black out top row on RIGHT side, rainbow far right column
-    if (!is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_right); i++) {
-        rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      }
-      for (int i = 0; i < sizeof(far_right_col); i++) {
-        uint8_t hue = (i * 64) + (timer_read() / 10); // Cycling rainbow
-        HSV hsv = {hue, 255, 255};
-        RGB rgb = hsv_to_rgb(hsv);
-        rgb_matrix_set_color(far_right_col[i], rgb.r, rgb.g, rgb.b);
-      }
-    }
-    return false;
-  }
-
-  if (is_fast_mode_active) {
-    // Fast mode: Black out top row on RIGHT side, RED far right column
-    if (!is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_right); i++) {
-        rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      }
-      for (int i = 0; i < sizeof(far_right_col); i++) {
-        rgb_matrix_set_color(far_right_col[i], 255, 0, 0);
-      }
-    }
-    return false;
-  }
-
-  if (is_scroll_active) {
-    // Scroll mode: Black out top row on LEFT side, rainbow far left column
-    if (is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_left); i++) {
-        rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
-      }
-      for (int i = 0; i < sizeof(far_left_col); i++) {
-        uint8_t hue = (i * 64) + (timer_read() / 10); // Cycling rainbow
-        HSV hsv = {hue, 255, 255};
-        RGB rgb = hsv_to_rgb(hsv);
-        rgb_matrix_set_color(far_left_col[i], rgb.r, rgb.g, rgb.b);
-      }
-    }
-    return false;
-  }
-
-  uint8_t layer = get_highest_layer(layer_state);
-  switch (layer) {
-  case 1: {
-    // Numpad (Blue)
-    static const uint8_t leds[] = {6,  9,  14, 17, 21, 5,  10, 13,
-                                   18, 22, 4,  11, 12, 19, 23};
-    for (int i = 0; i < sizeof(leds); i++)
-      rgb_matrix_set_color(leds[i], 0, 0, 255);
-    break;
-  }
-  case 2: {
-    // Arrow (Green)
-    if (is_keyboard_left()) {
-      static const uint8_t left[] = {5, 10, 13, 18, 4, 11, 12, 19};
-      for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 0, 255, 0);
-    }
-    if (!is_keyboard_left()) {
-      static const uint8_t right[] = {18, 13, 10, 5, 19, 12, 11, 4};
-      for (int i = 0; i < sizeof(right); i++)
-        rgb_matrix_set_color(right[i], 0, 255, 0);
-    }
-    break;
-  }
-  case 3: {
-    // Mouse (Yellow)
-    if (is_keyboard_left()) {
-      static const uint8_t left[] = {8,  1,  9, 14, 17, 21, 2,  5,  10,
-                                     13, 18, 4, 11, 12, 19, 26, 25, 24};
-      for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 255, 255, 0);
-    }
-    if (!is_keyboard_left()) {
-      static const uint8_t right[] = {21, 14, 9, 22, 19, 12, 11, 4};
-      for (int i = 0; i < sizeof(right); i++)
-        rgb_matrix_set_color(right[i], 255, 255, 0);
-    }
-    break;
-  }
-  case 4: {
-    // Left Side (Orange)
-    if (is_keyboard_left()) {
-      static const uint8_t left[] = {0,  7,  8,  15, 16, 20, 1,  6,  9, 14,
-                                     17, 21, 2,  5,  10, 13, 18, 22, 3, 4,
-                                     11, 12, 19, 23, 26, 27, 28, 25, 24};
-      for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 255, 127, 0);
-    }
-    break;
-  }
-  case 5: {
-    // Settings (Hot Pink)
-    if (is_keyboard_left()) {
-      // Left side: RGB control keys (Q, W, E, R positions + A, S, D, F + Z, X)
-      static const uint8_t left[] = {6, 9, 14, 17, 5, 10, 13, 18, 4, 11};
-      for (int i = 0; i < sizeof(left); i++)
-        rgb_matrix_set_color(left[i], 255, 110, 150);
-    }
-    if (!is_keyboard_left()) {
-      // Right side: Mouse setting keys (U, I, O positions + J, K, L)
-      static const uint8_t right[] = {17, 14, 9, 18, 13, 10};
-      for (int i = 0; i < sizeof(right); i++)
-        rgb_matrix_set_color(right[i], 255, 110, 150);
-    }
-    break;
-  }
-  default:
-    break;
-  }
-
-  // Black out the number and letter for the current active layer (0-4)
-  // This creates a "negative" indicator hole in the lighting
-  uint8_t indicator_idx = (layer == 0) ? 9 : (layer - 1);
-  if (indicator_idx < 10) {
-    uint8_t num_led = number_key_leds[indicator_idx];
-    uint8_t let_led = letter_key_leds[indicator_idx];
-    bool am_i_left = is_keyboard_left();
-
-    if (am_i_left && num_led < 29) {
-      rgb_matrix_set_color(num_led, 0, 0, 0);
-      rgb_matrix_set_color(let_led, 0, 0, 0);
-    } else if (!am_i_left && num_led >= 29) {
-      rgb_matrix_set_color(num_led - 29, 0, 0, 0);
-      rgb_matrix_set_color(let_led - 29, 0, 0, 0);
-    }
-  }
-
-  return false;
+  return housekeeping_rgb_indicators();
 }
 
 void keyboard_post_init_user(void) {

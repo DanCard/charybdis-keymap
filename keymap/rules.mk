@@ -8,3 +8,4 @@ CONSOLE_ENABLE = yes
 
 SRC += features/sync.c
 SRC += features/mouse.c
+SRC += features/rgb.c
