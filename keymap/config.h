@@ -21,6 +21,14 @@
 #define AUTO_MOUSE_TIME 1500          // Return to base layer after 1.5s of inactivity
 #define AUTO_MOUSE_DEBOUNCE 10        // Ignore small accidental movements
 
+/* Timing and Brightness Constants */
+#define SNIPE_MODE_TIMEOUT 2500      // Snipe mode timeout in ms
+#define FAST_MODE_TIMEOUT 2500       // Fast mode timeout in ms
+#define EEPROM_DEFER_MS 1500         // Delay EEPROM writes to avoid USB timeout
+#define DAY_BRIGHTNESS 225           // Brightness value for day mode
+#define NIGHT_BRIGHTNESS 16          // Brightness value for night mode
+#define RGB_AUTO_CYCLE_INTERVAL 30000 // Auto-cycle RGB every 30 seconds
+
 #define RGB_MATRIX_KEYPRESSES
 
 /* Enable animated RGB effects */

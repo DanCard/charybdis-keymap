@@ -15,17 +15,17 @@ uint8_t saved_rgb_mode;
 uint8_t saved_rgb_h, saved_rgb_s, saved_rgb_v;
 
 // LED indices for number keys 1-0 (uses global indices, subtract 29 for right side)
-static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
+const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
 // LED indices for letter keys Q-P (under numbers 1-0)
-static const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
+const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
 // Top row LEDs (left side, local: 1, 2, 3, 4, 5)
-static const uint8_t top_row_left[] = {7, 8, 15, 16, 20};
+const uint8_t top_row_left[] = {7, 8, 15, 16, 20};
 // Top row LEDs (right side, local: 6, 7, 8, 9, 0)
-static const uint8_t top_row_right[] = {20, 16, 15, 8, 7};
+const uint8_t top_row_right[] = {20, 16, 15, 8, 7};
 // Far left column LEDs (left keyboard, local: Esc, Tab, Shift, Ctrl)
-static const uint8_t far_left_col[] = {0, 1, 2, 3};
+const uint8_t far_left_col[] = {0, 1, 2, 3};
 // Far right column LEDs (right keyboard, local: Minus, Backslash, Quote, RShift)
-static const uint8_t far_right_col[] = {0, 1, 2, 3};
+const uint8_t far_right_col[] = {0, 1, 2, 3};
 
 // Helper for logging time
 #define LOG_TIME() do { \
@@ -86,7 +86,7 @@ static const char* const rgb_mode_names[] PROGMEM = {
 };
 
 const char *get_rgb_mode_name(uint8_t mode) {
-    if (mode < sizeof(rgb_mode_names) / sizeof(rgb_mode_names[0]) && rgb_mode_names[mode]) {
+    if (mode < sizeof(rgb_mode_names) / sizeof(rgb_mode_names[0])) {
         return rgb_mode_names[mode];
     }
     return "UNKNOWN";
@@ -144,8 +144,8 @@ bool housekeeping_rgb_indicators(void) {
 
   if (is_sniping_active) {
     if (!is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_right); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_right_col); i++) {
+      for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
+      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) {
         HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
         rgb_matrix_set_color(far_right_col[i], rgb.r, rgb.g, rgb.b);
@@ -156,16 +156,16 @@ bool housekeeping_rgb_indicators(void) {
 
   if (is_fast_mode_active) {
     if (!is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_right); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_right_col); i++) rgb_matrix_set_color(far_right_col[i], 255, 0, 0);
+      for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
+      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) rgb_matrix_set_color(far_right_col[i], 255, 0, 0);
     }
     return false;
   }
 
   if (is_scroll_active) {
     if (is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_left); i++) rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_left_col); i++) {
+      for (int i = 0; i < sizeof(top_row_left) / sizeof(top_row_left[0]); i++) rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
+      for (int i = 0; i < sizeof(far_left_col) / sizeof(far_left_col[0]); i++) {
         HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
         rgb_matrix_set_color(far_left_col[i], rgb.r, rgb.g, rgb.b);
@@ -178,48 +178,51 @@ bool housekeeping_rgb_indicators(void) {
   switch (layer) {
   case 1: {
     static const uint8_t leds[] = {6, 9, 14, 17, 21, 5, 10, 13, 18, 22, 4, 11, 12, 19, 23};
-    for (int i = 0; i < sizeof(leds); i++) rgb_matrix_set_color(leds[i], 0, 0, 255);
+    for (int i = 0; i < sizeof(leds) / sizeof(leds[0]); i++) rgb_matrix_set_color(leds[i], 0, 0, 255);
     break;
   }
   case 2: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {5, 10, 13, 18, 4, 11, 12, 19};
-      for (int i = 0; i < sizeof(left); i++) rgb_matrix_set_color(left[i], 0, 255, 0);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 0, 255, 0);
     } else {
       static const uint8_t right[] = {18, 13, 10, 5, 19, 12, 11, 4};
-      for (int i = 0; i < sizeof(right); i++) rgb_matrix_set_color(right[i], 0, 255, 0);
+      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color(right[i], 0, 255, 0);
     }
     break;
   }
   case 3: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {8, 1, 9, 14, 17, 21, 2, 5, 10, 13, 18, 4, 11, 12, 19, 26, 25, 24};
-      for (int i = 0; i < sizeof(left); i++) rgb_matrix_set_color(left[i], 255, 255, 0);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 255, 255, 0);
     } else {
       static const uint8_t right[] = {21, 14, 9, 22, 19, 12, 11, 4};
-      for (int i = 0; i < sizeof(right); i++) rgb_matrix_set_color(right[i], 255, 255, 0);
+      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color(right[i], 255, 255, 0);
     }
     break;
   }
   case 4: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {0, 7, 8, 15, 16, 20, 1, 6, 9, 14, 17, 21, 2, 5, 10, 13, 18, 22, 3, 4, 11, 12, 19, 23, 26, 27, 28, 25, 24};
-      for (int i = 0; i < sizeof(left); i++) rgb_matrix_set_color(left[i], 255, 127, 0);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 255, 127, 0);
     }
     break;
   }
   case 5: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {6, 9, 14, 17, 5, 10, 13, 18, 4, 11};
-      for (int i = 0; i < sizeof(left); i++) rgb_matrix_set_color(left[i], 255, 110, 150);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 255, 110, 150);
     } else {
       static const uint8_t right[] = {17, 14, 9, 18, 13, 10};
-      for (int i = 0; i < sizeof(right); i++) rgb_matrix_set_color(right[i], 255, 110, 150);
+      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color(right[i], 255, 110, 150);
     }
     break;
   }
   }
 
+  // Layer indicator logic: When on layer 0 (base), clear the indicator for layer 1 (LED at index 9)
+  // This provides visual feedback that we're on the base layer (no layer is active)
+  // For layers 1-5, clear the corresponding LED index (layer - 1)
   uint8_t indicator_idx = (layer == 0) ? 9 : (layer - 1);
   if (indicator_idx < 10) {
     uint8_t num_led = number_key_leds[indicator_idx];

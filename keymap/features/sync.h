@@ -10,6 +10,7 @@ extern uint32_t last_sync_time;
 extern uint32_t last_heartbeat_time;
 
 #define HEARTBEAT_INTERVAL 15000  // 15 seconds
+#define SYNC_POLL_INTERVAL 50       // Poll interval for detecting slave mouse activity (ms)
 
 // Custom Split Transport Logic
 typedef struct _user_sync_info_t {

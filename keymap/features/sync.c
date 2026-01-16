@@ -79,7 +79,7 @@ void housekeeping_task_sync(void) {
   if (is_keyboard_master()) {
     static uint32_t last_sync = 0;
     // Poll faster (50ms) to detect slave mouse movement for layer switching
-    bool needs_periodic = timer_elapsed32(last_sync) > 50;
+    bool needs_periodic = timer_elapsed32(last_sync) > SYNC_POLL_INTERVAL;
 
     // Update caps lock state on master
     is_caps_lock_on = host_keyboard_led_state().caps_lock;

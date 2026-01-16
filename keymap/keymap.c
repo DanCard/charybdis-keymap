@@ -9,7 +9,8 @@
 #include "features/logging.h"
 
 const char *layer_change_reason = NULL;
-static char layer_reason_buffer[64];
+#define REASON_BUFFER_SIZE 128
+static char layer_reason_buffer[REASON_BUFFER_SIZE];
 
 #include "features/keycodes.h"
 
@@ -99,19 +100,6 @@ extern uint8_t mk_interval;
  *   Sft=3   /=4     .=11    ,=12    M=19    N=23    <- Row 3
  *                   Thumb: 24, 25, 26 + Trackball underglow: 27, 28
  */
-
-// LED indices for number keys 1-0 (uses global indices, subtract 29 for right side)
-static const uint8_t number_key_leds[] = {7, 8, 15, 16, 20, 49, 45, 44, 37, 36};
-// LED indices for letter keys Q-P (under numbers 1-0)
-static const uint8_t letter_key_leds[] = {6, 9, 14, 17, 21, 50, 46, 43, 38, 35};
-// Top row LEDs (left side, local: 1, 2, 3, 4, 5)
-static const uint8_t top_row_left[] = {7, 8, 15, 16, 20};
-// Top row LEDs (right side, local: 6, 7, 8, 9, 0)
-static const uint8_t top_row_right[] = {20, 16, 15, 8, 7};
-// Far left column LEDs (left keyboard, local: Esc, Tab, Shift, Ctrl)
-static const uint8_t far_left_col[] = {0, 1, 2, 3};
-// Far right column LEDs (right keyboard, local: Minus, Backslash, Quote, RShift)
-static const uint8_t far_right_col[] = {0, 1, 2, 3};
 
 // RGB mode name lookup table - Removed (in features/rgb.c)
 
@@ -233,7 +221,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return false;
     }
 
-    uint32_t diff = now - last_key_time;
+    uint32_t diff = timer_elapsed32(last_key_time);
     last_key_time = now;
 
     switch (keycode) {
@@ -854,6 +842,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 4, record->event.pressed);
   case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 2, record->event.pressed);
   case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, record->event.pressed);
+  default:
+    return true;
   }
   return true;
 }

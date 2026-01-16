@@ -43,8 +43,8 @@ bool handle_diag_mouse(uint16_t dir1, uint16_t dir2, bool pressed) {
 
 // Process mouse timeouts (called from matrix_scan_user)
 void process_mouse_timeouts(void) {
-    // Timeout for Snipe Mode (2.5s)
-    if (is_sniping_active && timer_elapsed(snipe_timer) > 2500) {
+    // Timeout for Snipe Mode
+    if (is_sniping_active && timer_elapsed(snipe_timer) > SNIPE_MODE_TIMEOUT) {
         is_sniping_active = false;
         pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
         mk_max_speed = 12; // Restore default
@@ -53,8 +53,8 @@ void process_mouse_timeouts(void) {
         uprintf("Snipe Mode Timeout. CPI -> Default\n");
     }
 
-    // Timeout for Fast Mode (2.5s)
-    if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > 2500) {
+    // Timeout for Fast Mode
+    if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > FAST_MODE_TIMEOUT) {
         is_fast_mode_active = false;
         pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
         mk_max_speed = 12; // Restore default
@@ -95,7 +95,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     }
   }
 
-  int8_t threshold = 0; // Respond to any movement (threshold 0)
+  int8_t movement_threshold = 0;
   static uint8_t movement_streak = 0;
 
   if (is_jitter_filter_active) {
@@ -120,8 +120,8 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     if (auto_mouse_on) {
       // Any movement resets the timer to allow fine precision without timeout
       auto_mouse_timer = timer_read();
-    } else if (x > threshold || x < -threshold || y > threshold ||
-               y < -threshold) {
+    } else if (x > movement_threshold || x < -movement_threshold || y > movement_threshold ||
+               y < -movement_threshold) {
       movement_streak++;
       if (movement_streak > 1) { // Require 2 consecutive movement events
         // Only activate layer for significant movement
@@ -138,10 +138,8 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         movement_streak = 0;
       }
     } else {
-      // Only log jitter if it's above 0 to reduce console noise
-      if (x != 0 || y != 0) {
-        uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
-      }
+      // Log small movements below threshold (jitter)
+      uprintf("Mouse: Jitter Ignored (x=%d, y=%d)\n", x, y);
       movement_streak = 0;
     }
   } else {
