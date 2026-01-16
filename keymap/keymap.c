@@ -151,6 +151,13 @@ extern uint8_t mk_max_speed;
 extern uint8_t mk_time_to_max;
 extern uint8_t mk_interval;
 
+// Show mode state
+static bool show_mode_active = false;
+static uint8_t show_mode_digits[2];
+static uint8_t show_mode_digit_count = 0;
+static uint8_t show_mode_current_digit = 0;
+static uint16_t show_mode_timer = 0;
+static uint8_t show_mode_phase = 0; // 0=off, 1=on
 
 /*
  * LED Layout for Charybdis 4x6 (from info.json rgb_matrix.layout)
@@ -193,7 +200,12 @@ typedef struct _user_sync_info_t {
   bool is_fast_mode_active;
   bool mouse_is_locked;
   bool is_jitter_filter_active;
+  bool show_mode_active;
   bool is_caps_lock_on;
+  uint8_t show_mode_digits[2];
+  uint8_t show_mode_digit_count;
+  uint8_t show_mode_current_digit;
+  uint8_t show_mode_phase;
   uint8_t rgb_mode;
   bool is_left_hand;
   uint16_t random_seed;  // Sync random seed for effects like PIXEL_RAIN/PIXEL_FLOW
@@ -229,7 +241,13 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   is_fast_mode_active = sync_data->is_fast_mode_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
+  show_mode_active = sync_data->show_mode_active;
   is_caps_lock_on = sync_data->is_caps_lock_on;
+  show_mode_digits[0] = sync_data->show_mode_digits[0];
+  show_mode_digits[1] = sync_data->show_mode_digits[1];
+  show_mode_digit_count = sync_data->show_mode_digit_count;
+  show_mode_current_digit = sync_data->show_mode_current_digit;
+  show_mode_phase = sync_data->show_mode_phase;
 
   // Send slave's handedness back to master via response (not used currently, just stored locally)
 
@@ -371,6 +389,44 @@ const char *get_rgb_mode_name(uint8_t mode) {
   }
 }
 
+void start_show_mode(void) {
+  uint8_t mode = rgb_matrix_get_mode();
+  LOG_TIME();
+  uprintf("\033[93mRGB Mode Changed: %d (%s)\033[0m\n", mode, get_rgb_mode_name(mode));
+
+  // Generate new random seed for effects like PIXEL_RAIN/PIXEL_FLOW
+  // This ensures both halves of split keyboard show same random pattern
+  current_random_seed = timer_read();
+  random16_set_seed(current_random_seed);
+
+  // If entering Hue Breathing, pick a random base hue
+  if (mode == RGB_MATRIX_HUE_BREATHING) {
+    uint8_t random_hue = timer_read() % 256;
+    rgb_matrix_sethsv_noeeprom(random_hue, rgb_matrix_get_sat(),
+                               rgb_matrix_get_val());
+  } else if (mode == RGB_MATRIX_SOLID_COLOR || mode == RGB_MATRIX_BREATHING) {
+    // Increment hue for Solid Color and Breathing modes every time they activate
+    automatic_hue_tracker += 42;
+    rgb_matrix_sethsv_noeeprom(automatic_hue_tracker, rgb_matrix_get_sat(), rgb_matrix_get_val());
+    uprintf("Solid/Breathing Activated: Mode=%d (SOLID=%d, BREATHING=%d) Hue=%d\n",
+            mode, RGB_MATRIX_SOLID_COLOR, RGB_MATRIX_BREATHING, automatic_hue_tracker);
+  }
+
+  show_mode_digit_count = 0;
+
+  // Extract digits (handle 1-2 digit numbers)
+  if (mode >= 10) {
+    show_mode_digits[show_mode_digit_count++] = mode / 10;
+  }
+  show_mode_digits[show_mode_digit_count++] = mode % 10;
+
+  show_mode_current_digit = 0;
+  show_mode_phase = 1; // Start with flash on
+  show_mode_timer = timer_read();
+  show_mode_active = true;
+  sync_needed = true;
+}
+
 // Debug function to dump full sync state
 void debug_dump_sync_state(void) {
   uint32_t since_sync = last_sync_time > 0 ? timer_elapsed32(last_sync_time) : 0;
@@ -390,6 +446,7 @@ void debug_dump_sync_state(void) {
   uprintf("\n\033[96m--- Flags ---\033[0m\n");
   uprintf("sync_needed: %s\n", sync_needed ? "YES" : "no");
   uprintf("slave_first_sync: %s\n", slave_first_sync ? "YES" : "no");
+  uprintf("show_mode_active: %s\n", show_mode_active ? "YES" : "no");
   uprintf("is_flashlight: %s\n", is_flashlight ? "YES" : "no");
   uprintf("is_sniping_active: %s\n", is_sniping_active ? "YES" : "no");
   uprintf("is_fast_mode_active: %s\n", is_fast_mode_active ? "YES" : "no");
@@ -991,21 +1048,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_RAINBOW:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
+      start_show_mode();
     }
     return false;
   case RM_NEXT:
     if (record->event.pressed) {
       rgb_matrix_step_noeeprom();
+      start_show_mode();
     }
     return false;
   case RM_PREV:
     if (record->event.pressed) {
       rgb_matrix_step_reverse_noeeprom();
+      start_show_mode();
     }
     return false;
   case KC_REACTIVE:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(RGB_MATRIX_SPLASH);
+      start_show_mode();
     }
     return false;
   case KC_MOUSE_LOCK:
@@ -1066,6 +1127,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           tap_code(KC_F1);
         else if (layer == 3) {
           rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
+          start_show_mode();
         } else if (layer == 4)
           tap_code(KC_0);
         else
@@ -1086,6 +1148,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           tap_code(KC_F2);
         else if (layer == 3) {
           rgb_matrix_step_noeeprom();
+          start_show_mode();
         } else if (layer == 4)
           tap_code(KC_9);
         else
@@ -1152,16 +1215,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_JELLY:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(RGB_MATRIX_JELLYBEAN_RAINDROPS);
+      start_show_mode();
     }
     return false;
   case KC_SPIRAL:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_SPIRAL);
+      start_show_mode();
     }
     return false;
   case KC_CHEVRON:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(RGB_MATRIX_RAINBOW_MOVING_CHEVRON);
+      start_show_mode();
     }
     return false;
   case KC_RGB_AUTO:
@@ -1468,11 +1534,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_P_FRAC:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(29); // 29 = PIXEL_FRACTAL
+      start_show_mode();
     }
     return false;
   case KC_PINWHEEL:
     if (record->event.pressed) {
       rgb_matrix_mode_noeeprom(18); // 18 = CYCLE_PINWHEEL
+      start_show_mode();
     }
     return false;
   case KC_DAY:
@@ -1660,12 +1728,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT      , KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_EXIT      , KC_EXIT , KC_EXIT  , KC_EXIT, KC_PSCR, 
-                 KC_EXIT, RM_TOGG      , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE      , KC_EXIT      , KC_EXIT , KC_EXIT  , KC_EXIT, QK_CLEAR_EEPROM,
-                 KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY     , KC_NIGHT ,   KC_EXIT      , DPI_MOD      , DPI_RMOD, KC_JITTER, KC_EXIT, KC_EXIT,
-                 KC_EXIT, RM_HUEU      , RM_HUED, RM_SATU, RM_SATD    , KC_EXIT  ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
-                                                        KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
-                                                                 KC_EXIT, KC_EXIT,   KC_EXIT),
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD  , KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE    , KC_EXIT     , RM_VALU, RM_VALD, KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, KC_EXIT, KC_FLASHLIGHT, KC_EXIT, KC_DAY, KC_NIGHT,   KC_EXIT    , DPI_MOD     , DPI_RMOD, KC_JITTER, KC_EXIT, KC_EXIT,
+                 KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT     , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
+                                                  KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                                           KC_EXIT, KC_EXIT,   KC_EXIT),
 };
 
 bool rgb_matrix_indicators_user(void) {
@@ -1837,6 +1905,29 @@ bool rgb_matrix_indicators_user(void) {
       rgb_matrix_set_color(let_led - 29, 0, 0, 0);
     }
   }
+
+  // Flash number key logic for show_mode (Master Only) would go here
+  if (show_mode_active) {
+    uint8_t digit = show_mode_digits[show_mode_current_digit];
+    uint8_t led_index =
+        (digit == 0) ? number_key_leds[9] : number_key_leds[digit - 1];
+    uint8_t letter_index =
+        (digit == 0) ? letter_key_leds[9] : letter_key_leds[digit - 1];
+    bool am_i_left = is_keyboard_left();
+    uint8_t val = (show_mode_phase == 1) ? 255 : 0;
+    // Local addressing fix:
+    if (am_i_left) {
+      if (led_index < 29)
+        rgb_matrix_set_color(led_index, val, val, val);
+      if (letter_index < 29)
+        rgb_matrix_set_color(letter_index, val, val, val);
+    } else {
+      if (led_index >= 29)
+        rgb_matrix_set_color(led_index - 29, val, val, val);
+      if (letter_index >= 29)
+        rgb_matrix_set_color(letter_index - 29, val, val, val);
+    }
+  }
   return false;
 }
 
@@ -1889,7 +1980,7 @@ void keyboard_post_init_user(void) {
   uprintf("Init: Deferred EEPROM write. Pending Config=%u\n", new_config);
 
   // Initialize the tracker with the OLD hue, so the first increment
-  // lands exactly on 'next_hue'.
+  // in start_show_mode() lands exactly on 'next_hue'.
   automatic_hue_tracker = saved_hue;
 
   uprintf("Init: Next Theme=%d, Next Hue=%d. Saved=%u. CPI: %u\n", next_theme, next_hue,
@@ -1923,7 +2014,12 @@ void housekeeping_task_user(void) {
           .is_fast_mode_active = is_fast_mode_active,
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
+          .show_mode_active = show_mode_active,
           .is_caps_lock_on = is_caps_lock_on,
+          .show_mode_digits = {show_mode_digits[0], show_mode_digits[1]},
+          .show_mode_digit_count = show_mode_digit_count,
+          .show_mode_current_digit = show_mode_current_digit,
+          .show_mode_phase = show_mode_phase,
           .rgb_mode = rgb_matrix_get_mode(),
           .is_left_hand = is_keyboard_left(),
           .random_seed = current_random_seed};
@@ -2064,6 +2160,9 @@ void matrix_scan_user(void) {
   if (master_rgb_init_pending) {
     rgb_matrix_mode_noeeprom(master_rgb_init_mode);
     master_rgb_init_pending = false;
+    if (is_keyboard_master()) {
+      start_show_mode();
+    }
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
   }
 
@@ -2090,6 +2189,33 @@ void matrix_scan_user(void) {
   if (rgb_auto_cycle && timer_elapsed(rgb_auto_timer) > 30000) {
     rgb_matrix_step_noeeprom();
     rgb_auto_timer = timer_read();
+    if (is_keyboard_master()) {
+      start_show_mode();
+    }
+  }
+
+  // Handle show mode flash sequence
+  if (is_keyboard_master()) {
+    if (show_mode_active && timer_elapsed(show_mode_timer) > 500) {
+      if (show_mode_phase == 1) {
+        // Flash was on, turn off
+        show_mode_phase = 0;
+        show_mode_timer = timer_read();
+        sync_needed = true;
+      } else {
+        // Flash was off, move to next digit or end
+        show_mode_current_digit++;
+        if (show_mode_current_digit >= show_mode_digit_count) {
+          show_mode_active = false;
+          rgb_matrix_mode_noeeprom(
+              rgb_matrix_get_mode()); // Final nudge to clear overrides
+        } else {
+          show_mode_phase = 1;
+          show_mode_timer = timer_read();
+        }
+        sync_needed = true;
+      }
+    }
   }
 
   if (auto_mouse_on && !mouse_is_locked &&
