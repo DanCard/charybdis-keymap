@@ -1,0 +1,74 @@
+#pragma once
+
+#include QMK_KEYBOARD_H
+
+// Custom Keycodes
+enum custom_keycodes {
+  KC_RAINBOW = QK_USER_0,
+  KC_REACTIVE,
+  KC_MOUSE_LOCK,
+  KC_ENT_L2_EXIT,
+  KC_PGUP_TO0,
+  KC_P_TO0,
+  KC_HOME_TO0,
+  KC_L_TG1,
+  KC_R_TG2,
+  KC_ENT_MO4,
+  KC_ENT_EXIT,
+  KC_SPC_EXIT,
+  KC_BSPC_EXIT,
+  KC_EXIT,
+  KC_TURBO,
+  KC_MS_FAST_UP,
+  KC_MS_FAST_DOWN,
+  KC_MS_FAST_LEFT,
+  KC_MS_FAST_RIGHT,
+  KC_MS_DIAG_UL,
+  KC_MS_DIAG_UR,
+  KC_MS_DIAG_DL,
+  KC_MS_DIAG_DR,
+  KC_SCR_MODE,
+  KC_1_TG1,
+  KC_2_TG2,
+  KC_3_TG3,
+  KC_4_TG4,
+  KC_Q_TG4,
+  KC_JELLY,
+  KC_SPIRAL,
+  KC_CHEVRON,
+  KC_RGB_AUTO,
+  KC_PLUS_COLON,
+  KC_MINS_TO0,
+  KC_0_TG1,
+  KC_9_TG2,
+  KC_8_TG3,
+  KC_7_TO0,
+  KC_6_TO0,
+  KC_ENT_TG2,
+  KC_ENT_TG4,
+  KC_SPC_TG2,
+  KC_SPC_TG4,
+  KC_PMNS_TG4,
+  KC_MINS_TG4,
+  KC_F12_EXIT,
+  KC_FIRE,
+  KC_CPFR,
+  KC_SNIPE,
+  KC_FAST,
+  KC_MS_TMO_INC,
+  KC_MS_TMO_DEC,
+  KC_SET_LEFT,
+  KC_SET_RIGHT,
+  KC_DEBUG_SYNC,  // Debug key to dump sync state
+  KC_JITTER,      // Toggle Mouse Jitter Filter
+  KC_P_FRAC,      // Set Pixel Fractal Theme (29)
+  KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
+  KC_DAY,         // Set brightness to Day level
+  KC_NIGHT,       // Set brightness to Night level
+  KC_FLASHLIGHT,  // Toggle Flashlight mode
+  KC_SLSH_TO0,    // Tap: /, Hold: Temporary Layer 0
+  KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
+  KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
+  KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
+  KC_L3_EXT_TO1   // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
+};

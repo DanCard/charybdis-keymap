@@ -5,6 +5,7 @@
 #include "features/sync.h"
 #include "features/mouse.h"
 #include "features/rgb.h"
+#include "features/tap_hold.h"
 
 // Timestamp logging helper - prints [seconds.milliseconds]
 #define LOG_TIME() do { \
@@ -14,6 +15,8 @@
 
 const char *layer_change_reason = NULL;
 static char layer_reason_buffer[64];
+
+#include "features/keycodes.h"
 
 // Tap Dance Definitions
 typedef struct {
@@ -28,77 +31,6 @@ enum {
 };
 
 enum { TD_Z_LAYER = 0 };
-
-// Custom Keycodes
-enum custom_keycodes {
-  KC_RAINBOW = QK_USER_0,
-  KC_REACTIVE,
-  KC_MOUSE_LOCK,
-  KC_ENT_L2_EXIT,
-  KC_PGUP_TO0,
-  KC_P_TO0,
-  KC_HOME_TO0,
-  KC_L_TG1,
-  KC_R_TG2,
-  KC_ENT_MO4,
-  KC_ENT_EXIT,
-  KC_SPC_EXIT,
-  KC_BSPC_EXIT,
-  KC_EXIT,
-  KC_TURBO,
-  KC_MS_FAST_UP,
-  KC_MS_FAST_DOWN,
-  KC_MS_FAST_LEFT,
-  KC_MS_FAST_RIGHT,
-  KC_MS_DIAG_UL,
-  KC_MS_DIAG_UR,
-  KC_MS_DIAG_DL,
-  KC_MS_DIAG_DR,
-  KC_SCR_MODE,
-  KC_1_TG1,
-  KC_2_TG2,
-  KC_3_TG3,
-  KC_4_TG4,
-  KC_Q_TG4,
-  KC_JELLY,
-  KC_SPIRAL,
-  KC_CHEVRON,
-  KC_RGB_AUTO,
-  KC_PLUS_COLON,
-  KC_MINS_TO0,
-  KC_0_TG1,
-  KC_9_TG2,
-  KC_8_TG3,
-  KC_7_TO0,
-  KC_6_TO0,
-  KC_ENT_TG2,
-  KC_ENT_TG4,
-  KC_SPC_TG2,
-  KC_SPC_TG4,
-  KC_PMNS_TG4,
-  KC_MINS_TG4,
-  KC_F12_EXIT,
-  KC_FIRE,
-  KC_CPFR,
-  KC_SNIPE,
-  KC_FAST,
-  KC_MS_TMO_INC,
-  KC_MS_TMO_DEC,
-  KC_SET_LEFT,
-  KC_SET_RIGHT,
-  KC_DEBUG_SYNC,  // Debug key to dump sync state
-  KC_JITTER,      // Toggle Mouse Jitter Filter
-  KC_P_FRAC,      // Set Pixel Fractal Theme (29)
-  KC_PINWHEEL,    // Set Cycle Pinwheel Theme (18)
-  KC_DAY,         // Set brightness to Day level
-  KC_NIGHT,       // Set brightness to Night level
-  KC_FLASHLIGHT,  // Toggle Flashlight mode
-  KC_SLSH_TO0,    // Tap: /, Hold: Temporary Layer 0
-  KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
-  KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
-  KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
-  KC_L3_EXT_TO1   // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
-};
 
 uint8_t cur_dance(tap_dance_state_t *state) {
   if (state->count == 1) {
@@ -116,59 +48,8 @@ static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
 
 #define MY_TAPPING_TERM 250
 
-// =============================================================================
-// Tap/Hold Key State - Unified struct for all tap/hold keys
-// =============================================================================
-typedef struct {
-    uint16_t timer;
-    bool held;
-    bool triggered;
-} tap_hold_t;
-
-// Index enum for tap_hold array
-enum tap_hold_idx {
-    TH_Q, TH_L1,
-    TH_PGUP, TH_P, TH_SLSH, TH_HOME, TH_ENT_MO,
-    TH_K1, TH_K2, TH_K3, TH_K4, TH_K5,
-    TH_MINS, TH_K0, TH_K9, TH_K8, TH_K7, TH_K6,
-    TH_ENT_TG4, TH_ENT_TG2, TH_SPC_TG2, TH_SPC_TG4, TH_PMNS_TG4,
-    TH_F12,
-    TH_L3_TO4, TH_L3_TO2, TH_L3_TO1,
-    TH_COUNT  // Total count
-};
-
-static tap_hold_t th[TH_COUNT] = {0};
-
-// Helper macros for cleaner access
-#define TH_PRESS(idx) do { th[idx].held = true; th[idx].triggered = false; th[idx].timer = timer_read(); } while(0)
-#define TH_CHECK(idx) (th[idx].held && !th[idx].triggered && timer_elapsed(th[idx].timer) > MY_TAPPING_TERM)
-#define TH_RELEASE_TAP(idx) (th[idx].held = false, !th[idx].triggered)
-#define TH_TRIGGER(idx) (th[idx].triggered = true)
-
-// =============================================================================
 // Helper Functions for Duplicate Code Consolidation
-// =============================================================================
-
-// Simple tap-hold key table: maps keycode -> (th_index, tap_keycode)
-typedef struct {
-    uint16_t keycode;
-    uint8_t th_idx;
-    uint16_t tap_key;
-} simple_tap_hold_t;
-
-static const simple_tap_hold_t simple_tap_holds[] = {
-    {KC_PGUP_TO0, TH_PGUP, KC_PGUP},
-    {KC_HOME_TO0, TH_HOME, KC_HOME},
-    {KC_MINS_TO0, TH_MINS, KC_MINS},
-    {KC_0_TG1, TH_K0, KC_0},
-    {KC_9_TG2, TH_K9, KC_9},
-    {KC_8_TG3, TH_K8, KC_8},
-    {KC_7_TO0, TH_K7, KC_7},
-    {KC_6_TO0, TH_K6, KC_6},
-    {KC_PMNS_TG4, TH_PMNS_TG4, KC_PMNS},
-    {KC_F12_EXIT, TH_F12, KC_F12},
-};
-#define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
+// Simple tap-hold key table: maps keycode -> (th_index, tap_keycode) - Removed (in features/tap_hold.c)
 
 // RGB mode key table: maps keycode -> rgb_mode
 typedef struct {
@@ -186,58 +67,6 @@ static const rgb_mode_key_t rgb_mode_keys[] = {
     {KC_PINWHEEL, RGB_MATRIX_CYCLE_PINWHEEL},
 };
 #define RGB_MODE_KEY_COUNT (sizeof(rgb_mode_keys) / sizeof(rgb_mode_keys[0]))
-
-// Exit key helper (SPC_EXIT, ENT_EXIT, BSPC_EXIT)
-static bool handle_exit_key(uint16_t tap_key, bool pressed) {
-    if (pressed) {
-        layer_change_reason = "Exit Key: L0";
-        layer_state_set(0);
-        rgb_matrix_indicators_user();
-        th[TH_ENT_MO].timer = timer_read();
-    } else {
-        if (timer_elapsed(th[TH_ENT_MO].timer) < MY_TAPPING_TERM) {
-            tap_code(tap_key);
-        }
-        rgb_matrix_indicators_user();
-    }
-    return false;
-}
-
-// Layer 3 thumb key helper (tap=exit, hold=switch layer)
-static bool handle_l3_thumb(uint8_t th_idx, uint8_t hold_layer, bool pressed) {
-    if (pressed) {
-        th[th_idx].held = true;
-        th[th_idx].timer = timer_read();
-    } else {
-        th[th_idx].held = false;
-        if (timer_elapsed(th[th_idx].timer) < MY_TAPPING_TERM) {
-            layer_change_reason = "L3 Thumb Tap (Exit)";
-            layer_move(0);
-        } else {
-            layer_change_reason = "L3 Thumb Hold";
-            layer_move(hold_layer);
-        }
-        rgb_matrix_indicators_user();
-    }
-    return false;
-}
-
-// Verbose thumb toggle helper (ENT_TG2, ENT_TG4, SPC_TG2, SPC_TG4)
-static bool handle_thumb_toggle(uint8_t th_idx, uint16_t tap_key, const char* name, bool pressed) {
-    uint32_t now = timer_read32();
-    if (pressed) {
-        uprintf("[%lu.%03lu] %s Pressed\n", (unsigned long)(now/1000), (unsigned long)(now%1000), name);
-        TH_PRESS(th_idx);
-    } else {
-        uprintf("[%lu.%03lu] %s Released. Duration: %u ms. Action: %s\n",
-                (unsigned long)(now/1000), (unsigned long)(now%1000), name,
-                timer_elapsed(th[th_idx].timer),
-                !th[th_idx].triggered ? "Tap" : "Hold handled");
-        th[th_idx].held = false;
-        if (!th[th_idx].triggered) tap_code(tap_key);
-    }
-    return false;
-}
 
 // =============================================================================
 
@@ -534,19 +363,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
 
   // Handle simple tap-hold keys via table lookup
-  for (size_t i = 0; i < SIMPLE_TAP_HOLD_COUNT; i++) {
-    if (keycode == simple_tap_holds[i].keycode) {
-      uint8_t idx = simple_tap_holds[i].th_idx;
-      if (record->event.pressed) {
-        TH_PRESS(idx);
-      } else {
-        th[idx].held = false;
-        if (!th[idx].triggered) {
-          tap_code(simple_tap_holds[i].tap_key);
-        }
-      }
-      return false;
-    }
+  if (process_tap_hold_key(keycode, record)) {
+    return false;
   }
 
   // Handle RGB mode keys via table lookup
@@ -1209,221 +1027,7 @@ void matrix_scan_user(void) {
     }
   }
 
-  if (th[TH_PGUP].held && !th[TH_PGUP].triggered &&
-      timer_elapsed(th[TH_PGUP].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "PGUP(Hold): Exit to Base";
-    layer_move(0);
-    th[TH_PGUP].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_HOME].held && !th[TH_HOME].triggered &&
-      timer_elapsed(th[TH_HOME].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "HOME(Hold): Exit to Base";
-    layer_move(0);
-    th[TH_HOME].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_P].held && !th[TH_P].triggered && timer_elapsed(th[TH_P].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "P(Hold): Peek at Base";
-    layer_state_set(0); // Peek at base layer
-    th[TH_P].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_SLSH].held && !th[TH_SLSH].triggered && timer_elapsed(th[TH_SLSH].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "/(Hold): Peek at Base";
-    layer_state_set(0); // Peek at base layer
-    th[TH_SLSH].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_Q].held && !th[TH_Q].triggered && timer_elapsed(th[TH_Q].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "Q(Hold): Peek at One-Hand (L4)";
-    layer_move(4); // Peek at layer 4
-    th[TH_Q].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_L1].held && !th[TH_L1].triggered && timer_elapsed(th[TH_L1].timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 1) {
-       layer_change_reason = "L_TG1(Hold): Toggle L1 (OFF)";
-       layer_invert(1);
-    } else {
-       layer_change_reason = "L_TG1(Hold): Toggle L1 (ON)";
-       layer_invert(1);
-    }
-    th[TH_L1].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_ENT_MO].held && !th[TH_ENT_MO].triggered &&
-      timer_elapsed(th[TH_ENT_MO].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "ENT(Hold): MO(4)";
-    layer_on(4);
-    th[TH_ENT_MO].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-
-  if (th[TH_K1].held && !th[TH_K1].triggered &&
-      timer_elapsed(th[TH_K1].timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_change_reason = "K1(Hold): Toggle L1 (ON)";
-      layer_move(1);
-    } else {
-      layer_change_reason = "K1(Hold): Toggle L1 (OFF)";
-      layer_move(0);
-    }
-    th[TH_K1].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K2].held && !th[TH_K2].triggered &&
-      timer_elapsed(th[TH_K2].timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_change_reason = "K2(Hold): Toggle L2 (ON)";
-      layer_move(2);
-    } else {
-      layer_change_reason = "K2(Hold): Toggle L2 (OFF)";
-      layer_move(0);
-    }
-    th[TH_K2].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K3].held && !th[TH_K3].triggered &&
-      timer_elapsed(th[TH_K3].timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_change_reason = "K3(Hold): Toggle L3 (ON)";
-      layer_move(3);
-    } else {
-      layer_change_reason = "K3(Hold): Toggle L3 (OFF)";
-      layer_move(0);
-    }
-    th[TH_K3].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K4].held && !th[TH_K4].triggered &&
-      timer_elapsed(th[TH_K4].timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_change_reason = "K4(Hold): Toggle L4 (ON)";
-      layer_move(4);
-    } else {
-      layer_change_reason = "K4(Hold): Toggle L4 (OFF)";
-      layer_move(0);
-    }
-    th[TH_K4].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K5].held && !th[TH_K5].triggered &&
-      timer_elapsed(th[TH_K5].timer) > MY_TAPPING_TERM) {
-    if (get_highest_layer(layer_state) == 0) {
-      layer_change_reason = "K5(Hold): Toggle L5 (ON)";
-      layer_move(5);
-    } else {
-      layer_change_reason = "K5(Hold): Toggle L5 (OFF)";
-      layer_move(0);
-    }
-    th[TH_K5].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-
-  // New Layer 4 Keys Logic
-  if (th[TH_MINS].held && !th[TH_MINS].triggered &&
-      timer_elapsed(th[TH_MINS].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "MINS(Hold): L4->Base";
-    layer_move(0);
-    th[TH_MINS].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K0].held && !th[TH_K0].triggered &&
-      timer_elapsed(th[TH_K0].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "K0(Hold): L4->L1 (Jump)";
-    layer_move(1);
-    th[TH_K0].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K9].held && !th[TH_K9].triggered &&
-      timer_elapsed(th[TH_K9].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "K9(Hold): L4->L2 (Jump)";
-    layer_move(2);
-    th[TH_K9].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K8].held && !th[TH_K8].triggered &&
-      timer_elapsed(th[TH_K8].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "K8(Hold): L4->L3 (Jump)";
-    layer_move(3);
-    th[TH_K8].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K7].held && !th[TH_K7].triggered &&
-      timer_elapsed(th[TH_K7].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "K7(Hold): L4->Base";
-    layer_move(0);
-    th[TH_K7].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_K6].held && !th[TH_K6].triggered &&
-      timer_elapsed(th[TH_K6].timer) > MY_TAPPING_TERM) {
-    layer_change_reason = "K6(Hold): L4->Base";
-    layer_move(0);
-    th[TH_K6].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-
-  // Thumb Toggle Logic
-  if (th[TH_ENT_TG2].held && !th[TH_ENT_TG2].triggered &&
-      timer_elapsed(th[TH_ENT_TG2].timer) > MY_TAPPING_TERM) {
-    uprintf(">> Thumb Hold Triggered: ENT_TG2 -> Toggle Layer 2\n");
-    if (get_highest_layer(layer_state) == 2) {
-      layer_change_reason = "ENT(Hold): Toggle L2 (OFF)";
-      layer_move(0);
-    } else {
-      layer_change_reason = "ENT(Hold): Toggle L2 (ON)";
-      layer_move(2);
-    }
-    th[TH_ENT_TG2].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_ENT_TG4].held && !th[TH_ENT_TG4].triggered &&
-      timer_elapsed(th[TH_ENT_TG4].timer) > MY_TAPPING_TERM) {
-    uprintf(">> Thumb Hold Triggered: ENT_TG4 -> Toggle Layer 4\n");
-    if (get_highest_layer(layer_state) == 4) {
-      layer_change_reason = "ENT(Hold): Toggle L4 (OFF)";
-      layer_move(0);
-    } else {
-      layer_change_reason = "ENT(Hold): Toggle L4 (ON)";
-      layer_move(4);
-    }
-    th[TH_ENT_TG4].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_SPC_TG2].held && !th[TH_SPC_TG2].triggered &&
-      timer_elapsed(th[TH_SPC_TG2].timer) > MY_TAPPING_TERM) {
-    uprintf(">> Thumb Hold Triggered: SPC_TG2 -> Toggle Layer 2\n");
-    if (get_highest_layer(layer_state) == 2) {
-      layer_change_reason = "SPC(Hold): Toggle L2 (OFF)";
-      layer_move(0);
-    } else {
-      layer_change_reason = "SPC(Hold): Toggle L2 (ON)";
-      layer_move(2);
-    }
-    th[TH_SPC_TG2].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_SPC_TG4].held && !th[TH_SPC_TG4].triggered &&
-      timer_elapsed(th[TH_SPC_TG4].timer) > MY_TAPPING_TERM) {
-    uprintf(">> Thumb Hold Triggered: SPC_TG4 -> Toggle Layer 4\n");
-    if (get_highest_layer(layer_state) == 4) {
-      layer_change_reason = "SPC(Hold): Toggle L4 (OFF)";
-      layer_move(0);
-    } else {
-      layer_change_reason = "SPC(Hold): Toggle L4 (ON)";
-      layer_move(4);
-    }
-    th[TH_SPC_TG4].triggered = true;
-    rgb_matrix_indicators_user();
-  }
-  if (th[TH_F12].held && !th[TH_F12].triggered &&
-      timer_elapsed(th[TH_F12].timer) > MY_TAPPING_TERM) {
-    uprintf(">> Thumb Hold Triggered: F12 -> Exit to Base\n");
-    layer_change_reason = "F12(Hold): Exit to Base";
-    layer_move(0);
-    th[TH_F12].triggered = true;
-    rgb_matrix_indicators_user();
-  }
+  housekeeping_tap_hold();
 }
+
+

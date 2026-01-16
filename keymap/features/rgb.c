@@ -1,6 +1,7 @@
 #include "rgb.h"
 #include "sync.h"
 #include "mouse.h"
+#include "keycodes.h"
 #include <lib/lib8tion/lib8tion.h>
 
 // RGB state variables
