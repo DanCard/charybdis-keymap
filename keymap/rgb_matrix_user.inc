@@ -60,7 +60,7 @@ static bool fire(effect_params_t* params) {
         if (val < 15) {
             rgb_matrix_set_color(i, 0, 0, 0);
         } else {
-            HSV hsv = { hue, sat, (uint8_t)val };
+            HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / 255) };
             RGB rgb = hsv_to_rgb(hsv);
             rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
@@ -221,7 +221,7 @@ static bool wildfire(effect_params_t* params) {
         if (val < 10) {
             rgb_matrix_set_color(i, 0, 0, 0);
         } else {
-            HSV hsv = { hue, sat, (uint8_t)val };
+            HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / 255) };
             RGB rgb = hsv_to_rgb(hsv);
             rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
@@ -308,7 +308,7 @@ static bool campfire(effect_params_t* params) {
         if (val < 15) {
              rgb_matrix_set_color(i, 0, 0, 0);
         } else {
-             HSV hsv = { hue, sat, val };
+             HSV hsv = { hue, sat, (uint8_t)((val * rgb_matrix_config.hsv.v) / 255) };
              RGB rgb = hsv_to_rgb(hsv);
              rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
         }
