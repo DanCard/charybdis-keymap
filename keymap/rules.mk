@@ -5,3 +5,5 @@ MOUSEKEY_ENABLE = yes
 RGB_MATRIX_ENABLE = yes
 WS2812_DRIVER = vendor
 CONSOLE_ENABLE = yes
+
+SRC += features/sync.c
