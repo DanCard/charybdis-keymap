@@ -42,8 +42,7 @@ uint8_t cur_dance(tap_dance_state_t *state) {
 }
 
 static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
-
-
+static uint8_t z_original_layer = 0;
 
 // Helper Functions for Duplicate Code Consolidation
 // Simple tap-hold key table: maps keycode -> (th_index, tap_keycode) - Removed (in features/tap_hold.c)
@@ -108,9 +107,7 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
   switch (z_tap_state.state) {
   case SINGLE_TAP: {
     uint8_t layer = get_highest_layer(layer_state);
-    if (layer == 1)
-      tap_code(KC_P0);
-    else if (layer == 2)
+    if (layer == 2)
       tap_code(KC_HOME);
     else if (layer == 4)
       tap_code(KC_SLSH);
@@ -118,7 +115,8 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
       register_code(KC_Z);
   } break;
   case SINGLE_HOLD:
-    if (get_highest_layer(layer_state) == 4) {
+    z_original_layer = get_highest_layer(layer_state);
+    if (z_original_layer == 4) {
       layer_change_reason = "Tap Dance Z Hold";
       layer_move(0); // Peek at base layer
     } else {
@@ -134,15 +132,15 @@ void z_reset(tap_dance_state_t *state, void *user_data) {
   switch (z_tap_state.state) {
   case SINGLE_TAP: {
     uint8_t layer = get_highest_layer(layer_state);
-    if (layer != 1 && layer != 2 && layer != 4) {
+    if (layer != 2 && layer != 4) {
       unregister_code(KC_Z);
     }
   } break;
   case SINGLE_HOLD:
     if (get_highest_layer(layer_state) == 4) {
-      // Was peeking at layer 4, restore base layer
-      layer_change_reason = "Z(Hold Release): Base";
-      layer_move(0);
+      // Was peeking at layer 4, restore original layer
+      layer_change_reason = "Z(Hold Release): Restore";
+      layer_move(z_original_layer);
     } else {
       // Was peeking at base layer, restore layer 4
       layer_change_reason = "Z(Hold Release): L4";
