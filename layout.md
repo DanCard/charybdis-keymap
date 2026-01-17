@@ -17,14 +17,14 @@ Ctrl      Z(TD)     X         C         V         B        |  N         M       
 
 ### BASE + ARROWS (Layer 1)
 ```
-Esc       1         2/Left    3/Up      4/Down    5/Right  |  6/Left    7/Up      8/Down    9/Right   0         -
+Esc       1         Left/L2   Up/L3     Down/L4   Right/L5 |  Left/L6   7/Up      8/Down    9/Right   0/L0      -
 Tab       Q/L4      W         E         R         T        |  Y         U         I         O         P         \
 Shift     A         S         D         F         G        |  H         J         K         L         +/:       '
 Ctrl      Z(TD)     X         C         V         B        |  N         M         ,         .         /(L3)     Shift
                      Space/L2  Ent/L4    Exit               |  Del       Ent/L2    Alt
                     Alt       Bspc
 ```
-*Note: Dual-function arrow row. Tap: Arrow (Left, Up, Down, Left pattern), Shift+Tap: Number.*
+*Note: Dual-function arrow row. Tap: Arrow (Left, Up, Down, Right pattern), Shift+Tap: Number. Hold 0 for Layer 0.*
 
 ### FUNCTION (Layer 2)
 ```

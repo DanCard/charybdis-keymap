@@ -177,8 +177,19 @@ bool housekeeping_rgb_indicators(void) {
   uint8_t layer = get_highest_layer(layer_state);
   switch (layer) {
   case 1: {
-    static const uint8_t leds[] = {6, 9, 14, 17, 21, 5, 10, 13, 18, 22, 4, 11, 12, 19, 23};
-    for (int i = 0; i < sizeof(leds) / sizeof(leds[0]); i++) rgb_matrix_set_color(leds[i], 0, 0, 255);
+    if (is_keyboard_left()) {
+      // Keys 2, 3, 4, 5 on left (Indices: 8, 15, 16, 20)
+      rgb_matrix_set_color(8, 0, 0, 255);
+      rgb_matrix_set_color(15, 0, 0, 255);
+      rgb_matrix_set_color(16, 0, 0, 255);
+      rgb_matrix_set_color(20, 0, 0, 255);
+    } else {
+      // Keys 6, 7, 8, 9 on right (Indices: 20, 16, 15, 8 local)
+      rgb_matrix_set_color(20, 0, 0, 255);
+      rgb_matrix_set_color(16, 0, 0, 255);
+      rgb_matrix_set_color(15, 0, 0, 255);
+      rgb_matrix_set_color(8, 0, 0, 255);
+    }
     break;
   }
   case 2: {

@@ -22,7 +22,7 @@ LAYER_COLORS = {
 
 LAYER_NAMES = {
     0: "BASE",
-    1: "ORIGINAL",
+    1: "BASE + ARROWS",
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
