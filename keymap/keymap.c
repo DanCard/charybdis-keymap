@@ -449,17 +449,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       th[TH_L1].timer = timer_read();
     } else {
       th[TH_L1].held = false;
-      // If released quickly (Tap) -> Toggle L3 (Mouse)
+      // If released quickly (Tap) -> Toggle L1 (Base + Arrows)
       if (!th[TH_L1].triggered) {
-        if (get_highest_layer(layer_state) == 3) {
-          layer_change_reason = "L_TG1 (Tap): Toggle L3 (OFF)";
-          layer_off(3);
-        } else if (get_highest_layer(layer_state) > 0) {
-          layer_change_reason = "L_TG1 (Tap): L0 (Reset)";
-          layer_move(0);
+        if (get_highest_layer(layer_state) == 1) {
+          layer_change_reason = "L_TG1 (Tap): Toggle L1 (OFF)";
+          layer_off(1);
         } else {
-          layer_change_reason = "L_TG1 (Tap): Toggle L3 (Mouse)";
-          layer_on(3);
+          layer_change_reason = "L_TG1 (Tap): Toggle L1 (Base+Arrows)";
+          layer_on(1);
         }
       }
       rgb_matrix_indicators_user();
