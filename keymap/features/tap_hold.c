@@ -13,35 +13,36 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_PGUP_TO0, TH_PGUP, KC_PGUP},
     {KC_HOME_TO0, TH_HOME, KC_HOME},
     {KC_MINS_TO0, TH_MINS, KC_MINS},
-    {KC_0_TG1, TH_K0, KC_0},
-    {KC_9_TG2, TH_K9, KC_9},
-    {KC_8_TG3, TH_K8, KC_8},
+    {KC_0_L1, TH_K0, KC_0},
+    {KC_9_L2, TH_K9, KC_9},
+    {KC_8_L3, TH_K8, KC_8},
     {KC_7_TO0, TH_K7, KC_7},
     {KC_6_TO0, TH_K6, KC_6},
-    {KC_PMNS_TG4, TH_PMNS_TG4, KC_PMNS},
+    {KC_PMNS_L4, TH_PMNS_TG4, KC_PMNS},
     {KC_F12_EXIT, TH_F12, KC_F12},
     {KC_0_TO0, TH_K0_TO0, KC_0},
-    {KC_2_TO2, TH_K2_TO2, 0},
-    {KC_3_TO3, TH_K3_TO3, 0},
-    {KC_4_TO4, TH_K4_TO4, 0},
-    {KC_5_TO5, TH_K5_TO5, 0},
+    {KC_LEFT_2, TH_K2_TO2, 0},
+    {KC_UP_3, TH_K3_TO3, 0},
+    {KC_DOWN_4, TH_K4_TO4, 0},
+    {KC_RIGHT_5, TH_K5_TO5, 0},
+    {KC_6_L6, TH_K6_TG6, KC_6},
 };
 #define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
 
 bool process_tap_hold_key(uint16_t keycode, keyrecord_t *record) {
-    if (keycode == KC_6_TO6 || keycode == KC_2_TO2 || keycode == KC_3_TO3 ||
-        keycode == KC_4_TO4 || keycode == KC_5_TO5) {
+    if (keycode == KC_LEFT_6 || keycode == KC_LEFT_2 || keycode == KC_UP_3 ||
+        keycode == KC_DOWN_4 || keycode == KC_RIGHT_5) {
         if (record->event.pressed) {
-            if (keycode == KC_2_TO2) TH_PRESS(TH_K2_TO2);
-            else if (keycode == KC_3_TO3) TH_PRESS(TH_K3_TO3);
-            else if (keycode == KC_4_TO4) TH_PRESS(TH_K4_TO4);
-            else if (keycode == KC_5_TO5) TH_PRESS(TH_K5_TO5);
+            if (keycode == KC_LEFT_2) TH_PRESS(TH_K2_TO2);
+            else if (keycode == KC_UP_3) TH_PRESS(TH_K3_TO3);
+            else if (keycode == KC_DOWN_4) TH_PRESS(TH_K4_TO4);
+            else if (keycode == KC_RIGHT_5) TH_PRESS(TH_K5_TO5);
             else TH_PRESS(TH_K6_TO6);
         } else {
-            if (keycode == KC_2_TO2) th[TH_K2_TO2].held = false;
-            else if (keycode == KC_3_TO3) th[TH_K3_TO3].held = false;
-            else if (keycode == KC_4_TO4) th[TH_K4_TO4].held = false;
-            else if (keycode == KC_5_TO5) th[TH_K5_TO5].held = false;
+            if (keycode == KC_LEFT_2) th[TH_K2_TO2].held = false;
+            else if (keycode == KC_UP_3) th[TH_K3_TO3].held = false;
+            else if (keycode == KC_DOWN_4) th[TH_K4_TO4].held = false;
+            else if (keycode == KC_RIGHT_5) th[TH_K5_TO5].held = false;
             else th[TH_K6_TO6].held = false;
         }
         return false;
@@ -333,7 +334,7 @@ void housekeeping_tap_hold(void) {
     housekeeping_rgb_indicators();
   }
   if (TH_CHECK(TH_K6_TO6)) {
-    uprintf(">>> KC_6_TO6 Hold Triggered -> Layer 6\n");
+    uprintf(">>> KC_LEFT_6 Hold Triggered -> Layer 6\n");
     layer_change_reason = "6(Hold): Layer 6";
     layer_move(6);
     TH_TRIGGER(TH_K6_TO6);
@@ -347,31 +348,38 @@ void housekeeping_tap_hold(void) {
     housekeeping_rgb_indicators();
   }
   if (TH_CHECK(TH_K2_TO2)) {
-    uprintf(">>> KC_2_TO2 Hold Triggered -> Layer 2\n");
+    uprintf(">>> KC_LEFT_2 Hold Triggered -> Layer 2\n");
     layer_change_reason = "2(Hold): Layer 2";
     layer_move(2);
     TH_TRIGGER(TH_K2_TO2);
     housekeeping_rgb_indicators();
   }
   if (TH_CHECK(TH_K3_TO3)) {
-    uprintf(">>> KC_3_TO3 Hold Triggered -> Layer 3\n");
+    uprintf(">>> KC_UP_3 Hold Triggered -> Layer 3\n");
     layer_change_reason = "3(Hold): Layer 3";
     layer_move(3);
     TH_TRIGGER(TH_K3_TO3);
     housekeeping_rgb_indicators();
   }
   if (TH_CHECK(TH_K4_TO4)) {
-    uprintf(">>> KC_4_TO4 Hold Triggered -> Layer 4\n");
+    uprintf(">>> KC_DOWN_4 Hold Triggered -> Layer 4\n");
     layer_change_reason = "4(Hold): Layer 4";
     layer_move(4);
     TH_TRIGGER(TH_K4_TO4);
     housekeeping_rgb_indicators();
   }
   if (TH_CHECK(TH_K5_TO5)) {
-    uprintf(">>> KC_5_TO5 Hold Triggered -> Layer 5\n");
+    uprintf(">>> KC_RIGHT_5 Hold Triggered -> Layer 5\n");
     layer_change_reason = "5(Hold): Layer 5";
     layer_move(5);
     TH_TRIGGER(TH_K5_TO5);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K6_TG6)) {
+    uprintf(">>> KC_6_L6 Hold Triggered -> Layer 6\n");
+    layer_change_reason = "6(Hold): Layer 6";
+    layer_move(6);
+    TH_TRIGGER(TH_K6_TG6);
     housekeeping_rgb_indicators();
   }
 }

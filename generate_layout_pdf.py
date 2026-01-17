@@ -387,28 +387,28 @@ def simplify_key(key_code, layer_num=None):
 
     # Special handling for Layer 0 and Layer 6 Long Press
     if layer_num == 0 or layer_num == 6:
-        if key_code == "KC_1_TG1":
+        if key_code == "KC_1_L1":
             return "1\nL1"
-        if key_code == "KC_2_TG2":
+        if key_code == "KC_2_L2":
             return "2\nL2"
-        if key_code == "KC_3_TG3":
+        if key_code == "KC_3_L3":
             return "3\nL3"
-        if key_code == "KC_4_TG4":
+        if key_code == "KC_4_L4":
             return "4\nL4"
-        if key_code == "KC_5_TG5":
+        if key_code == "KC_5_L5":
             return "5\nL5"
         if key_code == "KC_0_TO0":
             return "0\nL0"
 
     # Special handling for Layer 1
     if layer_num == 1:
-        if key_code == "KC_1_TG1":
+        if key_code == "KC_1_L1":
             return "1\nL0"
-        if key_code == "KC_2_TG2":
+        if key_code == "KC_2_L2":
             return "2\nL0"
-        if key_code == "KC_3_TG3":
+        if key_code == "KC_3_L3":
             return "3\nL0"
-        if key_code == "KC_4_TG4":
+        if key_code == "KC_4_L4":
             return "4\nL0"
 
     # Special handling for Layer 2
@@ -417,21 +417,21 @@ def simplify_key(key_code, layer_num=None):
             return "Page\nUp"
 
     if layer_num is not None and layer_num > 0:
-        if key_code == "KC_L_TG1":
+        if key_code == "KC_L_L1":
             return "Exit\nL3"
 
     # Special handling for other layer long press returns
     if layer_num is not None and layer_num > 1:
-        if key_code == "KC_1_TG1":
+        if key_code == "KC_1_L1":
             label = "F1" if layer_num == 2 else ("Rainb" if layer_num == 3 else "0")
             return f"{label}\nL0"
-        if key_code == "KC_2_TG2":
+        if key_code == "KC_2_L2":
             label = "F2" if layer_num == 2 else ("Next" if layer_num == 3 else "9")
             return f"{label}\nL0"
-        if key_code == "KC_3_TG3":
+        if key_code == "KC_3_L3":
             label = "F3" if layer_num == 2 else "3"
             return f"{label}\nExit"
-        if key_code == "KC_4_TG4":
+        if key_code == "KC_4_L4":
             label = "F4" if layer_num == 2 else "4"
             return f"{label}\nExit"
 
@@ -489,9 +489,9 @@ def simplify_key(key_code, layer_num=None):
         "KC_SLSH_TO0": "/\nL0",
         "KC_X_TG2": "X\nTG2",
         "KC_V_TG5": "V\nTG5",
-        "KC_Q_TG4": "Q\nL4",
-        "KC_L_TG1": "L3\nL1",
-        "KC_R_TG2": "L2\nTgl",
+        "KC_Q_L4": "Q\nL4",
+        "KC_L_L1": "L3\nL1",
+        "KC_R_L2": "L2\nTgl",
         "KC_ENT_MO4": "Enter\nL4",
         "KC_ENT_EXIT": "Enter\nExit",
         "KC_SPC_EXIT": "Space\nExit",
@@ -510,11 +510,11 @@ def simplify_key(key_code, layer_num=None):
         "KC_MS_DIAG_DL": "Down\nLeft",
         "KC_MS_DIAG_DR": "Down\nRight",
         "KC_SCR_MODE": "Scr\nMod",
-        "KC_1_TG1": "1\nL1",
-        "KC_2_TG2": "2\nL2",
-        "KC_3_TG3": "3\nL3",
-        "KC_4_TG4": "4\nL4",
-        "KC_5_TG5": "5\nL5",
+        "KC_1_L1": "1\nL1",
+        "KC_2_L2": "2\nL2",
+        "KC_3_L3": "3\nL3",
+        "KC_4_L4": "4\nL4",
+        "KC_5_L5": "5\nL5",
         "KC_L3_EXT_TO4": "Exit\nL4",
         "KC_L3_EXT_TO2": "Exit\nL2",
         "KC_L3_EXT_TO1": "Exit\nL1",
@@ -538,9 +538,9 @@ def simplify_key(key_code, layer_num=None):
         "RM_VALU": "Brt\n+",
         "RM_VALD": "Brt\n-",
         "KC_MINS_TO0": "- \nExit",
-        "KC_0_TG1": "0\nL1",
-        "KC_9_TG2": "9\nL2",
-        "KC_8_TG3": "8\nL3",
+        "KC_0_L1": "0\nL1",
+        "KC_9_L2": "9\nL2",
+        "KC_8_L3": "8\nL3",
         "KC_P_FRAC": "Pixel\nFrac",
         "KC_PINWHEEL": "Pin\nwheel",
         "KC_7_TO0": "7\nExit",
@@ -554,11 +554,11 @@ def simplify_key(key_code, layer_num=None):
         "KC_7_UP": "Up\n7",
         "KC_8_DOWN": "Down\n8",
         "KC_9_RIGHT": "Right\n9",
-        "KC_SPC_TG2": "Space\nL2",
-        "KC_SPC_TG4": "Space\nL4",
-        "KC_ENT_TG2": "Enter\nL2",
-        "KC_ENT_TG4": "Enter\nL4",
-        "KC_PMNS_TG4": "Num -\nL4",
+        "KC_SPC_L2": "Space\nL2",
+        "KC_SPC_L4": "Space\nL4",
+        "KC_ENT_L2": "Enter\nL2",
+        "KC_ENT_L4": "Enter\nL4",
+        "KC_PMNS_L4": "Num -\nL4",
         "KC_F12_EXIT": "F12\nExit",
         "KC_MS_TMO_INC": "Time\nout +",
         "KC_MS_TMO_DEC": "Time\nout -",

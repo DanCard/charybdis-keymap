@@ -78,18 +78,18 @@ static const char* get_key_name(uint16_t kc) {
         case KC_BSLS: return "\\";
         
         // Custom Keycodes from features/keycodes.h
-        case KC_Q_TG4:      return "Q(L4)";
-        case KC_1_TG1:      return "1(L1)";
-        case KC_2_TG2:      return "2(L2)";
-        case KC_3_TG3:      return "3(L3)";
-        case KC_4_TG4:      return "4(L4)";
-        case KC_5_TG5:      return "5(L5)";
-        case KC_ENT_TG2:    return "ENT(L2)";
-        case KC_ENT_TG4:    return "ENT(L4)";
-        case KC_SPC_TG2:    return "SPC(L2)";
-        case KC_SPC_TG4:    return "SPC(L4)";
-        case KC_L_TG1:      return "L_TG1";
-        case KC_R_TG2:      return "R_TG2";
+        case KC_Q_L4:      return "Q(L4)";
+        case KC_1_L1:      return "1(L1)";
+        case KC_2_L2:      return "2(L2)";
+        case KC_3_L3:      return "3(L3)";
+        case KC_4_L4:      return "4(L4)";
+        case KC_5_L5:      return "5(L5)";
+        case KC_ENT_L2:    return "ENT(L2)";
+        case KC_ENT_L4:    return "ENT(L4)";
+        case KC_SPC_L2:    return "SPC(L2)";
+        case KC_SPC_L4:    return "SPC(L4)";
+        case KC_L_L1:      return "L_TG1";
+        case KC_R_L2:      return "R_TG2";
         case KC_PLUS_COLON: return "+/:";
         case QK_GESC:       return "GESC";
     }

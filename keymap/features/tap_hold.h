@@ -15,6 +15,7 @@
     TH_L3_TO4, TH_L3_TO2, TH_L3_TO1,
     TH_K6_TO6, TH_K0_TO0,
     TH_K2_TO2, TH_K3_TO3, TH_K4_TO4, TH_K5_TO5,
+    TH_K6_TG6,
     TH_COUNT  // Total count
 };
 
