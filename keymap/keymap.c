@@ -774,6 +774,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       is_day_mode = true;
       sync_needed = true;
       uprintf("Day Mode: Brightness set to 225\n");
+      layer_move(0);
     }
     return false;
   case KC_NIGHT:
@@ -784,6 +785,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       is_day_mode = false;
       sync_needed = true;
       uprintf("Night Mode: Brightness set to 16\n");
+      layer_move(0);
     }
     return false;
   case KC_FLASHLIGHT:
@@ -839,16 +841,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_DEBUG_SYNC:
     if (record->event.pressed) {
       debug_dump_sync_state();
+      layer_move(0);
     }
     return false;
   case KC_PRINT_STATS:
     if (record->event.pressed) {
       print_statistics_now();
+      layer_move(0);
     }
     return false;
   case KC_PRINT_STATS_GRID:
     if (record->event.pressed) {
       print_statistics_grid();
+      layer_move(0);
     }
     return false;
   // Layer 3 Thumb Logic: Tap = Exit, Hold = Switch Layer
