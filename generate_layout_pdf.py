@@ -376,14 +376,14 @@ def simplify_key(key_code, layer_num=None):
         if layer_num == 0:
             return "Z\nL4"
         if layer_num == 1:
-            return "Num 0\nExit"
+            return "Z\nL4"
         if layer_num == 2:
-            return "Home\nExit"
+            return "Home\nL4"
         if layer_num == 3:
-            return "Z\nExit"
+            return "Z\nL4"
         if layer_num == 4:
-            return "/\nExit"
-        return "Z\nTD"
+            return "/\nL0"
+        return "Z\nL4"
 
     # Special handling for Layer 0 and Layer 6 Long Press
     if layer_num == 0 or layer_num == 6:

@@ -10,6 +10,13 @@ static uint32_t matrix_counts_long[MATRIX_ROWS][MATRIX_COLS] = {0};
 static uint16_t press_timers[MATRIX_ROWS][MATRIX_COLS] = {0};
 static uint32_t last_print_time = 0;
 
+// Layer Timing Stats
+#define MAX_LAYERS 16
+static uint64_t layer_times[MAX_LAYERS] = {0};
+static uint32_t last_layer_switch_time = 0;
+static uint8_t current_layer = 0;
+static bool first_layer_update = true;
+
 // Print every 8 minutes (480,000 ms)
 #define PRINT_INTERVAL 480000 
 
@@ -30,6 +37,25 @@ void process_statistics(keyrecord_t *record) {
             matrix_counts_long[row][col]++;
         }
     }
+}
+
+void update_layer_stats(uint8_t layer) {
+    uint32_t now = timer_read32();
+    
+    if (first_layer_update) {
+        last_layer_switch_time = now;
+        current_layer = layer;
+        first_layer_update = false;
+        return;
+    }
+    
+    uint32_t elapsed = timer_elapsed32(last_layer_switch_time);
+    
+    // Add elapsed time (safe up to ~49 days per session)
+    layer_times[current_layer] += elapsed;
+    
+    last_layer_switch_time = now;
+    current_layer = layer;
 }
 
 // We need to access the keymap to show what key is at that position on Layer 0
@@ -101,6 +127,36 @@ static const char* get_key_name(uint16_t kc) {
 }
 
 void print_statistics_now(void) {
+    // Update current layer time first so it's accurate
+    update_layer_stats(current_layer);
+    
+    uprintf("\n--- Layer Usage Statistics ---\n");
+    uprintf("Layer | Time (m:s) | %% Total\n");
+    uprintf("---------------------------\n");
+    
+    uint64_t total_time = 0;
+    for (int i = 0; i < MAX_LAYERS; i++) {
+        total_time += layer_times[i];
+    }
+    
+    if (total_time > 0) {
+        for (int i = 0; i < MAX_LAYERS; i++) {
+            if (layer_times[i] > 0) {
+                // Calculate minutes and remaining seconds
+                uint32_t total_seconds = (uint32_t)(layer_times[i] / 1000);
+                uint32_t minutes = total_seconds / 60;
+                uint32_t seconds = total_seconds % 60;
+                
+                // Calculate percentage using 64-bit math
+                uint32_t percent = (uint32_t)((layer_times[i] * 100) / total_time);
+                uprintf("%5d | %4lu:%02lu | %6lu%%\n", i, (unsigned long)minutes, (unsigned long)seconds, (unsigned long)percent);
+            }
+        }
+    } else {
+        uprintf("No layer time recorded yet.\n");
+    }
+    uprintf("---------------------------\n");
+
     uprintf("\n--- Physical Key Usage List ---\n");
     uprintf("Row Col | Short (<%dms) | Long (>=%dms) | Key (L0) | Code\n", LONG_PRESS_TIMEOUT, LONG_PRESS_TIMEOUT);
     uprintf("------------------------------------------------------------\n");
