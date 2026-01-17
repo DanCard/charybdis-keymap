@@ -20,10 +20,26 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_6_TO0, TH_K6, KC_6},
     {KC_PMNS_TG4, TH_PMNS_TG4, KC_PMNS},
     {KC_F12_EXIT, TH_F12, KC_F12},
+    {KC_0_TO0, TH_K0_TO0, KC_0},
 };
 #define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
 
 bool process_tap_hold_key(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == KC_6_TO6) {
+        if (record->event.pressed) {
+            TH_PRESS(TH_K6_TO6);
+        } else {
+            th[TH_K6_TO6].held = false;
+            if (!th[TH_K6_TO6].triggered) {
+                // Custom Shift logic moved to keymap.c process_record_user
+                // but we return true here to let it reach there for the tap.
+                // Wait, if I return true here, it won't reach keymap.c if I handled it.
+                // Actually, I should just return false for KC_6_TO6 here and handle it entirely in keymap.c
+                // to maintain the shift logic cleanly.
+            }
+        }
+        return false; 
+    }
     for (size_t i = 0; i < SIMPLE_TAP_HOLD_COUNT; i++) {
         if (keycode == simple_tap_holds[i].keycode) {
             uint8_t idx = simple_tap_holds[i].th_idx;
@@ -308,6 +324,20 @@ void housekeeping_tap_hold(void) {
     layer_change_reason = "F12(Hold): Exit to Base";
     layer_move(0);
     th[TH_F12].triggered = true;
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K6_TO6)) {
+    uprintf(">>> KC_6_TO6 Hold Triggered -> Layer 6\n");
+    layer_change_reason = "6(Hold): Layer 6";
+    layer_move(6);
+    TH_TRIGGER(TH_K6_TO6);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K0_TO0)) {
+    uprintf(">>> KC_0_TO0 Hold Triggered -> Layer 0\n");
+    layer_change_reason = "0(Hold): Layer 0";
+    layer_move(0);
+    TH_TRIGGER(TH_K0_TO0);
     housekeeping_rgb_indicators();
   }
 }
