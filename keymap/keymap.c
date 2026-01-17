@@ -43,7 +43,7 @@ uint8_t cur_dance(tap_dance_state_t *state) {
 
 static tap_state_t z_tap_state = {.is_press_action = true, .state = 0};
 
-#define MY_TAPPING_TERM 250
+
 
 // Helper Functions for Duplicate Code Consolidation
 // Simple tap-hold key table: maps keycode -> (th_index, tap_keycode) - Removed (in features/tap_hold.c)
@@ -427,9 +427,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     } else {
       uprintf("KC_ENT_EXIT Released. Elapsed: %u. Action: %s\n",
               timer_elapsed(th[TH_ENT_MO].timer),
-              (timer_elapsed(th[TH_ENT_MO].timer) < MY_TAPPING_TERM) ? "Tap (Exit)"
+              (timer_elapsed(th[TH_ENT_MO].timer) < TAPPING_TERM) ? "Tap (Exit)"
                                                               : "Hold (Exit)");
-      if (timer_elapsed(th[TH_ENT_MO].timer) < MY_TAPPING_TERM) {
+      if (timer_elapsed(th[TH_ENT_MO].timer) < TAPPING_TERM) {
         tap_code(KC_ENT);
         // Tap = Permanent Exit. We stay at layer 0.
       } else {

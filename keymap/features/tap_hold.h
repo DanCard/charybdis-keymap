@@ -2,7 +2,7 @@
 
 #include QMK_KEYBOARD_H
 
-#define MY_TAPPING_TERM 250
+
 
 // Index enum for tap_hold array
 enum tap_hold_idx {
@@ -34,8 +34,9 @@ typedef struct {
 } simple_tap_hold_t;
 
 // Helper macros for cleaner access
+#define LONG_PRESS_TIMEOUT TAPPING_TERM
 #define TH_PRESS(idx) do { th[idx].held = true; th[idx].triggered = false; th[idx].timer = timer_read(); } while(0)
-#define TH_CHECK(idx) (th[idx].held && !th[idx].triggered && timer_elapsed(th[idx].timer) > MY_TAPPING_TERM)
+#define TH_CHECK(idx) (th[idx].held && !th[idx].triggered && timer_elapsed(th[idx].timer) > LONG_PRESS_TIMEOUT)
 #define TH_RELEASE_TAP(idx) (th[idx].held = false, !th[idx].triggered)
 #define TH_TRIGGER(idx) (th[idx].triggered = true)
 

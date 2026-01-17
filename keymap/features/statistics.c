@@ -1,21 +1,33 @@
 #include "statistics.h"
 #include <stdio.h>
 #include "keycodes.h"
+#include "tap_hold.h" // For LONG_PRESS_TIMEOUT (250ms)
 
 // Track by physical matrix position
 // Charybdis 4x6 has 10 rows (5 per side) and 6 columns
-static uint32_t matrix_counts[MATRIX_ROWS][MATRIX_COLS] = {0};
+static uint32_t matrix_counts_short[MATRIX_ROWS][MATRIX_COLS] = {0};
+static uint32_t matrix_counts_long[MATRIX_ROWS][MATRIX_COLS] = {0};
+static uint16_t press_timers[MATRIX_ROWS][MATRIX_COLS] = {0};
 static uint32_t last_print_time = 0;
 
 // Print every 8 minutes (480,000 ms)
 #define PRINT_INTERVAL 480000 
 
 void process_statistics(keyrecord_t *record) {
+    uint8_t row = record->event.key.row;
+    uint8_t col = record->event.key.col;
+    
+    if (row >= MATRIX_ROWS || col >= MATRIX_COLS) return;
+
     if (record->event.pressed) {
-        uint8_t row = record->event.key.row;
-        uint8_t col = record->event.key.col;
-        if (row < MATRIX_ROWS && col < MATRIX_COLS) {
-            matrix_counts[row][col]++;
+        press_timers[row][col] = timer_read();
+    } else {
+        // Released
+        uint16_t duration = timer_elapsed(press_timers[row][col]);
+        if (duration < LONG_PRESS_TIMEOUT) {
+            matrix_counts_short[row][col]++;
+        } else {
+            matrix_counts_long[row][col]++;
         }
     }
 }
@@ -89,62 +101,64 @@ static const char* get_key_name(uint16_t kc) {
 }
 
 void print_statistics_now(void) {
-    uprintf("\n--- Physical Key Usage Histogram (Layer 0) ---\n");
-    uprintf("Row Col | Count    | Key (L0) | Code\n");
-    uprintf("----------------------------------------\n");
+    uprintf("\n--- Physical Key Usage List ---\n");
+    uprintf("Row Col | Short (<%dms) | Long (>=%dms) | Key (L0) | Code\n", LONG_PRESS_TIMEOUT, LONG_PRESS_TIMEOUT);
+    uprintf("------------------------------------------------------------\n");
     
     for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
         for (uint8_t c = 0; c < MATRIX_COLS; c++) {
             uint16_t kc = pgm_read_word(&keymaps[0][r][c]);
             if (kc != KC_NO) {
-                uprintf("%2d  %2d  | %8lu | %-8s | 0x%04X\n", r, c, matrix_counts[r][c], get_key_name(kc), kc);
+                uprintf("%2d  %2d  | %13lu | %12lu | %-8s | 0x%04X\n", 
+                    r, c, 
+                    matrix_counts_short[r][c], 
+                    matrix_counts_long[r][c], 
+                    get_key_name(kc), 
+                    kc);
             }
         }
     }
-    uprintf("----------------------------------------------\n");
+    uprintf("------------------------------------------------------------\n");
 }
 
-void print_statistics_grid(void) {
-    uprintf("\n--- Key Usage Grid (Counts) ---\n");
+static void print_grid_matrix(uint32_t counts[MATRIX_ROWS][MATRIX_COLS], const char* title) {
+    uprintf("--- %s ---\n", title);
     
     // Main 4x6 Grid
     for (uint8_t r = 0; r < 4; r++) {
         // Left Half (Rows 0-3, Cols 0-5)
         for (uint8_t c = 0; c < 6; c++) {
-            uprintf("%5lu ", matrix_counts[r][c]);
-        }
-        
-        uprintf(" | ");
-        
+            uprintf("%5lu ", counts[r][c]);
+        }   
+        uprintf(" | ");   
         // Right Half (Rows 5-8, Cols 5-0)
         for (int8_t c = 5; c >= 0; c--) {
-            uprintf("%5lu ", matrix_counts[r + 5][c]);
+            uprintf("%5lu ", counts[r + 5][c]);
         }
         uprintf("\n");
     }
-    
     // Thumb Clusters
     uprintf("\n");
     // Left Thumb Top: [4][3], [4][4], [4][1]
-    uprintf("                  %5lu %5lu %5lu ", 
-            matrix_counts[4][3], matrix_counts[4][4], matrix_counts[4][1]);
-            
+    uprintf("                  %5lu %5lu %5lu ",  counts[4][3], counts[4][4], counts[4][1]);        
     uprintf(" | ");
-    
     // Right Thumb Top: [9][1], [9][3]
-    uprintf("%5lu %5lu\n", 
-            matrix_counts[9][1], matrix_counts[9][3]);
-            
+    uprintf("%5lu %5lu\n", counts[9][1], counts[9][3]);          
     // Left Thumb Bottom: [4][5], [4][2]
-    uprintf("                 %5lu %5lu       ", 
-            matrix_counts[4][5], matrix_counts[4][2]);
-            
-    uprintf(" | ");
-    
+    uprintf("                        %5lu %5lu ", counts[4][5], counts[4][2]);           
+    uprintf(" | ");   
     // Right Thumb Bottom: [9][5] (Approximation)
-    uprintf("      %5lu\n", matrix_counts[9][5]);
+    uprintf("      %5lu\n", counts[9][5]);
+}
+
+void print_statistics_grid(void) {
+    char title_buf[64];
     
-    uprintf("-------------------------------\n");
+    snprintf(title_buf, sizeof(title_buf), "Short Press Grid (<%dms)", LONG_PRESS_TIMEOUT);
+    print_grid_matrix(matrix_counts_short, title_buf);
+    
+    snprintf(title_buf, sizeof(title_buf), "Long Press Grid (>=%dms)", LONG_PRESS_TIMEOUT);
+    print_grid_matrix(matrix_counts_long, title_buf);
 }
 
 void matrix_scan_statistics(void) {
