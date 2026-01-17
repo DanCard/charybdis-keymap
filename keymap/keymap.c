@@ -415,11 +415,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_ENT_EXIT:
     if (record->event.pressed) {
-      uint32_t ent_exit_now = timer_read32();
-      uint32_t sec = ent_exit_now / 1000;
-      uint32_t ms = ent_exit_now % 1000;
-      uprintf("[%lu.%03lu] KC_ENT_EXIT Pressed. Layer state: %lu\n", sec, ms,
-              (unsigned long)layer_state);
       layer_change_reason = "ENT_EXIT (Tap): L0";
       layer_state_set(0); // Clear all layers (peek at base)
       rgb_matrix_indicators_user();
@@ -545,7 +540,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   case KC_ENT_L2_EXIT:
     if (record->event.pressed) {
-      uprintf("KC_ENT_L2_EXIT Pressed. Exiting Layer 2.\n");
       layer_change_reason = "ENT_L2_EXIT";
       layer_off(2);
       tap_code(KC_ENT);
@@ -737,12 +731,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       // Allow core to handle it first (return true), but log current/new DPI?
       // Actually, core handles it on press. We can log after?
       // Or just log that we pressed it.
-      uprintf("DPI+ Pressed. Current CPI: %u\n", pointing_device_get_cpi());
     }
     return true; // Let core handle the DPI change
   case DPI_RMOD:
     if (record->event.pressed) {
-      uprintf("DPI- Pressed. Current CPI: %u\n", pointing_device_get_cpi());
     }
     return true; // Let core handle the DPI change
   case KC_MS_TMO_INC:

@@ -78,11 +78,10 @@ bool handle_l3_thumb(uint8_t th_idx, uint8_t hold_layer, bool pressed) {
 
 // Verbose thumb toggle helper (ENT_TG2, ENT_TG4, SPC_TG2, SPC_TG4)
 bool handle_thumb_toggle(uint8_t th_idx, uint16_t tap_key, const char* name, bool pressed) {
-    uint32_t now = timer_read32();
     if (pressed) {
-        uprintf("[%lu.%03lu] %s Pressed\n", (unsigned long)(now/1000), (unsigned long)(now%1000), name);
         TH_PRESS(th_idx);
     } else {
+        uint32_t now = timer_read32();
         uprintf("[%lu.%03lu] %s Released. Duration: %u ms. Action: %s\n",
                 (unsigned long)(now/1000), (unsigned long)(now%1000), name,
                 timer_elapsed(th[th_idx].timer),
