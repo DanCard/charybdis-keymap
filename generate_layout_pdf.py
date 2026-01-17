@@ -17,20 +17,22 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (0.9, 0.9, 0.9),  # White/Light gray (Base)
-    1: (0.7, 0.7, 1.0),  # Blue (Numpad)
+    1: (0.6, 0.9, 0.9),  # Cyan (Original)
     2: (0.7, 1.0, 0.7),  # Green (Arrow)
     3: (1.0, 1.0, 0.7),  # Yellow (Mouse)
     4: (1.0, 0.5, 0.0),  # Orange (One-Hand)
     5: (1.0, 0.43, 0.59),  # Hot Pink (Settings)
+    6: (0.7, 0.7, 1.0),  # Blue (Numpad)
 }
 
 LAYER_NAMES = {
     0: "BASE",
-    1: "NUMPAD",
+    1: "ORIGINAL",
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
     5: "SETTINGS",
+    6: "NUMPAD",
 }
 
 # Key label simplifications
@@ -383,8 +385,8 @@ def simplify_key(key_code, layer_num=None):
             return "/\nExit"
         return "Z\nTD"
 
-    # Special handling for Layer 0 Long Press
-    if layer_num == 0:
+    # Special handling for Layer 0 and Layer 6 Long Press
+    if layer_num == 0 or layer_num == 6:
         if key_code == "KC_1_TG1":
             return "1\nL1"
         if key_code == "KC_2_TG2":
@@ -395,6 +397,8 @@ def simplify_key(key_code, layer_num=None):
             return "4\nL4"
         if key_code == "KC_5_TG5":
             return "5\nL5"
+        if key_code == "KC_0_TO0":
+            return "0\nL0"
 
     # Special handling for Layer 1
     if layer_num == 1:
@@ -541,6 +545,15 @@ def simplify_key(key_code, layer_num=None):
         "KC_PINWHEEL": "Pin\nwheel",
         "KC_7_TO0": "7\nExit",
         "KC_6_TO0": "6\nExit",
+        "KC_0_TO0": "0\nL0",
+        "KC_2_LEFT": "Left\n2",
+        "KC_3_UP": "Up\n3",
+        "KC_4_DOWN": "Down\n4",
+        "KC_5_RIGHT": "Right\n5",
+        "KC_6_TO6": "Left\n6",
+        "KC_7_UP": "Up\n7",
+        "KC_8_DOWN": "Down\n8",
+        "KC_9_RIGHT": "Right\n9",
         "KC_SPC_TG2": "Space\nL2",
         "KC_SPC_TG4": "Space\nL4",
         "KC_ENT_TG2": "Enter\nL2",

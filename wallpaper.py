@@ -12,30 +12,33 @@ from PIL import Image, ImageDraw, ImageFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (200, 200, 210),  # Light gray (Base)
-    1: (130, 150, 255),  # Blue (Numpad)
+    1: (150, 230, 230),  # Cyan (Original)
     2: (130, 220, 130),  # Green (Arrow)
     3: (240, 220, 100),  # Yellow (Mouse)
     4: (255, 150, 0),  # Orange (One-Hand)
     5: (255, 110, 150),  # Hot Pink (Settings)
+    6: (130, 150, 255),  # Blue (Numpad)
 }
 
 LAYER_NAMES = {
     0: "BASE",
-    1: "NUMPAD",
+    1: "ORIGINAL",
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
     5: "SETTINGS",
+    6: "NUMPAD",
 }
 
 # Key border colors (darker versions)
 KEY_BORDER_COLORS = {
     0: (150, 150, 160),
-    1: (80, 100, 180),
+    1: (100, 170, 170),  # Cyan (Original)
     2: (80, 160, 80),
     3: (180, 160, 60),
     4: (180, 80, 0),
     5: (180, 60, 90),
+    6: (80, 100, 180),  # Blue (Numpad)
 }
 
 # Key label simplifications
@@ -444,8 +447,8 @@ def simplify_key(key_code, layer_num=None):
             return "/\nExit"
         return "Z\nTD"
 
-    # Special handling for Layer 0 Long Press
-    if layer_num == 0:
+    # Special handling for Layer 0 and Layer 6 Long Press
+    if layer_num == 0 or layer_num == 6:
         if key_code == "KC_1_TG1":
             return "1\nL1"
         if key_code == "KC_2_TG2":
@@ -456,6 +459,8 @@ def simplify_key(key_code, layer_num=None):
             return "4\nL4"
         if key_code == "KC_5_TG5":
             return "5\nL5"
+        if key_code == "KC_0_TO0":
+            return "0\nL0"
 
     # Special handling for Layer 1
     if layer_num == 1:
@@ -602,6 +607,15 @@ def simplify_key(key_code, layer_num=None):
         "KC_PINWHEEL": "Pin\nwheel",
         "KC_7_TO0": "7\nExit",
         "KC_6_TO0": "6\nExit",
+        "KC_0_TO0": "0\nL0",
+        "KC_2_LEFT": "Left\n2",
+        "KC_3_UP": "Up\n3",
+        "KC_4_DOWN": "Down\n4",
+        "KC_5_RIGHT": "Right\n5",
+        "KC_6_TO6": "Left\n6",
+        "KC_7_UP": "Up\n7",
+        "KC_8_DOWN": "Down\n8",
+        "KC_9_RIGHT": "Right\n9",
         "KC_SPC_TG2": "Space\nL2",
         "KC_SPC_TG4": "Space\nL4",
         "KC_ENT_TG2": "Enter\nL2",
@@ -716,17 +730,17 @@ def parse_info_json(file_path):
 
     # Adjust layout to minimize whitespace and center thumbs
     for key in layout:
-        # Right Main (rows 0-3, x >= 11) -> Shift Left by 4
+        # Right Main (rows 0-3, x >= 11) -> Shift Left by 4.5
         if key["y"] < 4 and key["x"] >= 11:
-            key["x"] -= 4.0
+            key["x"] -= 4.5
 
         # Left Thumbs (y >= 4, x < 9) -> Shift Left by 2 (Center under Left Main)
         elif key["y"] >= 4 and key["x"] < 9:
             key["x"] -= 2.0
 
-        # Right Thumbs (y >= 4, x >= 9) -> Shift Left by 1 (Center under Right Main)
+        # Right Thumbs (y >= 4, x >= 9) -> Shift Left by 1.5 (Center under Right Main)
         elif key["y"] >= 4 and key["x"] >= 9:
-            key["x"] -= 1.0
+            key["x"] -= 1.5
 
     return layout
 
@@ -783,11 +797,11 @@ def draw_layer(
 
 
 def draw_combos(draw, start_x, start_y, width):
-    """Draw the combos section in 3 columns."""
+    """Draw the combos section in 2 columns."""
     current_y = start_y
 
-    title_font = get_font(36, bold=True)
-    text_font = get_font(28)
+    title_font = get_font(32, bold=True)
+    text_font = get_font(22)
 
     # Title
     title = "COMBOS & SPECIAL ACTIONS"
@@ -800,34 +814,32 @@ def draw_combos(draw, start_x, start_y, width):
         font=title_font,
     )
 
-    current_y += 60  # Spacing after title
+    current_y += 50  # Spacing after title
 
-    # Split combos into three columns
+    # Split combos into two columns
     n = len(COMBOS)
-    third = (n + 2) // 3
-    col1_combos = COMBOS[:third]
-    col2_combos = COMBOS[third : 2 * third]
-    col3_combos = COMBOS[2 * third :]
+    half = (n + 1) // 2
+    col1_combos = COMBOS[:half]
+    col2_combos = COMBOS[half:]
 
-    # Center the columns more tightly
-    col_content_width = 750  # Fixed width per column
-    total_combos_width = col_content_width * 3
-    combo_start_x = start_x + (width - total_combos_width) // 2
+    # Calculate column positions
+    col_content_width = width // 2
+    combo_start_x = start_x
 
-    line_height = 42
+    line_height = 34
 
-    max_rows = max(len(col1_combos), len(col2_combos), len(col3_combos))
+    max_rows = max(len(col1_combos), len(col2_combos))
     for i in range(max_rows):
         if i < len(col1_combos):
             keys, action = col1_combos[i]
             draw.text(
-                (combo_start_x + 40, current_y),
+                (combo_start_x + 20, current_y),
                 f"{keys}",
                 fill=(200, 200, 220),
                 font=text_font,
             )
             draw.text(
-                (combo_start_x + 280, current_y),
+                (combo_start_x + 200, current_y),
                 f": {action}",
                 fill=(160, 160, 180),
                 font=text_font,
@@ -836,28 +848,13 @@ def draw_combos(draw, start_x, start_y, width):
         if i < len(col2_combos):
             keys, action = col2_combos[i]
             draw.text(
-                (combo_start_x + col_content_width + 40, current_y),
+                (combo_start_x + col_content_width + 20, current_y),
                 f"{keys}",
                 fill=(200, 200, 220),
                 font=text_font,
             )
             draw.text(
-                (combo_start_x + col_content_width + 280, current_y),
-                f": {action}",
-                fill=(160, 160, 180),
-                font=text_font,
-            )
-
-        if i < len(col3_combos):
-            keys, action = col3_combos[i]
-            draw.text(
-                (combo_start_x + 2 * col_content_width + 40, current_y),
-                f"{keys}",
-                fill=(200, 200, 220),
-                font=text_font,
-            )
-            draw.text(
-                (combo_start_x + 2 * col_content_width + 280, current_y),
+                (combo_start_x + col_content_width + 200, current_y),
                 f": {action}",
                 fill=(160, 160, 180),
                 font=text_font,
@@ -885,16 +882,16 @@ def generate_wallpaper(output_path, keymap_path, info_path):
     img = Image.new("RGB", (WALLPAPER_WIDTH, WALLPAPER_HEIGHT), BACKGROUND_COLOR)
     draw = ImageDraw.Draw(img)
 
-    # Calculate grid layout (2 rows x 3 columns)
+    # Calculate grid layout (3 rows x 3 columns for 7 layers)
     grid_cols = 3
-    grid_rows = 2
-    grid_gap_x = 100  # Horizontal gap between layers
-    grid_gap_y = 60  # Vertical gap between rows
+    grid_rows = 3
+    grid_gap_x = 60  # Horizontal gap between layers
+    grid_gap_y = 40  # Vertical gap between rows
 
-    # Key dimensions - taller than wide to use vertical space
-    key_width = 88
-    key_height = 110  # Taller keys
-    key_gap = 4
+    # Key dimensions - sized to fill screen
+    key_width = 94
+    key_height = 94
+    key_gap = 2
 
     # Calculate actual layer dimensions based on keyboard layout
     max_x = max(k["x"] for k in layout_info)
@@ -902,26 +899,17 @@ def generate_wallpaper(output_path, keymap_path, info_path):
     layer_width = int((max_x + 1) * (key_width + key_gap))
     layer_height = int((max_y + 1) * (key_height + key_gap)) + 60  # +60 for title
 
-    # Calculate Combos section height
-    # Title (36+pad) + Rows * 42
-    n_combos = len(COMBOS)
-    rows_per_col = (n_combos + 2) // 3
-    combos_height = 60 + (rows_per_col * 42)
-
-    # Calculate total content size
+    # Calculate total content size (no combos below - they go beside L6)
     grid_height = grid_rows * layer_height + (grid_rows - 1) * grid_gap_y
-    content_gap = 80  # Gap between grid and combos
-    total_height = grid_height + content_gap + combos_height
-
     total_width = grid_cols * layer_width + (grid_cols - 1) * grid_gap_x
 
     # Center everything on the wallpaper
     start_x = (WALLPAPER_WIDTH - total_width) // 2
-    start_y = (WALLPAPER_HEIGHT - total_height) // 2
+    start_y = (WALLPAPER_HEIGHT - grid_height) // 2
 
     # Draw each layer in grid
     layer_nums = sorted(layers.keys())
-    for idx, layer_num in enumerate(layer_nums[:6]):  # Max 6 layers
+    for idx, layer_num in enumerate(layer_nums[:9]):  # Max 9 layers (3x3 grid)
         row = idx // grid_cols
         col = idx % grid_cols
 
@@ -940,9 +928,13 @@ def generate_wallpaper(output_path, keymap_path, info_path):
             key_height,
         )
 
-    # Draw combos at the bottom
-    combos_y = start_y + grid_height + content_gap
-    draw_combos(draw, start_x, combos_y, total_width)
+    # Draw combos in the empty space next to L6 (row 2, cols 1-2)
+    num_layers = len(layer_nums)
+    if num_layers <= 7:  # We have empty space in row 2
+        combos_x = start_x + 1 * (layer_width + grid_gap_x)
+        combos_y = start_y + 2 * (layer_height + grid_gap_y)
+        combos_width = 2 * layer_width + grid_gap_x
+        draw_combos(draw, combos_x, combos_y, combos_width)
 
     # Save
     img.save(output_path, "PNG", quality=95)
