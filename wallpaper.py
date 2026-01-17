@@ -16,8 +16,8 @@ LAYER_COLORS = {
     2: (130, 220, 130),  # Green (Arrow)
     3: (240, 220, 100),  # Yellow (Mouse)
     4: (255, 150, 0),  # Orange (One-Hand)
-    5: (255, 110, 150),  # Hot Pink (Settings)
-    6: (130, 150, 255),  # Blue (Numpad)
+    5: (130, 150, 255),  # Blue (Nav)
+    6: (255, 110, 150),  # Hot Pink (Settings)
 }
 
 LAYER_NAMES = {
@@ -26,8 +26,8 @@ LAYER_NAMES = {
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
-    5: "SETTINGS",
-    6: "NUMPAD",
+    5: "NUMBER SYMBOLS",
+    6: "SETTINGS",
 }
 
 # Key border colors (darker versions)
@@ -37,8 +37,8 @@ KEY_BORDER_COLORS = {
     2: (80, 160, 80),
     3: (180, 160, 60),
     4: (180, 80, 0),
-    5: (180, 60, 90),
-    6: (80, 100, 180),  # Blue (Numpad)
+    5: (80, 100, 180),  # Blue (Nav)
+    6: (180, 60, 90),  # Hot Pink (Settings)
 }
 
 # Key label simplifications

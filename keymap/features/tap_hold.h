@@ -5,7 +5,7 @@
 
 
 // Index enum for tap_hold array
-enum tap_hold_idx {
+ enum tap_hold_idx {
     TH_Q, TH_L1,
     TH_PGUP, TH_P, TH_SLSH, TH_HOME, TH_ENT_MO,
     TH_K1, TH_K2, TH_K3, TH_K4, TH_K5,
@@ -14,6 +14,7 @@ enum tap_hold_idx {
     TH_F12,
     TH_L3_TO4, TH_L3_TO2, TH_L3_TO1,
     TH_K6_TO6, TH_K0_TO0,
+    TH_K2_TO2, TH_K3_TO3, TH_K4_TO4, TH_K5_TO5,
     TH_COUNT  // Total count
 };
 

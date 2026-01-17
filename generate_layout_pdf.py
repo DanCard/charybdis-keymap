@@ -21,8 +21,8 @@ LAYER_COLORS = {
     2: (0.7, 1.0, 0.7),  # Green (Arrow)
     3: (1.0, 1.0, 0.7),  # Yellow (Mouse)
     4: (1.0, 0.5, 0.0),  # Orange (One-Hand)
-    5: (1.0, 0.43, 0.59),  # Hot Pink (Settings)
-    6: (0.7, 0.7, 1.0),  # Blue (Numpad)
+    5: (0.7, 0.7, 1.0),  # Blue (Nav)
+    6: (1.0, 0.43, 0.59),  # Hot Pink (Settings)
 }
 
 LAYER_NAMES = {
@@ -31,8 +31,8 @@ LAYER_NAMES = {
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
-    5: "SETTINGS",
-    6: "NUMPAD",
+    5: "NUMBER SYMBOLS",
+    6: "SETTINGS",
 }
 
 # Key label simplifications

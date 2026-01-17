@@ -21,24 +21,30 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_PMNS_TG4, TH_PMNS_TG4, KC_PMNS},
     {KC_F12_EXIT, TH_F12, KC_F12},
     {KC_0_TO0, TH_K0_TO0, KC_0},
+    {KC_2_TO2, TH_K2_TO2, 0},
+    {KC_3_TO3, TH_K3_TO3, 0},
+    {KC_4_TO4, TH_K4_TO4, 0},
+    {KC_5_TO5, TH_K5_TO5, 0},
 };
 #define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
 
 bool process_tap_hold_key(uint16_t keycode, keyrecord_t *record) {
-    if (keycode == KC_6_TO6) {
+    if (keycode == KC_6_TO6 || keycode == KC_2_TO2 || keycode == KC_3_TO3 ||
+        keycode == KC_4_TO4 || keycode == KC_5_TO5) {
         if (record->event.pressed) {
-            TH_PRESS(TH_K6_TO6);
+            if (keycode == KC_2_TO2) TH_PRESS(TH_K2_TO2);
+            else if (keycode == KC_3_TO3) TH_PRESS(TH_K3_TO3);
+            else if (keycode == KC_4_TO4) TH_PRESS(TH_K4_TO4);
+            else if (keycode == KC_5_TO5) TH_PRESS(TH_K5_TO5);
+            else TH_PRESS(TH_K6_TO6);
         } else {
-            th[TH_K6_TO6].held = false;
-            if (!th[TH_K6_TO6].triggered) {
-                // Custom Shift logic moved to keymap.c process_record_user
-                // but we return true here to let it reach there for the tap.
-                // Wait, if I return true here, it won't reach keymap.c if I handled it.
-                // Actually, I should just return false for KC_6_TO6 here and handle it entirely in keymap.c
-                // to maintain the shift logic cleanly.
-            }
+            if (keycode == KC_2_TO2) th[TH_K2_TO2].held = false;
+            else if (keycode == KC_3_TO3) th[TH_K3_TO3].held = false;
+            else if (keycode == KC_4_TO4) th[TH_K4_TO4].held = false;
+            else if (keycode == KC_5_TO5) th[TH_K5_TO5].held = false;
+            else th[TH_K6_TO6].held = false;
         }
-        return false; 
+        return false;
     }
     for (size_t i = 0; i < SIMPLE_TAP_HOLD_COUNT; i++) {
         if (keycode == simple_tap_holds[i].keycode) {
@@ -338,6 +344,34 @@ void housekeeping_tap_hold(void) {
     layer_change_reason = "0(Hold): Layer 0";
     layer_move(0);
     TH_TRIGGER(TH_K0_TO0);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K2_TO2)) {
+    uprintf(">>> KC_2_TO2 Hold Triggered -> Layer 2\n");
+    layer_change_reason = "2(Hold): Layer 2";
+    layer_move(2);
+    TH_TRIGGER(TH_K2_TO2);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K3_TO3)) {
+    uprintf(">>> KC_3_TO3 Hold Triggered -> Layer 3\n");
+    layer_change_reason = "3(Hold): Layer 3";
+    layer_move(3);
+    TH_TRIGGER(TH_K3_TO3);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K4_TO4)) {
+    uprintf(">>> KC_4_TO4 Hold Triggered -> Layer 4\n");
+    layer_change_reason = "4(Hold): Layer 4";
+    layer_move(4);
+    TH_TRIGGER(TH_K4_TO4);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K5_TO5)) {
+    uprintf(">>> KC_5_TO5 Hold Triggered -> Layer 5\n");
+    layer_change_reason = "5(Hold): Layer 5";
+    layer_move(5);
+    TH_TRIGGER(TH_K5_TO5);
     housekeeping_rgb_indicators();
   }
 }

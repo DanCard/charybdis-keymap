@@ -922,6 +922,62 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return false;
+  case KC_2_TO2:
+    if (!record->event.pressed) {
+      if (!th[TH_K2_TO2].triggered) {
+        if (get_mods() & MOD_MASK_SHIFT) {
+          uint8_t mods = get_mods();
+          unregister_mods(MOD_MASK_SHIFT);
+          tap_code(KC_2);
+          register_mods(mods);
+        } else {
+          tap_code(KC_LEFT);
+        }
+      }
+    }
+    return false;
+  case KC_3_TO3:
+    if (!record->event.pressed) {
+      if (!th[TH_K3_TO3].triggered) {
+        if (get_mods() & MOD_MASK_SHIFT) {
+          uint8_t mods = get_mods();
+          unregister_mods(MOD_MASK_SHIFT);
+          tap_code(KC_3);
+          register_mods(mods);
+        } else {
+          tap_code(KC_UP);
+        }
+      }
+    }
+    return false;
+  case KC_4_TO4:
+    if (!record->event.pressed) {
+      if (!th[TH_K4_TO4].triggered) {
+        if (get_mods() & MOD_MASK_SHIFT) {
+          uint8_t mods = get_mods();
+          unregister_mods(MOD_MASK_SHIFT);
+          tap_code(KC_4);
+          register_mods(mods);
+        } else {
+          tap_code(KC_DOWN);
+        }
+      }
+    }
+    return false;
+  case KC_5_TO5:
+    if (!record->event.pressed) {
+      if (!th[TH_K5_TO5].triggered) {
+        if (get_mods() & MOD_MASK_SHIFT) {
+          uint8_t mods = get_mods();
+          unregister_mods(MOD_MASK_SHIFT);
+          tap_code(KC_5);
+          register_mods(mods);
+        } else {
+          tap_code(KC_RIGHT);
+        }
+      }
+    }
+    return false;
   case KC_6_TO6:
     if (!record->event.pressed) {
       if (!th[TH_K6_TO6].triggered) {
@@ -1007,12 +1063,13 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] =
-        LAYOUT(QK_GESC, KC_1_TG1, KC_2_LEFT, KC_3_UP, KC_4_DOWN, KC_5_RIGHT,   KC_6_TO6, KC_7_UP, KC_8_DOWN, KC_9_RIGHT, KC_0, KC_MINS,
+        LAYOUT(QK_GESC, KC_1_TG1, KC_2_TO2, KC_3_TO3, KC_4_TO4, KC_5_TO5,   KC_6_TO6, KC_7_UP, KC_8_DOWN, KC_9_RIGHT, KC_0, KC_MINS,
                KC_TAB , KC_Q_TG4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                                         KC_SPC_TG4, KC_ENT_TG2, KC_L_TG1,   KC_DEL, KC_ENT_TG2,
                                                         KC_LALT, KC_BSPC,   KC_BSPC),
+    // Layer 1: Copy of original base layer (Original)
     [1] = LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5,   KC_6, KC_7, KC_8, KC_9, KC_0_TO0, KC_MINS,
                  KC_TAB , KC_Q_TG4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
@@ -1037,20 +1094,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                   KC_LCTL, KC_SLSH_TO0, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH_TO0, KC_RCTL,
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
-    // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_EXIT  , KC_EXIT  , KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
-                 KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
-                 KC_EXIT, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
-                                                  KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
-                                                           KC_EXIT, KC_EXIT,   KC_EXIT),
-    // Layer 6: Copy of Original Layer 1 (Nav)
-    [6] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
+    // Layer 6: number symbol layer
+    [5] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
                  KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , KC_EXIT,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
                  KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_EXIT,   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EXIT,
                  KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_EXIT   , KC_EXIT,
                                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,   KC_R_TG2, KC_ENT_EXIT,
                                               KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
+    // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
+    [6] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_EXIT  , KC_EXIT  , KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
+                 KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
+                 KC_EXIT, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
+                                                  KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                                           KC_EXIT, KC_EXIT,   KC_EXIT),
 };
 
 bool rgb_matrix_indicators_user(void) {

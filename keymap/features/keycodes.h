@@ -81,6 +81,10 @@ enum custom_keycodes {
   KC_7_UP,        // Tap: Up,   Shift+Tap: 7
   KC_8_DOWN,      // Tap: Down, Shift+Tap: 8
   KC_9_RIGHT,     // Tap: Right, Shift+Tap: 9
+  KC_2_TO2,       // Tap: Left,  Shift+Tap: 2, Hold: TO(2)
+  KC_3_TO3,       // Tap: Up,    Shift+Tap: 3, Hold: TO(3)
+  KC_4_TO4,       // Tap: Down,  Shift+Tap: 4, Hold: TO(4)
+  KC_5_TO5,       // Tap: Right, Shift+Tap: 5, Hold: TO(5)
   KC_6_TO6,       // Tap: Left,  Shift+Tap: 6, Hold: TO(6)
   KC_0_TO0        // Tap: 0, Hold: TO(0)
 };
