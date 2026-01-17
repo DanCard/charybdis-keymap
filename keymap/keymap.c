@@ -851,7 +851,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   // Layer 3 Thumb Logic: Tap = Exit, Hold = Switch Layer
   case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 4, record->event.pressed);
   case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 2, record->event.pressed);
-  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, record->event.pressed);
+  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 6, record->event.pressed);
   
   // Dual-function Arrow/Number keys
   case KC_2_LEFT:
@@ -1005,12 +1005,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                                         KC_SPC_TG4, KC_ENT_TG2, KC_L_TG1,   KC_DEL, KC_ENT_TG2,
                                                         KC_LALT, KC_BSPC,   KC_BSPC),
-    [1] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
-                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , KC_EXIT,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
-                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_EXIT,   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EXIT,
-                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_EXIT   , KC_EXIT,
-                                 KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,   KC_R_TG2, KC_ENT_EXIT,
-                                              KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
+    [1] = LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5,   KC_6, KC_7, KC_8, KC_9, KC_0_TO0, KC_MINS,
+                 KC_TAB , KC_Q_TG4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+                 KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
+                                          KC_SPC_TG4, KC_ENT_TG2, KC_L_TG1,   KC_DEL, KC_ENT_TG2,
+                                                          KC_LALT, KC_BSPC,   KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
@@ -1036,13 +1036,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_EXIT, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                            KC_EXIT, KC_EXIT,   KC_EXIT),
-    // Layer 6: Copy of Original Layer 0
-    [6] = LAYOUT(QK_GESC, KC_1_TG1, KC_2_TG2, KC_3_TG3, KC_4_TG4, KC_5_TG5,   KC_6, KC_7, KC_8, KC_9, KC_0_TO0, KC_MINS,
-                 KC_TAB , KC_Q_TG4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
-                 KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
-                                          KC_SPC_TG4, KC_ENT_TG2, KC_L_TG1,   KC_DEL, KC_ENT_TG2,
-                                                          KC_LALT, KC_BSPC,   KC_BSPC),
+    // Layer 6: Copy of Original Layer 1 (Nav)
+    [6] = LAYOUT(KC_PSCR, KC_EXIT    , TO(2), TO(3), TO(4), KC_EXIT,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_PSCR   , QK_BOOT,
+                 KC_TAB , KC_MINS_TO0, KC_7 , KC_8 , KC_9 , KC_EXIT,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
+                 KC_EXIT, S(KC_EQL)  , KC_4 , KC_5 , KC_6 , KC_EXIT,   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EXIT,
+                 KC_LCTL, KC_0       , KC_1 , KC_2 , KC_3 , KC_EQL ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , KC_EXIT   , KC_EXIT,
+                                 KC_SPC_EXIT, KC_ENT_EXIT, KC_L_TG1,   KC_R_TG2, KC_ENT_EXIT,
+                                              KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
 };
 
 bool rgb_matrix_indicators_user(void) {
