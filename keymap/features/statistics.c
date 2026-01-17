@@ -1,0 +1,155 @@
+#include "statistics.h"
+#include <stdio.h>
+#include "keycodes.h"
+
+// Track by physical matrix position
+// Charybdis 4x6 has 10 rows (5 per side) and 6 columns
+static uint32_t matrix_counts[MATRIX_ROWS][MATRIX_COLS] = {0};
+static uint32_t last_print_time = 0;
+
+// Print every 8 minutes (480,000 ms)
+#define PRINT_INTERVAL 480000 
+
+void process_statistics(keyrecord_t *record) {
+    if (record->event.pressed) {
+        uint8_t row = record->event.key.row;
+        uint8_t col = record->event.key.col;
+        if (row < MATRIX_ROWS && col < MATRIX_COLS) {
+            matrix_counts[row][col]++;
+        }
+    }
+}
+
+// We need to access the keymap to show what key is at that position on Layer 0
+extern const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS];
+
+static const char* get_key_name(uint16_t kc) {
+    // Basic Alphanumeric
+    if (kc >= KC_A && kc <= KC_Z) {
+        static char name[2] = {0, 0};
+        name[0] = 'A' + (kc - KC_A);
+        return name;
+    }
+    if (kc >= KC_1 && kc <= KC_9) {
+        static char name[2] = {0, 0};
+        name[0] = '1' + (kc - KC_1);
+        return name;
+    }
+    if (kc == KC_0) return "0";
+    
+    // Common symbols and modifiers
+    switch (kc) {
+        case KC_TAB:  return "TAB";
+        case KC_ENT:  return "ENT";
+        case KC_SPC:  return "SPC";
+        case KC_BSPC: return "BSPC";
+        case KC_ESC:  return "ESC";
+        case KC_DEL:  return "DEL";
+        case KC_LSFT: return "LSFT";
+        case KC_RSFT: return "RSFT";
+        case KC_LCTL: return "LCTL";
+        case KC_RCTL: return "RCTL";
+        case KC_LALT: return "LALT";
+        case KC_RALT: return "RALT";
+        case KC_LGUI: return "LGUI";
+        case KC_RGUI: return "RGUI";
+        case KC_LEFT: return "LEFT";
+        case KC_RGHT: return "RGHT";
+        case KC_UP:   return "UP";
+        case KC_DOWN: return "DOWN";
+        case KC_COMM: return ",";
+        case KC_DOT:  return ".";
+        case KC_SLSH: return "/";
+        case KC_SCLN: return ";";
+        case KC_QUOT: return "'";
+        case KC_MINS: return "-";
+        case KC_BSLS: return "\\";
+        
+        // Custom Keycodes from features/keycodes.h
+        case KC_Q_TG4:      return "Q(L4)";
+        case KC_1_TG1:      return "1(L1)";
+        case KC_2_TG2:      return "2(L2)";
+        case KC_3_TG3:      return "3(L3)";
+        case KC_4_TG4:      return "4(L4)";
+        case KC_5_TG5:      return "5(L5)";
+        case KC_ENT_TG2:    return "ENT(L2)";
+        case KC_ENT_TG4:    return "ENT(L4)";
+        case KC_SPC_TG2:    return "SPC(L2)";
+        case KC_SPC_TG4:    return "SPC(L4)";
+        case KC_L_TG1:      return "L_TG1";
+        case KC_R_TG2:      return "R_TG2";
+        case KC_PLUS_COLON: return "+/:";
+        case QK_GESC:       return "GESC";
+    }
+    
+    // Tap Dance handling (if possible to match hex)
+    if (kc == 0x5700) return "Z(TD)"; // TD(0) 
+
+    return "???";
+}
+
+void print_statistics_now(void) {
+    uprintf("\n--- Physical Key Usage Histogram (Layer 0) ---\n");
+    uprintf("Row Col | Count    | Key (L0) | Code\n");
+    uprintf("----------------------------------------\n");
+    
+    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
+        for (uint8_t c = 0; c < MATRIX_COLS; c++) {
+            uint16_t kc = pgm_read_word(&keymaps[0][r][c]);
+            if (kc != KC_NO) {
+                uprintf("%2d  %2d  | %8lu | %-8s | 0x%04X\n", r, c, matrix_counts[r][c], get_key_name(kc), kc);
+            }
+        }
+    }
+    uprintf("----------------------------------------------\n");
+}
+
+void print_statistics_grid(void) {
+    uprintf("\n--- Key Usage Grid (Counts) ---\n");
+    
+    // Main 4x6 Grid
+    for (uint8_t r = 0; r < 4; r++) {
+        // Left Half (Rows 0-3, Cols 0-5)
+        for (uint8_t c = 0; c < 6; c++) {
+            uprintf("%5lu ", matrix_counts[r][c]);
+        }
+        
+        uprintf(" | ");
+        
+        // Right Half (Rows 5-8, Cols 5-0)
+        for (int8_t c = 5; c >= 0; c--) {
+            uprintf("%5lu ", matrix_counts[r + 5][c]);
+        }
+        uprintf("\n");
+    }
+    
+    // Thumb Clusters
+    uprintf("\n");
+    // Left Thumb Top: [4][3], [4][4], [4][1]
+    uprintf("                  %5lu %5lu %5lu ", 
+            matrix_counts[4][3], matrix_counts[4][4], matrix_counts[4][1]);
+            
+    uprintf(" | ");
+    
+    // Right Thumb Top: [9][1], [9][3]
+    uprintf("%5lu %5lu\n", 
+            matrix_counts[9][1], matrix_counts[9][3]);
+            
+    // Left Thumb Bottom: [4][5], [4][2]
+    uprintf("                 %5lu %5lu       ", 
+            matrix_counts[4][5], matrix_counts[4][2]);
+            
+    uprintf(" | ");
+    
+    // Right Thumb Bottom: [9][5] (Approximation)
+    uprintf("      %5lu\n", matrix_counts[9][5]);
+    
+    uprintf("-------------------------------\n");
+}
+
+void matrix_scan_statistics(void) {
+    if (timer_elapsed32(last_print_time) > PRINT_INTERVAL) {
+        last_print_time = timer_read32();
+        print_statistics_grid();
+    }
+}

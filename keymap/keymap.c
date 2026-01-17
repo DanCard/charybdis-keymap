@@ -7,6 +7,7 @@
 #include "features/rgb.h"
 #include "features/tap_hold.h"
 #include "features/logging.h"
+#include "features/statistics.h"
 
 const char *layer_change_reason = NULL;
 #define REASON_BUFFER_SIZE 128
@@ -210,6 +211,8 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  process_statistics(record);
+
   uint32_t now = timer_read32();
   uint32_t sec = now / 1000;
   uint32_t ms = now % 1000;
@@ -838,6 +841,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       debug_dump_sync_state();
     }
     return false;
+  case KC_PRINT_STATS:
+    if (record->event.pressed) {
+      print_statistics_now();
+    }
+    return false;
+  case KC_PRINT_STATS_GRID:
+    if (record->event.pressed) {
+      print_statistics_grid();
+    }
+    return false;
   // Layer 3 Thumb Logic: Tap = Exit, Hold = Switch Layer
   case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 4, record->event.pressed);
   case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 2, record->event.pressed);
@@ -907,8 +920,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_TG2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_EXIT    , KC_EXIT  , KC_EXIT  , KC_EXIT  , KC_PSCR,
-                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE      , KC_EXIT    , KC_EXIT  , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
+    [5] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_EXIT  , KC_EXIT  , KC_PSCR,
+                 KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_P_FRAC,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
                  KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
                  KC_EXIT, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD , KC_EXIT ,   KC_PINWHEEL, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                                   KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
@@ -992,6 +1005,8 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 }
 
 void matrix_scan_user(void) {
+  matrix_scan_statistics();
+
   // Handle deferred EEPROM update (wait >1s after boot)
   if (eeprom_update_pending && timer_elapsed32(eeprom_defer_timer) > 1500) {
     eeconfig_update_user(pending_eeprom_config);

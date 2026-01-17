@@ -70,5 +70,7 @@ enum custom_keycodes {
   KC_5_TG5,       // Tap: 5, Hold: Toggle Layer 5 (Settings)
   KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
   KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
-  KC_L3_EXT_TO1   // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
+  KC_L3_EXT_TO1,  // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
+  KC_PRINT_STATS, // Print statistics histogram immediately
+  KC_PRINT_STATS_GRID // Print statistics in a 2D grid format
 };
