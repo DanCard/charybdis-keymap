@@ -62,6 +62,14 @@ Each feature: `features/feature_name.h` (prototypes, extern globals, typedefs) +
 - RGB Matrix: Both halves sync modes and random seeds
 - Symlink: `keymap/` is source of truth, symlinked into qmk_firmware directory
 
+## Git Conventions
+
+**Commit Messages**:
+- **Do NOT** use "feat:" prefix (was overused)
+- Other prefixes like "fix:", "chore:" are acceptable
+- Use descriptive, plain English messages when not using prefixes
+- Examples: "update Layer 1 RGB indicators to show arrow keys on right half", "fix: EEPROM write timing issue", "chore: reorganize Python scripts"
+
 ## Common Patterns
 
 **Custom Keycodes** - Define in `custom_keycodes` enum (features/keycodes.h):

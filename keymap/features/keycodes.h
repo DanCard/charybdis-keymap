@@ -59,8 +59,8 @@ enum custom_keycodes {
   KC_MS_TMO_DEC,
   KC_SET_LEFT,
   KC_SET_RIGHT,
-  KC_DEBUG_SYNC,  // Debug key to dump sync state
-  KC_SYNC_LOG,    // Toggle Sync Heartbeat Logging
+  KC_DUMP_LOG,    // Debug key to dump sync state
+  KC_FILT_LOG,    // Toggle Sync Heartbeat Logging
   KC_JITTER,      // Toggle Mouse Jitter Filter
   KC_JITTER_LOG,  // Toggle Mouse Jitter Logging
   KC_DAY,         // Set brightness to Day level
