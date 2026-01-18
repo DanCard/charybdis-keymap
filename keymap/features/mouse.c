@@ -15,6 +15,33 @@ uint16_t auto_mouse_timeout = 1500; // Default (matches AUTO_MOUSE_TIME in confi
 // Internal timers
 static uint16_t snipe_timer = 0;
 static uint16_t fast_mode_timer = 0;
+static uint8_t mouse_buttons_held = 0;
+bool is_selection_locked = false;
+
+void update_mouse_button_state(uint16_t keycode, bool pressed) {
+  uint8_t mask = 0;
+  switch (keycode) {
+    case MS_BTN1: mask = 1 << 0; break;
+    case MS_BTN2: mask = 1 << 1; break;
+    case MS_BTN3: mask = 1 << 2; break;
+    case MS_BTN4: mask = 1 << 3; break;
+    case MS_BTN5: mask = 1 << 4; break;
+    case MS_BTN6: mask = 1 << 5; break;
+    case MS_BTN7: mask = 1 << 6; break;
+    case MS_BTN8: mask = 1 << 7; break;
+    default: return;
+  }
+  
+  if (pressed) {
+    mouse_buttons_held |= mask;
+    // Reset timer immediately on press/hold event
+    if (auto_mouse_on) {
+      auto_mouse_timer = timer_read();
+    }
+  } else {
+    mouse_buttons_held &= ~mask;
+  }
+}
 
 // Mouse Key globals logic
 // Fast mouse movement helper
@@ -64,12 +91,19 @@ void process_mouse_timeouts(void) {
     }
 
     static char mouse_reason_buffer[64];
+    
+    // If any mouse button is held, keep the layer alive (reset timer)
+    if (mouse_buttons_held && auto_mouse_on) {
+        auto_mouse_timer = timer_read();
+    }
+
     if (auto_mouse_on && !mouse_is_locked &&
         timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
         snprintf(mouse_reason_buffer, sizeof(mouse_reason_buffer), "Auto Mouse Timeout (%u ms)", auto_mouse_timeout);
         layer_change_reason = mouse_reason_buffer;
         layer_off(3);
         auto_mouse_on = false;
+        mouse_buttons_held = 0; // Failsafe: clear held status if we force layer off
     }
 }
 

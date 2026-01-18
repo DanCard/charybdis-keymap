@@ -219,6 +219,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   process_statistics(record);
+  update_mouse_button_state(keycode, record->event.pressed);
 
   uint32_t now = timer_read32();
   uint32_t sec = now / 1000;
@@ -1035,6 +1036,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return false;
 
+  case KC_0_TO0:
+    // ... logic for KC_0_TO0 if needed ...
+    return true; 
+  case KC_SEL_LOCK:
+    if (record->event.pressed) {
+        if (!is_selection_locked) {
+            register_code(MS_BTN1);
+            is_selection_locked = true;
+            // Manually update internal state so layer timeout sees the hold
+            update_mouse_button_state(MS_BTN1, true);
+            uprintf("Selection Lock: ON (BTN1 Held)\n");
+        } else {
+            unregister_code(MS_BTN1);
+            is_selection_locked = false;
+            update_mouse_button_state(MS_BTN1, false);
+            uprintf("Selection Lock: OFF (BTN1 Released)\n");
+        }
+    }
+    return false;
+
   default:
     return true;
   }
@@ -1088,12 +1109,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L_L1,   KC_EXIT, KC_ENT_EXIT,
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
-    [3] = LAYOUT(QK_GESC        , KC_EXIT      , KC_MS_FAST_UP, KC_EXIT       , KC_EXIT         , QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI       , KC_EXIT, QK_BOOT,
-                 KC_EXIT        , KC_MS_DIAG_UL, MS_UP        , KC_MS_DIAG_UR , MS_BTN1         , KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT       , KC_EXIT, KC_EXIT,
-                 KC_MS_FAST_LEFT, MS_LEFT      , MS_BTN1      , MS_RGHT       , KC_MS_FAST_RIGHT, MS_BTN2,   KC_EXIT, MS_BTN1 , DRGSCRL, KC_MOUSE_LOCK , MS_BTN2, KC_EXIT,
-                 KC_EXIT        , KC_MS_DIAG_DL, MS_DOWN      , KC_MS_DIAG_DR , MS_BTN3         , KC_EXIT,   KC_EXIT, KC_EXIT , MS_BTN3, MS_BTN3       , MS_BTN3, KC_RSFT,
-                                               KC_L3_EXT_TO4 , KC_L3_EXT_TO2 , KC_L3_EXT_TO1   ,             KC_EXIT, KC_EXIT,
-                                                                       KC_EXIT, KC_EXIT        ,             KC_EXIT),
+    [3] = LAYOUT(QK_GESC  , KC_EXIT    , KC_MS_FAST_UP, KC_EXIT, KC_EXIT, QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI       , KC_EXIT, QK_BOOT,
+                 KC_EXIT  , KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN2, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT       , KC_EXIT, KC_EXIT,
+                 KC_MS_FAST_LEFT, MS_LEFT, KC_SEL_LOCK, MS_RGHT, MS_BTN1, MS_BTN2,   KC_EXIT, MS_BTN1 , DRGSCRL, KC_SEL_LOCK   , MS_BTN2, KC_EXIT,
+                 KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, MS_BTN3, KC_EXIT,   KC_EXIT, KC_EXIT , MS_BTN3, MS_BTN3       , MS_BTN3, KC_RSFT,
+                                      KC_L3_EXT_TO4, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_EXIT,
+                                                            KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
