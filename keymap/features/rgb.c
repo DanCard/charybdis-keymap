@@ -178,17 +178,14 @@ bool housekeeping_rgb_indicators(void) {
   switch (layer) {
   case 1: {
     if (is_keyboard_left()) {
-      // Keys 2, 3, 4, 5 on left (Indices: 8, 15, 16, 20)
-      rgb_matrix_set_color(8, 0, 0, 255);
-      rgb_matrix_set_color(15, 0, 0, 255);
-      rgb_matrix_set_color(16, 0, 0, 255);
-      rgb_matrix_set_color(20, 0, 0, 255);
+      // No indicators on left
     } else {
-      // Keys 6, 7, 8, 9 on right (Indices: 20, 16, 15, 8 local)
-      rgb_matrix_set_color(20, 0, 0, 255);
-      rgb_matrix_set_color(16, 0, 0, 255);
-      rgb_matrix_set_color(15, 0, 0, 255);
-      rgb_matrix_set_color(8, 0, 0, 255);
+      // Arrow keys (Up, Down, Right, Left)
+      // Up: 0, Down: 1, Right: 2, Left: 5
+      rgb_matrix_set_color(0, 0, 0, 255);
+      rgb_matrix_set_color(1, 0, 0, 255);
+      rgb_matrix_set_color(2, 0, 0, 255);
+      rgb_matrix_set_color(5, 0, 0, 255);
     }
     break;
   }

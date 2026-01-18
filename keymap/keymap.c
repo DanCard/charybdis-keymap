@@ -834,6 +834,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
       limit_jitter_filter_messages = !limit_jitter_filter_messages;
       uprintf("[%lu.%03lu] Jitter Logging Limit (500ms): %s\n", sec, ms, limit_jitter_filter_messages ? "ON" : "OFF");
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   case KC_DEBUG_SYNC:
