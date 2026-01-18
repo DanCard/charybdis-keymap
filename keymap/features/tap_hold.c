@@ -67,8 +67,8 @@ bool process_tap_hold_key(uint16_t keycode, keyrecord_t *record) {
 // Exit key helper (SPC_EXIT, ENT_EXIT, BSPC_EXIT)
 bool handle_exit_key(uint16_t tap_key, bool pressed) {
     if (pressed) {
-        layer_change_reason = "Exit Key: L0";
-        layer_state_set(0);
+        // layer_change_reason = "Exit Key: L0"; // Handled by layer_history_pop
+        layer_history_pop();
         housekeeping_rgb_indicators(); // Call rgb indicator update
         th[TH_ENT_MO].timer = timer_read();
     } else {

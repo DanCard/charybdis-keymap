@@ -8,6 +8,7 @@ bool is_sniping_active = false;
 bool is_fast_mode_active = false;
 bool mouse_is_locked = false;
 bool is_jitter_filter_active = false;
+bool limit_jitter_filter_messages = true;
 bool auto_mouse_on = false;
 uint16_t auto_mouse_timer = 0;
 uint16_t auto_mouse_timeout = 1500; // Default (matches AUTO_MOUSE_TIME in config.h)
@@ -108,6 +109,9 @@ void process_mouse_timeouts(void) {
 }
 
 // Main mouse processing task (called from pointing_device_task_user)
+#define MOUSE_JITTER_STREAK_INTERVAL 50  // Max ms between small movements to count as a streak
+#define MOUSE_JITTER_STREAK_THRESHOLD 4  // Number of small movements to establish a streak
+
 report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   int8_t x = mouse_report.x;
   int8_t y = mouse_report.y;
@@ -135,18 +139,50 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   if (is_jitter_filter_active) {
     // Filter out 1-unit orthogonal movements (jitter)
     // Keep diagonals (e.g. x=1, y=1) or larger movements
-    if ((x == 0 && (y == 1 || y == -1)) || (y == 0 && (x == 1 || x == -1))) {
-      static uint32_t last_jitter_log = 0;
-      if (timer_elapsed32(last_jitter_log) > 1000) {
-        LOG_TIME();
-        uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d)\033[0m\n", x, y);
-        last_jitter_log = timer_read32();
+    bool is_small_orthogonal = ((x == 0 && (y == 1 || y == -1)) || (y == 0 && (x == 1 || x == -1)));
+
+    if (is_small_orthogonal) {
+      static uint32_t last_jitter_time = 0;
+      static uint8_t jitter_streak = 0;
+
+      // Check if this small movement occurred very soon after the previous one.
+      // High-frequency small movements (interval < MOUSE_JITTER_STREAK_INTERVAL) are likely intentional
+      // slow tracking rather than random sensor noise.
+      if (timer_elapsed32(last_jitter_time) < MOUSE_JITTER_STREAK_INTERVAL) {
+        if (jitter_streak < 255) jitter_streak++;
+      } else {
+        // If there's a gap, reset the streak; it's considered isolated jitter again.
+        if (jitter_streak > 0) {
+          uprintf("\033[90mMouse: Streak Reset (was %d)\033[0m\n", jitter_streak);
+        }
+        jitter_streak = 0;
       }
-      // Zero out the report so it's ignored by the host AND by the auto-layer logic below
-      mouse_report.x = 0;
-      mouse_report.y = 0;
-      x = 0;
-      y = 0;
+      last_jitter_time = timer_read32();
+
+      // We only suppress the movement if it hasn't established a "streak".
+      // A streak of MOUSE_JITTER_STREAK_THRESHOLD+ events means the user is consistently moving the ball slowly,
+      // so we stop filtering and let the movement through to the host.
+      if (jitter_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
+        static uint32_t last_jitter_log = 0;
+        // Apply logging throttle (default 500ms)
+        if (limit_jitter_filter_messages && timer_elapsed32(last_jitter_log) > 500) {
+          LOG_TIME();
+          uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d)\033[0m\n", x, y, jitter_streak);
+          last_jitter_log = timer_read32();
+        }
+        // Zero out the report so it's ignored by the host AND by the auto-layer logic below
+        mouse_report.x = 0;
+        mouse_report.y = 0;
+        x = 0;
+        y = 0;
+      } else {
+        // Log when we break the filter
+        static uint8_t last_logged_streak = 0;
+        if (jitter_streak == MOUSE_JITTER_STREAK_THRESHOLD && last_logged_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
+          uprintf("\033[92mMouse: Streak Established (%d), Filter Broken\033[0m\n", jitter_streak);
+        }
+        last_logged_streak = jitter_streak;
+      }
     }
   }
 
@@ -160,11 +196,17 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       if (movement_streak > 1) { // Require 2 consecutive movement events
         // Only activate layer for significant movement
         if (is_keyboard_master()) {
-             uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
-             layer_change_reason = "Auto Mouse Movement";
-             layer_on(3); // Switch to Mouse Layer (3)
-             auto_mouse_on = true;
-             auto_mouse_timer = timer_read();
+             // Only activate Auto Mouse if Layer 3 isn't already active (e.g. manually locked)
+             if (!layer_state_is(3)) {
+                 uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
+                 layer_change_reason = "Auto Mouse Movement";
+                 layer_on(3); // Switch to Mouse Layer (3)
+                 auto_mouse_on = true;
+                 auto_mouse_timer = timer_read();
+             } else if (auto_mouse_on) {
+                 // If already in auto-mouse mode, just update the timer
+                 auto_mouse_timer = timer_read();
+             }
         } else {
              // Slave side: Signal master
              slave_mouse_active = true;

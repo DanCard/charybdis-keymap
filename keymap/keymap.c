@@ -13,6 +13,24 @@ const char *layer_change_reason = NULL;
 #define REASON_BUFFER_SIZE 128
 static char layer_reason_buffer[REASON_BUFFER_SIZE];
 
+// Layer History Stack
+#define LAYER_HISTORY_SIZE 3
+static layer_state_t layer_history[LAYER_HISTORY_SIZE] = {0};
+static uint8_t history_head = 0;
+static bool is_popping_layer = false;
+
+void layer_history_pop(void) {
+  layer_state_t target_state = 0;
+  if (history_head > 0) {
+    history_head--;
+    target_state = layer_history[history_head];
+  }
+  snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "Return: Restore %lu (Head %u)", (unsigned long)target_state, history_head);
+  layer_change_reason = layer_reason_buffer;
+  is_popping_layer = true;
+  layer_state_set(target_state);
+}
+
 #include "features/keycodes.h"
 
 // Tap Dance Definitions
@@ -186,6 +204,23 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   uint32_t now = timer_read32();
   uint32_t sec = now / 1000;
   uint32_t ms = now % 1000;
+
+  if (state != layer_state) {
+    if (is_popping_layer) {
+      is_popping_layer = false;
+    } else {
+      // Normal navigation: Push old state to history
+      if (history_head < LAYER_HISTORY_SIZE) {
+        layer_history[history_head++] = layer_state;
+      } else {
+        // Stack full: Shift left
+        for (int i = 0; i < LAYER_HISTORY_SIZE - 1; i++) {
+          layer_history[i] = layer_history[i + 1];
+        }
+        layer_history[LAYER_HISTORY_SIZE - 1] = layer_state;
+      }
+    }
+  }
 
   uint8_t layer = get_highest_layer(state);
   uint8_t prev_layer = get_highest_layer(layer_state);
@@ -366,60 +401,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
   case KC_EXIT:
     if (record->event.pressed) {
-      snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "KC_EXIT (Tap): L0 (Key: R%u, C%u)", record->event.key.row, record->event.key.col);
-      layer_change_reason = layer_reason_buffer;
-      layer_move(0);
+      layer_history_pop();
       rgb_matrix_indicators_user();
     }
     return false;
-  case KC_TURBO:
-    if (record->event.pressed) {
-      pointing_device_set_cpi(3000);
-      uprintf("[%lu.%03lu] Turbo ON. CPI -> 3000\n", sec, ms);
-    } else {
-      pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      uprintf("[%lu.%03lu] Turbo OFF. CPI -> Default (%u)\n", sec, ms,
-              pointing_device_get_cpi());
-    }
-    return false;
-  case KC_MS_FAST_UP:    return handle_fast_mouse(MS_UP, record->event.pressed);
-  case KC_MS_FAST_DOWN:  return handle_fast_mouse(MS_DOWN, record->event.pressed);
-  case KC_MS_FAST_LEFT:  return handle_fast_mouse(MS_LEFT, record->event.pressed);
-  case KC_MS_FAST_RIGHT: return handle_fast_mouse(MS_RGHT, record->event.pressed);
-  case KC_MS_DIAG_UL:    return handle_diag_mouse(MS_UP, MS_LEFT, record->event.pressed);
-  case KC_MS_DIAG_UR:    return handle_diag_mouse(MS_UP, MS_RGHT, record->event.pressed);
-  case KC_MS_DIAG_DL:    return handle_diag_mouse(MS_DOWN, MS_LEFT, record->event.pressed);
-  case KC_MS_DIAG_DR:    return handle_diag_mouse(MS_DOWN, MS_RGHT, record->event.pressed);
-  case KC_SCR_MODE:
-    if (record->event.pressed) {
-      is_scroll_mode = true;
-    } else {
-      is_scroll_mode = false;
-    }
-    return false;
-  case KC_ENT_MO4:
-    if (record->event.pressed) {
-      th[TH_ENT_MO].held = true;
-      th[TH_ENT_MO].triggered = false;
-      th[TH_ENT_MO].timer = timer_read();
-    } else {
-      th[TH_ENT_MO].held = false;
-      if (!th[TH_ENT_MO].triggered) {
-        tap_code(KC_ENT);
-      } else {
-        layer_change_reason = "ENT_MO4 (Release): L4->L0";
-        layer_off(4);
-        rgb_matrix_indicators_user();
-      }
-    }
-    return false;
+
   case KC_ENT_EXIT:
     if (record->event.pressed) {
-      layer_change_reason = "ENT_EXIT (Tap): L0";
-      layer_state_set(0); // Clear all layers (peek at base)
+      layer_history_pop();
       rgb_matrix_indicators_user();
       th[TH_ENT_MO].timer = timer_read();
     } else {
+// ...
       uprintf("KC_ENT_EXIT Released. Elapsed: %u. Action: %s\n",
               timer_elapsed(th[TH_ENT_MO].timer),
               (timer_elapsed(th[TH_ENT_MO].timer) < TAPPING_TERM) ? "Tap (Exit)"
@@ -822,6 +815,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       eeconfig_update_user(current_config);
     }
     return false;
+  case KC_JITTER_LOG:
+    if (record->event.pressed) {
+      limit_jitter_filter_messages = !limit_jitter_filter_messages;
+      uprintf("[%lu.%03lu] Jitter Logging Limit (500ms): %s\n", sec, ms, limit_jitter_filter_messages ? "ON" : "OFF");
+    }
+    return false;
   case KC_DEBUG_SYNC:
     if (record->event.pressed) {
       debug_dump_sync_state();
@@ -1095,14 +1094,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
-    // Layer 1: Base + Arrows (Old Layer 0)
-    [1] =
-        LAYOUT(QK_GESC, KC_1, KC_2_LEFT, KC_3_UP, KC_4_DOWN, KC_5_RIGHT,   KC_6_LEFT, KC_UP_7, KC_DOWN_8, KC_RIGHT_9, KC_0_TO0, KC_MINS,
-               KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
-               KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-               KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
-                                        KC_SPC_L4, KC_ENT_L2, KC_EXIT_TO3,   KC_DEL, KC_ENT_L2,
-                                                        KC_LALT, KC_BSPC,   KC_BSPC),
+    // Layer 1: Punctuation Arrows (Modified Base)
+    [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0, KC_UP,
+                 KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
+                 KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
+                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
+                                          KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
+                                                          KC_LALT, KC_BSPC,   KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
@@ -1133,10 +1131,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      [6] = LAYOUT(
       KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_SYNC_LOG, KC_EXIT  , KC_PSCR,
       KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
-      KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
+      KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_JITTER_LOG  , KC_EXIT,
       KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                        KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                 KC_EXIT, KC_EXIT,   KC_EXIT),
+
+    // Layer 7: Original Base + Arrows (Moved from L1)
+    [7] =
+        LAYOUT(QK_GESC, KC_1, KC_2_LEFT, KC_3_UP, KC_4_DOWN, KC_5_RIGHT,   KC_6_LEFT, KC_UP_7, KC_DOWN_8, KC_RIGHT_9, KC_0_TO0, KC_MINS,
+               KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
+               KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
+               KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, LT(3, KC_SLSH), KC_RSFT,
+                                        KC_SPC_L4, KC_ENT_L2, KC_EXIT_TO3,   KC_DEL, KC_ENT_L2,
+                                                        KC_LALT, KC_BSPC,   KC_BSPC),
 };
 
 bool rgb_matrix_indicators_user(void) {

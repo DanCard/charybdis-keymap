@@ -62,6 +62,7 @@ enum custom_keycodes {
   KC_DEBUG_SYNC,  // Debug key to dump sync state
   KC_SYNC_LOG,    // Toggle Sync Heartbeat Logging
   KC_JITTER,      // Toggle Mouse Jitter Filter
+  KC_JITTER_LOG,  // Toggle Mouse Jitter Logging
   KC_DAY,         // Set brightness to Day level
   KC_NIGHT,       // Set brightness to Night level
   KC_FLASHLIGHT,  // Toggle Flashlight mode

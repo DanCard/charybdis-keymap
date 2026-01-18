@@ -15,16 +15,16 @@ Ctrl      Z(TD)     X         C         V         B        |  N         M       
 ```
 *Note: This is the "Clean" layer. Standard numbers. Hold numbers to peek other layers.*
 
-### BASE + ARROWS (Layer 1)
+### PUNCTUATION ARROWS (Layer 1)
 ```
-Esc       1         Left/L2   Up/L3     Down/L4   Right/L5 |  Left/L6   7/Up      8/Down    9/Right   0/L0      -
-Tab       Q/L4      W         E         R         T        |  Y         U         I         O         P         \
-Shift     A         S         D         F         G        |  H         J         K         L         +/:       '
-Ctrl      Z(TD)     X         C         V         B        |  N         M         ,         .         /(L3)     Shift
-                     Space/L2  Ent/L4    Exit               |  Del       Ent/L2    Alt
+Esc       1/L1      2/L2      3/L3      4/L4      5/L5     |  6/L6      7         8         9         0         -
+Tab       Q/L4      W         E         R         T        |  Y         U         I         O         P         Up
+Shift     A         S         D         F         G        |  H         J         K         L         Left      Right
+Ctrl      Z(TD)     X         C         V         B        |  N         M         ,         .         Down      Shift
+                     Space/L2  Ent/L4    L1(Tog)            |  Del       Ent/L2    Alt
                     Alt       Bspc
 ```
-*Note: Dual-function arrow row. Tap: Arrow (Left, Up, Down, Right pattern), Shift+Tap: Number. Hold 0 for Layer 0.*
+*Note: Base layer copy. Right-hand punctuation keys replaced with Arrows (Up, Left, Right, Down).*
 
 ### FUNCTION (Layer 2)
 ```
@@ -73,16 +73,28 @@ Exit      Hue+      Hue-      Sat+      Sat-      Exit     |  Exit      Time+   
 ```
 *Note: Keys marked with * auto-exit to Layer 0 after activation. Access via **Hold '5'**.*
 
+### BASE + ARROWS (Layer 7)
+```
+Esc       1         Left/L2   Up/L3     Down/L4   Right/L5 |  Left/L6   7/Up      8/Down    9/Right   0/L0      -
+Tab       Q/L4      W         E         R         T        |  Y         U         I         O         P         \
+Shift     A         S         D         F         G        |  H         J         K         L         +/:       '
+Ctrl      Z(TD)     X         C         V         B        |  N         M         ,         .         /(L3)     Shift
+                     Space/L2  Ent/L4    Exit               |  Del       Ent/L2    Alt
+                    Alt       Bspc
+```
+*Note: Dual-function arrow row (Old Layer 1). Tap: Arrow (Left, Up, Down, Right pattern), Shift+Tap: Number.*
+
 ## User Guide
 
 ### 1. Layers Overview
 - **Base (0):** Clean layer. Standard numbers. Hold numbers to peek other layers (e.g., Hold '2' for Layer 2).
-- **Base + Arrows (1):** Dual-function row. Numbers 2-9 act as Arrows (L, U, D, L pattern). Shift+Tap sends the number. Access via **Hold '1'**.
+- **Punctuation Arrows (1):** Base Layer variant. Right-hand punctuation keys (+\':./) map to Arrows (Up, Left, Right, Down). Access via **Hold '1'**.
 - **Function (2):** F-keys and navigation. Access via **Hold '2'**.
 - **Mouse (3):** Trackball layer. Automatically activates on movement.
 - **One-Hand (4):** Mirrored layout. Access via **Hold '4'** or **Hold 'Z'**.
 - **Nav/Num (5):** Numpad and secondary navigation. Access via **Hold '6'** (on Layer 0/1) or Mouse Thumb Hold.
 - **Settings (6):** RGB, Mouse config, and Statistics. Access via **Hold '5'**.
+- **Base + Arrows (7):** Legacy Arrow layer. Dual-function numbers.
 
 ### 2. Timing (LONG_PRESS_TIMEOUT)
 The unified timing for all tap-hold actions is **250ms**. This applies to Layer-Tap (LT), custom logic, and statistics tracking (Short vs Long presses).

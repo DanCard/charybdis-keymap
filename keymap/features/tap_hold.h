@@ -49,4 +49,5 @@ bool process_tap_hold_key(uint16_t keycode, keyrecord_t *record);
 bool handle_exit_key(uint16_t tap_key, bool pressed);
 bool handle_l3_thumb(uint8_t th_idx, uint8_t tap_layer, uint8_t hold_layer, bool pressed);
 bool handle_thumb_toggle(uint8_t th_idx, uint16_t tap_key, const char* name, bool pressed);
+void layer_history_pop(void);
 void housekeeping_tap_hold(void);
