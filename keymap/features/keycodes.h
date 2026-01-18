@@ -11,7 +11,7 @@ enum custom_keycodes {
   KC_PGUP_TO0,
   KC_P_TO0,
   KC_HOME_TO0,
-  KC_L_L1,
+  KC_L1_L3,
   KC_R_L2,
   KC_ENT_MO4,
   KC_ENT_EXIT,
@@ -69,6 +69,7 @@ enum custom_keycodes {
   KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
   KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
   KC_L3_EXT_TO1,  // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
+  KC_EXIT_TO3,    // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
   KC_PRINT_STATS, // Print statistics histogram immediately
   KC_PRINT_STATS_GRID, // Print statistics in a 2D grid format
   KC_2_LEFT,      // Tap: Left, Shift+Tap: 2

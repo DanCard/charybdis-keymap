@@ -114,7 +114,7 @@ static const char* get_key_name(uint16_t kc) {
         case KC_ENT_L4:    return "ENT(L4)";
         case KC_SPC_L2:    return "SPC(L2)";
         case KC_SPC_L4:    return "SPC(L4)";
-        case KC_L_L1:      return "L_TG1";
+        case KC_L1_L3:     return "L1_L3";
         case KC_R_L2:      return "R_TG2";
         case KC_PLUS_COLON: return "+/:";
         case QK_GESC:       return "GESC";
@@ -207,12 +207,41 @@ static void print_grid_matrix(uint32_t counts[MATRIX_ROWS][MATRIX_COLS], const c
     uprintf("      %5lu\n", counts[9][5]);
 }
 
+static void print_layer_times(void) {
+    uprintf("\n--- Layer Usage ---\n");
+
+    // Update current layer time first so it's accurate
+    update_layer_stats(current_layer);
+
+    uint64_t total_time = 0;
+    for (int i = 0; i < MAX_LAYERS; i++) {
+        total_time += layer_times[i];
+    }
+
+    if (total_time > 0) {
+        for (int i = 0; i < MAX_LAYERS; i++) {
+            if (layer_times[i] > 0) {
+                uint32_t total_seconds = (uint32_t)(layer_times[i] / 1000);
+                uint32_t minutes = total_seconds / 60;
+                uint32_t seconds = total_seconds % 60;
+                uint32_t percent = (uint32_t)((layer_times[i] * 100) / total_time);
+                uprintf("L%d: %lu:%02lu (%lu%%)  ", i, (unsigned long)minutes, (unsigned long)seconds, (unsigned long)percent);
+            }
+        }
+        uprintf("\n");
+    } else {
+        uprintf("No layer time recorded yet.\n");
+    }
+}
+
 void print_statistics_grid(void) {
     char title_buf[64];
-    
+
+    print_layer_times();
+
     snprintf(title_buf, sizeof(title_buf), "Short Press Grid (<%dms)", LONG_PRESS_TIMEOUT);
     print_grid_matrix(matrix_counts_short, title_buf);
-    
+
     snprintf(title_buf, sizeof(title_buf), "Long Press Grid (>=%dms)", LONG_PRESS_TIMEOUT);
     print_grid_matrix(matrix_counts_long, title_buf);
 }

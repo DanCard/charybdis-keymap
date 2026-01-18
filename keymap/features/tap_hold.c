@@ -25,7 +25,7 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_UP_3, TH_K3_TO3, 0},
     {KC_DOWN_4, TH_K4_TO4, 0},
     {KC_RIGHT_5, TH_K5_TO5, 0},
-    {KC_6_L6, TH_K6_TG6, KC_6},
+    {KC_6_L6, TH_K6_TO6, KC_6},
 };
 #define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
 
@@ -149,13 +149,8 @@ void housekeeping_tap_hold(void) {
     housekeeping_rgb_indicators();
   }
   if (th[TH_L1].held && !th[TH_L1].triggered && timer_elapsed(th[TH_L1].timer) > LONG_PRESS_TIMEOUT) {
-    if (get_highest_layer(layer_state) == 1) {
-       layer_change_reason = "L_TG1(Hold): Toggle L1 (OFF)";
-       layer_invert(1);
-    } else {
-       layer_change_reason = "L_TG1(Hold): Toggle L1 (ON)";
-       layer_invert(1);
-    }
+    layer_change_reason = "L_TG1(Hold): Layer 3";
+    layer_move(3);
     th[TH_L1].triggered = true;
     housekeeping_rgb_indicators();
   }
@@ -375,11 +370,18 @@ void housekeeping_tap_hold(void) {
     TH_TRIGGER(TH_K5_TO5);
     housekeeping_rgb_indicators();
   }
-  if (TH_CHECK(TH_K6_TG6)) {
+  if (TH_CHECK(TH_K6_TO6)) {
     uprintf(">>> KC_6_L6 Hold Triggered -> Layer 6\n");
     layer_change_reason = "6(Hold): Layer 6";
     layer_move(6);
-    TH_TRIGGER(TH_K6_TG6);
+    TH_TRIGGER(TH_K6_TO6);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_EXIT_TO3)) {
+    uprintf(">>> KC_EXIT_TO3 Hold Triggered -> Layer 3\n");
+    layer_change_reason = "EXIT(Hold): Layer 3";
+    layer_move(3);
+    TH_TRIGGER(TH_EXIT_TO3);
     housekeeping_rgb_indicators();
   }
 }

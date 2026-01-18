@@ -469,7 +469,7 @@ def simplify_key(key_code, layer_num=None):
             return "Page\nUp"
 
     if layer_num is not None and layer_num > 0:
-        if key_code == "KC_L_L1":
+        if key_code == "KC_L1_L3":
             return "Exit\nL1"
 
     # Special handling for other layer long press returns
@@ -542,7 +542,7 @@ def simplify_key(key_code, layer_num=None):
         "KC_X_TG2": "X\nTG2",
         "KC_V_TG5": "V\nTG5",
         "KC_Q_L4": "Q\nL4",
-        "KC_L_L1": "L1",
+        "KC_L1_L3": "L1\nL3",
         "KC_R_L2": "L2\nTgl",
         "KC_ENT_MO4": "Enter\nL4",
         "KC_ENT_EXIT": "Enter\nExit",
