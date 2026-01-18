@@ -29,6 +29,18 @@ LAYER_COLORS = {
 L6_RED = (1.0, 0.2, 0.2)  # Red for top-left corner
 L6_BLUE = (0.2, 0.4, 1.0)  # Blue for top-right corner
 
+# Flash theme colors for Layer 1 corners
+L1_PINK = (1.0, 0.4, 0.7)  # Pink for top-left corner
+L1_CYAN = (0.0, 0.8, 0.6)  # Cyan (opposite of pink) for top-right corner
+
+# Rainbow theme colors for Layer 7 corners
+L7_RAINBOW = [
+    (1.0, 0.2, 0.2),  # Red
+    (1.0, 0.6, 0.0),  # Orange
+    (0.0, 0.8, 0.4),  # Green
+    (0.2, 0.4, 1.0),  # Blue
+]
+
 LAYER_NAMES = {
     0: "BASE",
     1: "BASE + ARROWS",
@@ -37,6 +49,7 @@ LAYER_NAMES = {
     4: "ONE-HAND",
     5: "NUMBER SYMBOLS",
     6: "SETTINGS",
+    7: "ARROWS FOR NUMBERS",
 }
 
 # Key label simplifications
@@ -577,6 +590,7 @@ def simplify_key(key_code, layer_num=None):
         "KC_FIRE": "Fire",
         "KC_DAY": "Day\nBright",
         "KC_NIGHT": "Night\nDim",
+        "KC_QUES_SLSH": "?\n/",
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -710,13 +724,27 @@ def draw_layer(
         kx = start_x + info["x"] * (key_size + key_gap)
         ky = offset_y - (info["y"]) * (key_size + key_gap)
 
-        # Determine key color (special handling for Layer 6 police theme)
+        # Determine key color (special handling for themed layers)
         key_color = bg_color
-        if layer_num == 6 and info["y"] == 0:  # Top row only
+        if layer_num == 6 and info["y"] == 0:  # Layer 6 police theme - top row only
             if info["x"] <= 1:  # Top-left corner (first 2 keys on left)
                 key_color = L6_RED
             elif info["x"] >= 10:  # Top-right corner (last 2 keys on right)
                 key_color = L6_BLUE
+        elif layer_num == 1 and info["y"] == 0:  # Layer 1 flash theme - top row only
+            if info["x"] <= 1:  # Top-left corner (first 2 keys on left)
+                key_color = L1_PINK
+            elif info["x"] >= 10:  # Top-right corner (last 2 keys on right)
+                key_color = L1_CYAN
+        elif layer_num == 7 and info["y"] == 0:  # Layer 7 rainbow theme - top row only
+            if info["x"] == 0:
+                key_color = L7_RAINBOW[0]  # Red
+            elif info["x"] == 1:
+                key_color = L7_RAINBOW[1]  # Orange
+            elif info["x"] == 10:
+                key_color = L7_RAINBOW[2]  # Green
+            elif info["x"] == 11:
+                key_color = L7_RAINBOW[3]  # Blue
 
         label = simplify_key(key_code, layer_num)
         draw_key(c, kx, ky, key_size, key_size, label, key_color)

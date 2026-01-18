@@ -89,5 +89,7 @@ enum custom_keycodes {
   KC_LEFT_6,      // Tap: Left,  Shift+Tap: 6, Hold: TO(6)
   KC_6_L6,        // Tap: 6, Hold: Layer 6
   KC_0_TO0,       // Tap: 0, Hold: TO(0)
-  KC_SEL_LOCK     // Toggle Left Click Hold (Selection Lock)
+  KC_SEL_LOCK,    // Toggle Left Click Hold (Selection Lock)
+  KC_QUES_SLSH,   // Tap: ?, Shift+Tap: /
+  KC_7_L7         // Tap: 7, Hold: Layer 7
 };

@@ -26,6 +26,7 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_DOWN_4, TH_K4_TO4, 0},
     {KC_RIGHT_5, TH_K5_TO5, 0},
     {KC_6_L6, TH_K6_TO6, KC_6},
+    {KC_7_L7, TH_K7_L7, KC_7},
 };
 #define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
 
@@ -382,6 +383,13 @@ void housekeeping_tap_hold(void) {
     layer_change_reason = "EXIT(Hold): Layer 3";
     layer_move(3);
     TH_TRIGGER(TH_EXIT_TO3);
+    housekeeping_rgb_indicators();
+  }
+  if (TH_CHECK(TH_K7_L7)) {
+    uprintf(">>> KC_7_L7 Hold Triggered -> Layer 7\n");
+    layer_change_reason = "7(Hold): Layer 7";
+    layer_move(7);
+    TH_TRIGGER(TH_K7_L7);
     housekeeping_rgb_indicators();
   }
 }
