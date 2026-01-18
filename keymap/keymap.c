@@ -724,16 +724,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return false;
   case DPI_MOD:
-    if (record->event.pressed) {
-      // Allow core to handle it first (return true), but log current/new DPI?
-      // Actually, core handles it on press. We can log after?
-      // Or just log that we pressed it.
-    }
-    return true; // Let core handle the DPI change
   case DPI_RMOD:
     if (record->event.pressed) {
+      uprintf("DPI Change Requested. Current DPI: %u\n", charybdis_get_pointer_default_dpi());
     }
-    return true; // Let core handle the DPI change
+    return true; // Allow process_record_kb to handle the actual DPI change
   case KC_MS_TMO_INC:
     if (record->event.pressed) {
       auto_mouse_timeout += 500;
@@ -1057,6 +1052,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
+  case DPI_MOD:
+  case DPI_RMOD:
+    if (record->event.pressed) {
+      uprintf("DPI Change Executed. New DPI: %u\n", charybdis_get_pointer_default_dpi());
+    }
+    break;
   case RM_HUEU:
   case RM_HUED:
     if (record->event.pressed) {
@@ -1104,10 +1105,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     [3] = LAYOUT(QK_GESC  , KC_EXIT    , KC_MS_FAST_UP, KC_EXIT, KC_EXIT, QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI       , KC_EXIT, QK_BOOT,
                  KC_EXIT  , KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN2, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT       , KC_EXIT, KC_EXIT,
-                 KC_MS_FAST_LEFT, MS_LEFT, KC_SEL_LOCK, MS_RGHT, MS_BTN1, MS_BTN2,   KC_EXIT, MS_BTN1 , DRGSCRL, KC_SEL_LOCK   , MS_BTN2, KC_EXIT,
+                 KC_MS_FAST_LEFT, MS_LEFT, KC_SEL_LOCK, MS_RGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, DRGSCRL, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
                  KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, MS_BTN3, KC_EXIT,   KC_EXIT, KC_EXIT , MS_BTN3, MS_BTN3       , MS_BTN3, KC_RSFT,
                                       KC_L3_EXT_TO4, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_EXIT,
                                                             KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
+    // Layer 4: left hand layer                                                            
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
@@ -1121,13 +1123,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, KC_0       , KC_1 , KC_2    , KC_3    , KC_EQL ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN   , KC_END    , KC_RSFT,
                                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_R_L2, KC_ENT_EXIT,
                                               KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
-     // Settings Layer - RGB and Mouse configuration (accessed via Hold '5')
-     [6] = LAYOUT(KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT    , KC_EXIT  ,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_EXIT  , KC_EXIT  , KC_PSCR,
-                  KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
-                  KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
-                  KC_EXIT, RM_HUEU   , RM_HUED, RM_SATU , RM_SATD , KC_EXIT ,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
-                                                  KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
-                                                           KC_EXIT, KC_EXIT,   KC_EXIT),
+     // Settings Layer - accessed via long press 5
+     [6] = LAYOUT(
+      KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_EXIT  , KC_EXIT  , KC_PSCR,
+      KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
+      KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
+      KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
+                                       KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
+                                                KC_EXIT, KC_EXIT,   KC_EXIT),
 };
 
 bool rgb_matrix_indicators_user(void) {

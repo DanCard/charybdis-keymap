@@ -229,6 +229,20 @@ bool housekeeping_rgb_indicators(void) {
     }
     break;
   }
+  case 6: {
+    // Police Theme: Top Left and Top Right keys flash Red/Blue
+    bool phase = (timer_read() / 500) % 2;
+    if (is_keyboard_left()) {
+      // Left Top-Left (Esc) is LED 0
+      if (phase) rgb_matrix_set_color(0, 255, 0, 0); // Red
+      else       rgb_matrix_set_color(0, 0, 0, 255); // Blue
+    } else {
+      // Right Top-Right (Minus) is LED 0
+      if (phase) rgb_matrix_set_color(0, 0, 0, 255); // Blue
+      else       rgb_matrix_set_color(0, 255, 0, 0); // Red
+    }
+    break;
+  }
   }
 
   // Layer indicator logic: When on layer 0 (base), clear the indicator for layer 1 (LED at index 9)

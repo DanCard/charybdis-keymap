@@ -126,6 +126,15 @@ static const char* get_key_name(uint16_t kc) {
     return "???";
 }
 
+typedef struct {
+    uint8_t row;
+    uint8_t col;
+    uint16_t kc;
+    const char* name;
+    uint32_t tap_count;
+    uint32_t hold_count;
+} key_stat_t;
+
 void print_statistics_now(void) {
     // Update current layer time first so it's accurate
     update_layer_stats(current_layer);
@@ -173,6 +182,51 @@ void print_statistics_now(void) {
                     kc);
             }
         }
+    }
+    uprintf("------------------------------------------------------------\n");
+
+    // Print sorted by tap usage (least used first)
+    uprintf("\n--- Physical Key Usage (Sorted by Tap Count, Least First) ---\n");
+    uprintf("Tap Count | Hold Count | Key (L0) | Row Col | Code\n");
+    uprintf("------------------------------------------------------------\n");
+    
+    key_stat_t stats[MATRIX_ROWS * MATRIX_COLS];
+    uint8_t count = 0;
+    
+    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
+        for (uint8_t c = 0; c < MATRIX_COLS; c++) {
+            uint16_t kc = pgm_read_word(&keymaps[0][r][c]);
+            if (kc != KC_NO) {
+                stats[count].row = r;
+                stats[count].col = c;
+                stats[count].kc = kc;
+                stats[count].name = get_key_name(kc);
+                stats[count].tap_count = matrix_counts_short[r][c];
+                stats[count].hold_count = matrix_counts_long[r][c];
+                count++;
+            }
+        }
+    }
+    
+    // Bubble sort by tap count (ascending)
+    for (uint8_t i = 0; i < count - 1; i++) {
+        for (uint8_t j = 0; j < count - i - 1; j++) {
+            if (stats[j].tap_count > stats[j + 1].tap_count) {
+                key_stat_t temp = stats[j];
+                stats[j] = stats[j + 1];
+                stats[j + 1] = temp;
+            }
+        }
+    }
+    
+    for (uint8_t i = 0; i < count; i++) {
+        uprintf("%9lu | %10lu | %-8s | %2d   %2d | 0x%04X\n", 
+            stats[i].tap_count, 
+            stats[i].hold_count, 
+            stats[i].name, 
+            stats[i].row, 
+            stats[i].col,
+            stats[i].kc);
     }
     uprintf("------------------------------------------------------------\n");
 }

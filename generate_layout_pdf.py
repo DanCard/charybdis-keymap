@@ -22,8 +22,12 @@ LAYER_COLORS = {
     3: (1.0, 1.0, 0.7),  # Yellow (Mouse)
     4: (1.0, 0.5, 0.0),  # Orange (One-Hand)
     5: (0.7, 0.7, 1.0),  # Blue (Nav)
-    6: (1.0, 0.43, 0.59),  # Hot Pink (Settings)
+    6: (0.95, 0.95, 0.95),  # White (Settings - Police theme)
 }
+
+# Police theme colors for Layer 6 corners
+L6_RED = (1.0, 0.2, 0.2)  # Red for top-left corner
+L6_BLUE = (0.2, 0.4, 1.0)  # Blue for top-right corner
 
 LAYER_NAMES = {
     0: "BASE",
@@ -706,8 +710,16 @@ def draw_layer(
         kx = start_x + info["x"] * (key_size + key_gap)
         ky = offset_y - (info["y"]) * (key_size + key_gap)
 
+        # Determine key color (special handling for Layer 6 police theme)
+        key_color = bg_color
+        if layer_num == 6 and info["y"] == 0:  # Top row only
+            if info["x"] <= 1:  # Top-left corner (first 2 keys on left)
+                key_color = L6_RED
+            elif info["x"] >= 10:  # Top-right corner (last 2 keys on right)
+                key_color = L6_BLUE
+
         label = simplify_key(key_code, layer_num)
-        draw_key(c, kx, ky, key_size, key_size, label, bg_color)
+        draw_key(c, kx, ky, key_size, key_size, label, key_color)
 
     # Return height used for this layer
     return (max_y + 1) * (key_size + key_gap) + 15

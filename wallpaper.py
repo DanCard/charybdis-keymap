@@ -17,8 +17,12 @@ LAYER_COLORS = {
     3: (240, 220, 100),  # Yellow (Mouse)
     4: (255, 150, 0),  # Orange (One-Hand)
     5: (130, 150, 255),  # Blue (Nav)
-    6: (255, 110, 150),  # Hot Pink (Settings)
+    6: (240, 240, 245),  # White (Settings - Police theme)
 }
+
+# Police theme colors for Layer 6 corners
+L6_RED = (255, 50, 50)  # Red for top-left corner
+L6_BLUE = (50, 100, 255)  # Blue for top-right corner
 
 LAYER_NAMES = {
     0: "BASE",
@@ -38,8 +42,12 @@ KEY_BORDER_COLORS = {
     3: (180, 160, 60),
     4: (180, 80, 0),
     5: (80, 100, 180),  # Blue (Nav)
-    6: (180, 60, 90),  # Hot Pink (Settings)
+    6: (180, 180, 190),  # Gray for white keys (Settings - Police theme)
 }
+
+# Police theme border colors for Layer 6 corners
+L6_RED_BORDER = (180, 30, 30)  # Dark red for top-left corner
+L6_BLUE_BORDER = (30, 60, 180)  # Dark blue for top-right corner
 
 # Key label simplifications
 KEY_LABELS = {
@@ -787,9 +795,20 @@ def draw_layer(
         kx = start_x + int(info["x"] * (key_width + key_gap))
         ky = keys_start_y + int(info["y"] * (key_height + key_gap))
 
+        # Determine key color (special handling for Layer 6 police theme)
+        key_bg = bg_color
+        key_border = border_color
+        if layer_num == 6 and info["y"] == 0:  # Top row only
+            if info["x"] <= 1:  # Top-left corner (first 2 keys on left)
+                key_bg = L6_RED
+                key_border = L6_RED_BORDER
+            elif info["x"] >= 10:  # Top-right corner (last 2 keys on right)
+                key_bg = L6_BLUE
+                key_border = L6_BLUE_BORDER
+
         label = simplify_key(key_code, layer_num)
         if label:  # Only draw if there's a label
-            draw_key(draw, kx, ky, key_width, key_height, label, bg_color, border_color)
+            draw_key(draw, kx, ky, key_width, key_height, label, key_bg, key_border)
 
     return (max_y + 1) * (key_height + key_gap) + 55
 

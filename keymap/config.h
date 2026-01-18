@@ -5,7 +5,7 @@
 #define POINTING_DEVICE_RIGHT
 
 /* Charybdis Mouse Tuning */
-#define CHARYBDIS_MINIMUM_DEFAULT_DPI 800
+#define CHARYBDIS_MINIMUM_DEFAULT_DPI 200
 #define CHARYBDIS_DEFAULT_DPI_CONFIG_STEP 200
 #define CHARYBDIS_DRAGSCROLL_DIVISOR 4    // Lower = faster scrolling (default is 8)
 
