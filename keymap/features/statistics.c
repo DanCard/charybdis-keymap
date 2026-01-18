@@ -17,8 +17,8 @@ static uint32_t last_layer_switch_time = 0;
 static uint8_t current_layer = 0;
 static bool first_layer_update = true;
 
-// Print every 8 minutes (480,000 ms)
-#define PRINT_INTERVAL 480000 
+// Print every 10 minutes (600,000 ms)
+#define PRINT_INTERVAL 600000 
 
 void process_statistics(keyrecord_t *record) {
     uint8_t row = record->event.key.row;
@@ -64,14 +64,15 @@ extern const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS];
 static const char* get_key_name(uint16_t kc) {
     // Basic Alphanumeric
     if (kc >= KC_A && kc <= KC_Z) {
-        static char name[2] = {0, 0};
-        name[0] = 'A' + (kc - KC_A);
-        return name;
+        static const char *alpha[] = {
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+        };
+        return alpha[kc - KC_A];
     }
     if (kc >= KC_1 && kc <= KC_9) {
-        static char name[2] = {0, 0};
-        name[0] = '1' + (kc - KC_1);
-        return name;
+        static const char *digits[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+        return digits[kc - KC_1];
     }
     if (kc == KC_0) return "0";
     
