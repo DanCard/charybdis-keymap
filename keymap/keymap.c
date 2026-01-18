@@ -167,18 +167,10 @@ const uint16_t PROGMEM xv_combo[] = {KC_X, KC_V, COMBO_END};
 const uint16_t PROGMEM zv_combo[] = {TD(TD_Z_LAYER), KC_V, COMBO_END};
 const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
 
-// Right Hand Number Combos
-const uint16_t PROGMEM jcol_combo[] = {KC_J, KC_PLUS_COLON, COMBO_END}; // 6 (Mirrors 5: A+F)
-const uint16_t PROGMEM jk_combo[]   = {KC_J, KC_K, COMBO_END};          // 7 (Mirrors 4: D+F)
-const uint16_t PROGMEM kl_combo[]   = {KC_K, KC_L, COMBO_END};          // 8 (Mirrors 3: S+D)
-const uint16_t PROGMEM lcol_combo[] = {KC_L, KC_PLUS_COLON, COMBO_END}; // 9 (Mirrors 2: A+S)
-
 combo_t key_combos[] = {
-    COMBO(left_combo, KC_2),      COMBO(up_combo, KC_3),
-    COMBO(down_combo, KC_4),      COMBO(af_combo, KC_5),
+    COMBO(left_combo, KC_LEFT),   COMBO(up_combo, KC_UP),
+    COMBO(down_combo, KC_DOWN),   COMBO(af_combo, KC_RIGHT),
     COMBO(ad_combo, KC_DEL),
-    COMBO(jcol_combo, KC_6),      COMBO(jk_combo, KC_7),
-    COMBO(kl_combo, KC_8),        COMBO(lcol_combo, KC_9),
     COMBO(home_combo, KC_HOME),   COMBO(pgup_combo, KC_PGUP),
     COMBO(pgdn_combo, KC_PGDN),   COMBO(xv_combo, C(S(KC_V))),
     COMBO(zv_combo, KC_END),
