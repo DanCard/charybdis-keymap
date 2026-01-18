@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (200, 200, 210),  # Light gray (Base)
-    1: (150, 230, 230),  # Cyan (Original)
+    1: (240, 240, 245),  # White
     2: (130, 220, 130),  # Green (Arrow)
     3: (240, 220, 100),  # Yellow (Mouse)
     4: (255, 150, 0),  # Orange (One-Hand)
@@ -24,6 +24,24 @@ LAYER_COLORS = {
 L6_RED = (255, 50, 50)  # Red for top-left corner
 L6_BLUE = (50, 100, 255)  # Blue for top-right corner
 
+# Flash theme colors for Layer 1 corners
+L1_PINK = (255, 100, 180)  # Pink for top-left corner
+L1_CYAN = (0, 200, 150)  # Cyan (opposite of pink) for top-right corner
+
+# Rainbow theme colors for Layer 7 corners
+L7_RAINBOW = [
+    (255, 50, 50),    # Red
+    (255, 150, 0),    # Orange
+    (0, 200, 100),    # Green
+    (50, 100, 255),   # Blue
+]
+L7_RAINBOW_BORDER = [
+    (180, 30, 30),    # Dark red
+    (180, 100, 0),    # Dark orange
+    (0, 140, 70),     # Dark green
+    (30, 60, 180),    # Dark blue
+]
+
 LAYER_NAMES = {
     0: "BASE",
     1: "BASE + ARROWS",
@@ -32,12 +50,13 @@ LAYER_NAMES = {
     4: "ONE-HAND",
     5: "NUMBER SYMBOLS",
     6: "SETTINGS",
+    7: "ARROWS FOR NUMBERS",
 }
 
 # Key border colors (darker versions)
 KEY_BORDER_COLORS = {
     0: (150, 150, 160),
-    1: (100, 170, 170),  # Cyan (Original)
+    1: (180, 180, 190),  # Gray for white keys
     2: (80, 160, 80),
     3: (180, 160, 60),
     4: (180, 80, 0),
@@ -48,6 +67,10 @@ KEY_BORDER_COLORS = {
 # Police theme border colors for Layer 6 corners
 L6_RED_BORDER = (180, 30, 30)  # Dark red for top-left corner
 L6_BLUE_BORDER = (30, 60, 180)  # Dark blue for top-right corner
+
+# Flash theme border colors for Layer 1 corners
+L1_PINK_BORDER = (180, 70, 130)  # Dark pink
+L1_CYAN_BORDER = (0, 140, 105)  # Dark cyan
 
 # Key label simplifications
 KEY_LABELS = {
@@ -641,6 +664,7 @@ def simplify_key(key_code, layer_num=None):
         "KC_FIRE": "Fire",
         "KC_DAY": "Day\nBright",
         "KC_NIGHT": "Night\nDim",
+        "KC_QUES_SLSH": "?\n/",
     }
     if key_code in custom_map:
         return custom_map[key_code]
@@ -795,16 +819,36 @@ def draw_layer(
         kx = start_x + int(info["x"] * (key_width + key_gap))
         ky = keys_start_y + int(info["y"] * (key_height + key_gap))
 
-        # Determine key color (special handling for Layer 6 police theme)
+        # Determine key color (special handling for themed layers)
         key_bg = bg_color
         key_border = border_color
-        if layer_num == 6 and info["y"] == 0:  # Top row only
+        if layer_num == 6 and info["y"] == 0:  # Layer 6 police theme - top row only
             if info["x"] <= 1:  # Top-left corner (first 2 keys on left)
                 key_bg = L6_RED
                 key_border = L6_RED_BORDER
             elif info["x"] >= 10:  # Top-right corner (last 2 keys on right)
                 key_bg = L6_BLUE
                 key_border = L6_BLUE_BORDER
+        elif layer_num == 1 and info["y"] == 0:  # Layer 1 flash theme - top row only
+            if info["x"] <= 1:  # Top-left corner (first 2 keys on left)
+                key_bg = L1_PINK
+                key_border = L1_PINK_BORDER
+            elif info["x"] >= 10:  # Top-right corner (last 2 keys on right)
+                key_bg = L1_CYAN
+                key_border = L1_CYAN_BORDER
+        elif layer_num == 7 and info["y"] == 0:  # Layer 7 rainbow theme - top row only
+            if info["x"] == 0:
+                key_bg = L7_RAINBOW[0]
+                key_border = L7_RAINBOW_BORDER[0]
+            elif info["x"] == 1:
+                key_bg = L7_RAINBOW[1]
+                key_border = L7_RAINBOW_BORDER[1]
+            elif info["x"] == 10:
+                key_bg = L7_RAINBOW[2]
+                key_border = L7_RAINBOW_BORDER[2]
+            elif info["x"] == 11:
+                key_bg = L7_RAINBOW[3]
+                key_border = L7_RAINBOW_BORDER[3]
 
         label = simplify_key(key_code, layer_num)
         if label:  # Only draw if there's a label

@@ -17,7 +17,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 # Layer colors matching the RGB settings in keymap.c
 LAYER_COLORS = {
     0: (0.9, 0.9, 0.9),  # White/Light gray (Base)
-    1: (0.6, 0.9, 0.9),  # Cyan (Original)
+    1: (0.95, 0.95, 0.95),  # White
     2: (0.7, 1.0, 0.7),  # Green (Arrow)
     3: (1.0, 1.0, 0.7),  # Yellow (Mouse)
     4: (1.0, 0.5, 0.0),  # Orange (One-Hand)

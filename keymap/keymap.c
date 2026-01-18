@@ -184,6 +184,7 @@ const uint16_t PROGMEM pgdn_combo[] = {KC_C, KC_V, COMBO_END};
 const uint16_t PROGMEM xv_combo[] = {KC_X, KC_V, COMBO_END};
 const uint16_t PROGMEM zv_combo[] = {TD(TD_Z_LAYER), KC_V, COMBO_END};
 const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
+const uint16_t PROGMEM alt_home_combo[] = {TD(TD_Z_LAYER), KC_C, COMBO_END};
 
 combo_t key_combos[] = {
     COMBO(left_combo, KC_LEFT),   COMBO(up_combo, KC_UP),
@@ -191,7 +192,7 @@ combo_t key_combos[] = {
     COMBO(ad_combo, KC_DEL),
     COMBO(home_combo, KC_HOME),   COMBO(pgup_combo, KC_PGUP),
     COMBO(pgdn_combo, KC_PGDN),   COMBO(xv_combo, C(S(KC_V))),
-    COMBO(zv_combo, KC_END),
+    COMBO(zv_combo, KC_END),      COMBO(alt_home_combo, LALT(KC_HOME)),
     COMBO(caps_combo, KC_CAPS),
 };
 
@@ -845,6 +846,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
       is_sync_logging_enabled = !is_sync_logging_enabled;
       uprintf("[%lu.%03lu] Sync Heartbeat: %s\n", sec, ms, is_sync_logging_enabled ? "ON" : "OFF");
+      layer_move(0);
     }
     return false;
   case KC_PRINT_STATS:
