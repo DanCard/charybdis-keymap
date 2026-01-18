@@ -8,7 +8,6 @@ bool is_sniping_active = false;
 bool is_fast_mode_active = false;
 bool mouse_is_locked = false;
 bool is_jitter_filter_active = false;
-bool limit_jitter_filter_messages = true;
 bool auto_mouse_on = false;
 uint16_t auto_mouse_timer = 0;
 uint16_t auto_mouse_timeout = 1500; // Default (matches AUTO_MOUSE_TIME in config.h)
@@ -165,7 +164,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       if (jitter_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
         static uint32_t last_jitter_log = 0;
         // Apply logging throttle (default 500ms)
-        if (limit_jitter_filter_messages && timer_elapsed32(last_jitter_log) > 500) {
+        if (timer_elapsed32(last_jitter_log) > 500) {
           LOG_TIME();
           uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d)\033[0m\n", x, y, jitter_streak);
           last_jitter_log = timer_read32();
@@ -195,6 +194,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       movement_streak++;
       if (movement_streak > 1) { // Require 2 consecutive movement events
         // Only activate layer for significant movement
+        uprintf("Mouse Streak > 1 (x=%d, y=%d). Master: %d. L3: %d\n", x, y, is_keyboard_master(), layer_state_is(3));
         if (is_keyboard_master()) {
              // Only activate Auto Mouse if Layer 3 isn't already active (e.g. manually locked)
              if (!layer_state_is(3)) {

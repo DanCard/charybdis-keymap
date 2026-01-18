@@ -14,12 +14,7 @@ This repository contains the custom QMK firmware for a BastardKB Charybdis 4x6 s
 ### Build Firmware
 **CRITICAL:** This project targets the **Elite-Pi (RP2040)** controller. You MUST use the `CONVERT_TO=elite_pi` flag. The default target in QMK is for AVR (Elite-C) and will not work.
 
-**Quick Build:**
-```bash
-./build.sh
-```
-
-**Manual Build:**
+**Compile Command:**
 ```bash
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```

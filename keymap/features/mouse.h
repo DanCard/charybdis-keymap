@@ -7,7 +7,6 @@ extern bool is_sniping_active;
 extern bool is_fast_mode_active;
 extern bool mouse_is_locked;
 extern bool is_jitter_filter_active;
-extern bool limit_jitter_filter_messages;
 extern bool is_selection_locked;
 extern bool auto_mouse_on;
 extern uint16_t auto_mouse_timer;

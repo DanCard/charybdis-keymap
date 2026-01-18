@@ -20,16 +20,10 @@ The keymap source files are stored in the `keymap/` directory of this repository
 
 ## 2. Building the Firmware
 
-### Recommended: Quick Build
-Use the provided script in the root directory:
-```bash
-./build.sh
-```
+### Build Command
+**WARNING:** You MUST include the `CONVERT_TO=elite_pi` flag. Without it, QMK will compile for AVR (Elite-C), and the firmware will be incompatible with your RP2040 hardware.
 
-### Manual Build
-If you need to pass extra flags:
 ```bash
-cd qmk_firmware
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```
 

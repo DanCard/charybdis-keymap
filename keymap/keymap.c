@@ -24,8 +24,11 @@ void layer_history_pop(void) {
   if (history_head > 0) {
     history_head--;
     target_state = layer_history[history_head];
+    snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "Return: Restore %lu (Head %u)", (unsigned long)target_state, history_head);
+  } else {
+    target_state = 0;
+    snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "Return: Fallback to L0 (History Empty)");
   }
-  snprintf(layer_reason_buffer, sizeof(layer_reason_buffer), "Return: Restore %lu (Head %u)", (unsigned long)target_state, history_head);
   layer_change_reason = layer_reason_buffer;
   is_popping_layer = true;
   layer_state_set(target_state);
@@ -197,7 +200,6 @@ combo_t key_combos[] = {
 };
 
 bool is_fast_mouse = false;
-bool is_scroll_mode = false;
 
 static uint32_t last_key_time = 0;
 
@@ -238,6 +240,12 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   if (layer == 3) {
     uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
             pointing_device_get_cpi());
+  } else if (prev_layer == 3) {
+    // Automatically disable drag scroll when leaving Layer 3
+    if (charybdis_get_pointer_dragscroll_enabled()) {
+      charybdis_set_pointer_dragscroll_enabled(false);
+      uprintf("[%lu.%03lu] Exiting Layer 3: Drag Scroll OFF\n", sec, ms);
+    }
   }
   
   update_layer_stats(layer);
@@ -360,27 +368,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case KC_END:
       uprintf("[%lu.%03lu] END (diff %lu)\n", sec, ms, diff);
       break;
-    }
-  }
-
-  if (is_scroll_mode && record->event.pressed) {
-    switch (keycode) {
-    case KC_MS_FAST_UP:
-    case MS_UP:
-      tap_code(MS_WHLU);
-      return false;
-    case KC_MS_FAST_DOWN:
-    case MS_DOWN:
-      tap_code(MS_WHLD);
-      return false;
-    case KC_MS_FAST_LEFT:
-    case MS_LEFT:
-      tap_code(MS_WHLL);
-      return false;
-    case KC_MS_FAST_RIGHT:
-    case MS_RGHT:
-      tap_code(MS_WHLR);
-      return false;
     }
   }
 
@@ -766,7 +753,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       is_day_mode = true;
       sync_needed = true;
       uprintf("[%lu.%03lu] Day Mode: Brightness set to 225\n", sec, ms);
-      layer_move(0);
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   case KC_NIGHT:
@@ -777,7 +765,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       is_day_mode = false;
       sync_needed = true;
       uprintf("[%lu.%03lu] Night Mode: Brightness set to 16\n", sec, ms);
-      layer_move(0);
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   case KC_FLASHLIGHT:
@@ -828,12 +817,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         current_config &= ~0x0080; // Clear bit 7
       }
       eeconfig_update_user(current_config);
-    }
-    return false;
-  case KC_JITTER_LOG:
-    if (record->event.pressed) {
-      limit_jitter_filter_messages = !limit_jitter_filter_messages;
-      uprintf("[%lu.%03lu] Jitter Logging Limit (500ms): %s\n", sec, ms, limit_jitter_filter_messages ? "ON" : "OFF");
       layer_history_pop();
       rgb_matrix_indicators_user();
     }
@@ -843,7 +826,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uint32_t uptime_min = timer_read32() / 60000;
       uprintf("Uptime: %lu minutes\n", (unsigned long)uptime_min);
       debug_dump_sync_state();
-      layer_move(0);
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   case KC_FILT_LOG:
@@ -851,19 +835,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       is_sync_logging_enabled = !is_sync_logging_enabled;
       uint32_t uptime_min = timer_read32() / 60000;
       uprintf("[%lu.%03lu] Sync Heartbeat: %s (Uptime: %lu min)\n", sec, ms, is_sync_logging_enabled ? "ON" : "OFF", (unsigned long)uptime_min);
-      layer_move(0);
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   case KC_PRINT_STATS:
     if (record->event.pressed) {
       print_statistics_now();
-      layer_move(0);
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   case KC_PRINT_STATS_GRID:
     if (record->event.pressed) {
       print_statistics_grid();
-      layer_move(0);
+      layer_history_pop();
+      rgb_matrix_indicators_user();
     }
     return false;
   // Layer 3 Thumb Logic: Tap = Layer Change, Hold = Switch Layer
@@ -1151,7 +1138,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
          [6] = LAYOUT(
           KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,   KC_DUMP_LOG, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_FILT_LOG, KC_EXIT  , KC_PSCR,
           KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
-          KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_JITTER_LOG  , KC_EXIT,
+          KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT        , KC_EXIT,
           KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                            KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                     KC_EXIT, KC_EXIT,   KC_EXIT),
