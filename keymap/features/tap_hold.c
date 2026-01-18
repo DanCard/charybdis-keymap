@@ -80,16 +80,16 @@ bool handle_exit_key(uint16_t tap_key, bool pressed) {
     return false;
 }
 
-// Layer 3 thumb key helper (tap=exit, hold=switch layer)
-bool handle_l3_thumb(uint8_t th_idx, uint8_t hold_layer, bool pressed) {
+// Layer 3 thumb key helper (tap=switch layer, hold=switch layer)
+bool handle_l3_thumb(uint8_t th_idx, uint8_t tap_layer, uint8_t hold_layer, bool pressed) {
     if (pressed) {
         th[th_idx].held = true;
         th[th_idx].timer = timer_read();
     } else {
         th[th_idx].held = false;
         if (timer_elapsed(th[th_idx].timer) < LONG_PRESS_TIMEOUT) {
-            layer_change_reason = "L3 Thumb Tap (Exit)";
-            layer_move(0);
+            layer_change_reason = "L3 Thumb Tap";
+            layer_move(tap_layer);
         } else {
             layer_change_reason = "L3 Thumb Hold";
             layer_move(hold_layer);

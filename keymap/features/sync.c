@@ -15,6 +15,7 @@ uint16_t current_random_seed = 0;
 uint16_t slave_task_counter = 0;
 bool slave_mouse_active = false;
 bool is_caps_lock_on = false;
+bool is_sync_logging_enabled = true;
 
 // External function required for logging
 extern const char *get_rgb_mode_name(uint8_t mode);
@@ -134,7 +135,7 @@ void housekeeping_task_sync(void) {
     }
 
     // Periodic heartbeat - show sync health every HEARTBEAT_INTERVAL
-    if (timer_elapsed32(last_heartbeat_time) > HEARTBEAT_INTERVAL) {
+    if (is_sync_logging_enabled && timer_elapsed32(last_heartbeat_time) > HEARTBEAT_INTERVAL) {
       last_heartbeat_time = timer_read32();
       uint32_t since_sync = timer_elapsed32(last_sync_time);
       LOG_TIME();

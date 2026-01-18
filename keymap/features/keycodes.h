@@ -60,6 +60,7 @@ enum custom_keycodes {
   KC_SET_LEFT,
   KC_SET_RIGHT,
   KC_DEBUG_SYNC,  // Debug key to dump sync state
+  KC_SYNC_LOG,    // Toggle Sync Heartbeat Logging
   KC_JITTER,      // Toggle Mouse Jitter Filter
   KC_DAY,         // Set brightness to Day level
   KC_NIGHT,       // Set brightness to Night level
@@ -68,7 +69,7 @@ enum custom_keycodes {
   KC_5_L5,        // Tap: 5, Hold: Layer 5 (Settings)
   KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
   KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
-  KC_L3_EXT_TO1,  // Layer 3 Left Thumb: Tap Exit, Hold TO(1)
+  KC_L3_EXT_TO1,  // Layer 3 Left Thumb: Tap TO(1), Hold TO(6)
   KC_EXIT_TO3,    // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
   KC_PRINT_STATS, // Print statistics histogram immediately
   KC_PRINT_STATS_GRID, // Print statistics in a 2D grid format

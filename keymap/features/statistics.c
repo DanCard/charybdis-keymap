@@ -303,6 +303,13 @@ void print_statistics_grid(void) {
 void matrix_scan_statistics(void) {
     if (timer_elapsed32(last_print_time) > PRINT_INTERVAL) {
         last_print_time = timer_read32();
-        print_statistics_grid();
+        static bool print_grid_next = true;
+        
+        if (print_grid_next) {
+            print_statistics_grid();
+        } else {
+            print_statistics_now();
+        }
+        print_grid_next = !print_grid_next;
     }
 }

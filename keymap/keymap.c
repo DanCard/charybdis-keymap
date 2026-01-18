@@ -726,7 +726,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case DPI_MOD:
   case DPI_RMOD:
     if (record->event.pressed) {
-      uprintf("DPI Change Requested. Current DPI: %u\n", charybdis_get_pointer_default_dpi());
+      uprintf("[%lu.%03lu] DPI Change Requested. Current DPI: %u\n", sec, ms, charybdis_get_pointer_default_dpi());
     }
     return true; // Allow process_record_kb to handle the actual DPI change
   case KC_MS_TMO_INC:
@@ -735,7 +735,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (auto_mouse_timeout > 10000) {
         auto_mouse_timeout = 10000; // Max 10 seconds
       }
-      uprintf("Auto-mouse timeout: %u ms\n", auto_mouse_timeout);
+      uprintf("[%lu.%03lu] Auto-mouse timeout: %u ms\n", sec, ms, auto_mouse_timeout);
     }
     return false;
   case KC_MS_TMO_DEC:
@@ -746,7 +746,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (auto_mouse_timeout < 500) {
         auto_mouse_timeout = 500; // Min 0.5 seconds
       }
-      uprintf("Auto-mouse timeout: %u ms\n", auto_mouse_timeout);
+      uprintf("[%lu.%03lu] Auto-mouse timeout: %u ms\n", sec, ms, auto_mouse_timeout);
     }
     return false;
   // KC_P_FRAC, KC_PINWHEEL now handled by RGB mode table lookup
@@ -757,7 +757,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 225);
       is_day_mode = true;
       sync_needed = true;
-      uprintf("Day Mode: Brightness set to 225\n");
+      uprintf("[%lu.%03lu] Day Mode: Brightness set to 225\n", sec, ms);
       layer_move(0);
     }
     return false;
@@ -768,7 +768,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 16);
       is_day_mode = false;
       sync_needed = true;
-      uprintf("Night Mode: Brightness set to 16\n");
+      uprintf("[%lu.%03lu] Night Mode: Brightness set to 16\n", sec, ms);
       layer_move(0);
     }
     return false;
@@ -782,12 +782,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         handle_rgb_mode_change(RGB_MATRIX_SOLID_COLOR);
         rgb_matrix_sethsv_noeeprom(HSV_WHITE);
         is_flashlight = true;
-        uprintf("Flashlight ON\n");
+        uprintf("[%lu.%03lu] Flashlight ON\n", sec, ms);
       } else {
         handle_rgb_mode_change(saved_rgb_mode);
         rgb_matrix_sethsv_noeeprom(saved_rgb_h, saved_rgb_s, saved_rgb_v);
         is_flashlight = false;
-        uprintf("Flashlight OFF\n");
+        uprintf("[%lu.%03lu] Flashlight OFF\n", sec, ms);
       }
       sync_needed = true;
     }
@@ -828,6 +828,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       layer_move(0);
     }
     return false;
+  case KC_SYNC_LOG:
+    if (record->event.pressed) {
+      is_sync_logging_enabled = !is_sync_logging_enabled;
+      uprintf("[%lu.%03lu] Sync Heartbeat: %s\n", sec, ms, is_sync_logging_enabled ? "ON" : "OFF");
+    }
+    return false;
   case KC_PRINT_STATS:
     if (record->event.pressed) {
       print_statistics_now();
@@ -840,11 +846,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       layer_move(0);
     }
     return false;
-  // Layer 3 Thumb Logic: Tap = Exit, Hold = Switch Layer
-  case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 4, record->event.pressed);
-  case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 2, record->event.pressed);
-  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 6, record->event.pressed);
-  case KC_EXIT_TO3: return handle_l3_thumb(TH_EXIT_TO3, 3, record->event.pressed);
+  // Layer 3 Thumb Logic: Tap = Layer Change, Hold = Switch Layer
+  case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 0, 4, record->event.pressed);
+  case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 0, 2, record->event.pressed);
+  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, 6, record->event.pressed);
+  case KC_EXIT_TO3: return handle_l3_thumb(TH_EXIT_TO3, 0, 3, record->event.pressed);
 
   // Dual-function Arrow/Number keys
   case KC_2_LEFT:
@@ -1107,7 +1113,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_EXIT  , KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN2, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT       , KC_EXIT, KC_EXIT,
                  KC_MS_FAST_LEFT, MS_LEFT, KC_SEL_LOCK, MS_RGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, DRGSCRL, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
                  KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, MS_BTN3, KC_EXIT,   KC_EXIT, KC_EXIT , MS_BTN3, MS_BTN3       , MS_BTN3, KC_RSFT,
-                                      KC_L3_EXT_TO4, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_EXIT,
+                                      MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_EXIT,
                                                             KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     // Layer 4: left hand layer                                                            
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
@@ -1125,7 +1131,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                               KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
      // Settings Layer - accessed via long press 5
      [6] = LAYOUT(
-      KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_EXIT  , KC_EXIT  , KC_PSCR,
+      KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,   KC_DEBUG_SYNC, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_SYNC_LOG, KC_EXIT  , KC_PSCR,
       KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,   KC_FIRE      , KC_EXIT       , KC_EXIT            , KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
       KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,   KC_EXIT      , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT  , KC_EXIT,
       KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,

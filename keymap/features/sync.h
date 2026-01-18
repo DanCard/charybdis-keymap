@@ -42,6 +42,7 @@ extern bool is_jitter_filter_active;
 extern bool is_caps_lock_on;
 extern bool is_day_mode;
 extern bool sync_needed;
+extern bool is_sync_logging_enabled;
 extern bool slave_first_sync;
 extern uint16_t current_random_seed;
 extern uint16_t slave_task_counter;
