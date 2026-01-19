@@ -176,7 +176,8 @@ bool housekeeping_rgb_indicators(void) {
 
   uint8_t layer = get_highest_layer(layer_state);
   switch (layer) {
-  case 1: {
+  case 1:
+  case 7: {
     bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {
       // Left Arrows: LEFT(4), RIGHT(11), UP(28), DOWN(25)

@@ -254,8 +254,9 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
-  // Only apply on Layer 1
-  if (get_highest_layer(layer_state) != 1)
+  // Only apply on Layer 1 or Layer 7
+  uint8_t layer = get_highest_layer(layer_state);
+  if (layer != 1 && layer != 7)
     return true;
 
   // Only on press
@@ -1131,6 +1132,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
           KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                            KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                     KC_EXIT, KC_EXIT,   KC_EXIT),
+            // Layer 7: copy of Layer 1
+            [7] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0_TO0, KC_UP,                     KC_TAB , KC_Q_Z, KC_W_X  , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
+                     KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
+                     KC_LCTL, KC_LEFT, KC_RIGHT, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                                              KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
+                                                              KC_DOWN, KC_BSPC,   KC_BSPC),
 
 };
 
