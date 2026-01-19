@@ -129,7 +129,7 @@ def draw_key(draw, x, y, width, height, label, bg_color, border_color):
     for line in lines:
         l = len(line)
         if l <= 1:
-            font_size = 46
+            font_size = 40
         elif l <= 3:
             font_size = 38
         elif l <= 4:
@@ -165,7 +165,8 @@ def draw_key(draw, x, y, width, height, label, bg_color, border_color):
         text_width = bbox[2] - bbox[0]
         text_x = x + (width - text_width) // 2
 
-        draw.text((text_x, current_y), line, fill=text_color, font=font)
+        # Adjust for font's bounding box offset to properly center vertically
+        draw.text((text_x, current_y - bbox[1]), line, fill=text_color, font=font)
         current_y += h
 
 

@@ -181,6 +181,7 @@ CUSTOM_KEY_MAP = {
     "KC_V_TG5": "V\nTG5",
     "KC_Q_L4": "Q\nL4",
     "KC_Q_Z": "Q\nZ",
+    "KC_W_X": "W\nX",
     "KC_L1_L3": "L1\nL3",
     "KC_R_L2": "L2\nTgl",
     "KC_ENT_MO4": "Enter\nL4",
@@ -637,11 +638,11 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
     # Layer 1: Arrow keys theme (pink for left, cyan for right)
     if layer_num == 1:
         # Left side arrows (pink):
-        # - Row 3, leftmost 2 keys (LEFT, RIGHT at x=0,1)
+        # - Row 3, keys at x=1,2 (LEFT, RIGHT after CTRL at x=0)
         # - Thumb UP at y=4, x=5 (after shift)
         # - Thumb DOWN at y=5, x=4 (after shift)
         is_left_arrow = (
-            (y == 3 and x < 2) or      # LEFT, RIGHT on bottom row
+            (y == 3 and 1 <= x <= 2) or      # LEFT, RIGHT on bottom row
             (y == 4 and 4.5 < x < 5.5) or  # UP on thumb top row (x=5)
             (y == 5 and 3.5 < x < 4.5)     # DOWN on thumb bottom row (x=4)
         )

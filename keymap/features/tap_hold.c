@@ -336,4 +336,9 @@ void housekeeping_tap_hold(void) {
     register_code(KC_Z);
     TH_TRIGGER(TH_Q_Z);
   }
+  if (TH_CHECK(TH_W_X)) {
+    uprintf(">>> KC_W_X Hold Triggered -> X\n");
+    register_code(KC_X);
+    TH_TRIGGER(TH_W_X);
+  }
 }

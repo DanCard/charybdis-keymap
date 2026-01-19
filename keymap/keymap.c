@@ -329,25 +329,28 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
   } else {
     // Left Side Arrows
     switch (keycode) {
-    case KC_RIGHT: // Position of KC_Z (L0: TD_Z_LAYER -> Z)
+    case KC_LEFT: // Position of KC_Z (L0: TD_Z_LAYER -> Z)
       if (shift_held) {
-        // Shift + Z -> Z
+        // Shift + LEFT -> Z (for Shift+Z)
         tap_code(KC_Z);
         return false;
       }
       if (ctrl_held) {
-        // Ctrl + Arrow -> Unshifted 'z'
-        unregister_mods(MOD_MASK_CTRL);
+        // Ctrl + LEFT -> Ctrl+Z (undo)
         tap_code(KC_Z);
-        register_mods(mods & MOD_MASK_CTRL);
         return false;
       }
       break;
-      
-    case KC_LEFT: // Position of KC_LCTL
-      if (shift_held || ctrl_held) {
-        // Map to LCTL (Modifier tap usually does nothing, but preserving intent)
-        tap_code(KC_LCTL); 
+
+    case KC_RIGHT: // Position of KC_X (L0: X)
+      if (shift_held) {
+        // Shift + RIGHT -> X (for Shift+X)
+        tap_code(KC_X);
+        return false;
+      }
+      if (ctrl_held) {
+        // Ctrl + RIGHT -> Ctrl+X (cut)
+        tap_code(KC_X);
         return false;
       }
       break;
@@ -1028,6 +1031,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return false;
 
+  case KC_W_X:
+    if (record->event.pressed) {
+      th[TH_W_X].held = true;
+      th[TH_W_X].triggered = false;
+      th[TH_W_X].timer = timer_read();
+    } else {
+      th[TH_W_X].held = false;
+      if (!th[TH_W_X].triggered) {
+        tap_code(KC_W);
+      } else {
+        unregister_code(KC_X);
+      }
+    }
+    return false;
+
   default:
     return true;
   }
@@ -1074,10 +1092,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
             // Layer 1: base + arrows
-            [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0_TO0, KC_UP,                     KC_TAB , KC_Q_Z, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
+            [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0_TO0, KC_UP,                     KC_TAB , KC_Q_Z, KC_W_X  , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
                      KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
-                     KC_LEFT, KC_RIGHT, KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
-                                              KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_RCTL, KC_ENT_L2,
+                     KC_LCTL, KC_LEFT, KC_RIGHT, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                                              KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
                                                               KC_DOWN, KC_BSPC,   KC_BSPC),
         [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
                      KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
