@@ -78,11 +78,6 @@ Simply edit the files in `keymap/` (`keymap.c`, `config.h`, `rules.mk`). The sym
 
 ### Compile Command
 
-**Quick Build (Recommended):**
-```bash
-./build.sh
-```
-
 **Manual Command:**
 ```bash
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi

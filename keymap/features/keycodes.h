@@ -73,22 +73,9 @@ enum custom_keycodes {
   KC_EXIT_TO3,    // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
   KC_PRINT_STATS, // Print statistics histogram immediately
   KC_PRINT_STATS_GRID, // Print statistics in a 2D grid format
-  KC_2_LEFT,      // Tap: Left, Shift+Tap: 2
-  KC_3_UP,        // Tap: Up,   Shift+Tap: 3
-  KC_4_DOWN,      // Tap: Down, Shift+Tap: 4
-  KC_5_RIGHT,     // Tap: Right, Shift+Tap: 5
-  KC_6_LEFT,      // Tap: Left, Shift+Tap: 6
-  KC_UP_7,        // Tap: Up,   Shift+Tap: 7
-  KC_DOWN_8,      // Tap: Down, Shift+Tap: 8
-  KC_RIGHT_9,     // Tap: Right, Shift+Tap: 9
-  KC_LEFT_2,      // Tap: Left,  Shift+Tap: 2, Hold: TO(2)
-  KC_UP_3,        // Tap: Up,    Shift+Tap: 3, Hold: TO(3)
-  KC_DOWN_4,      // Tap: Down,  Shift+Tap: 4, Hold: TO(4)
-  KC_RIGHT_5,     // Tap: Right, Shift+Tap: 5, Hold: TO(5)
-  KC_LEFT_6,      // Tap: Left,  Shift+Tap: 6, Hold: TO(6)
   KC_6_L6,        // Tap: 6, Hold: Layer 6
   KC_0_TO0,       // Tap: 0, Hold: TO(0)
   KC_SEL_LOCK,    // Toggle Left Click Hold (Selection Lock)
   KC_QUES_SLSH,   // Tap: ?, Shift+Tap: /
-  KC_7_L7         // Tap: 7, Hold: Layer 7
+  KC_Q_Z          // Tap: Q, Hold: Z
 };

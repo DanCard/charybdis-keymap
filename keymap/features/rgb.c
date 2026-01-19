@@ -177,15 +177,21 @@ bool housekeeping_rgb_indicators(void) {
   uint8_t layer = get_highest_layer(layer_state);
   switch (layer) {
   case 1: {
+    bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {
-      // No indicators on left
+      // Left Keys: LCTL(3), Q(6), Thumbs(24-28)
+      static const uint8_t left_leds[] = {3, 6, 24, 25, 26, 27, 28};
+      for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
+         if (phase) rgb_matrix_set_color(left_leds[i], 255, 0, 255); // Pink
+         else       rgb_matrix_set_color(left_leds[i], 0, 255, 0);   // Green
+      }
     } else {
-      // Arrow keys (Up, Down, Right, Left)
-      // Up: 0, Down: 1, Right: 2, Left: 5
-      rgb_matrix_set_color(0, 0, 0, 255);
-      rgb_matrix_set_color(1, 0, 0, 255);
-      rgb_matrix_set_color(2, 0, 0, 255);
-      rgb_matrix_set_color(5, 0, 0, 255);
+      // Right Keys: 0, 1, 2, 5 (Existing Arrows)
+      static const uint8_t right_leds[] = {0, 1, 2, 5};
+      for (int i = 0; i < sizeof(right_leds) / sizeof(right_leds[0]); i++) {
+         if (phase) rgb_matrix_set_color(right_leds[i], 0, 255, 0);   // Green
+         else       rgb_matrix_set_color(right_leds[i], 255, 0, 255); // Pink
+      }
     }
     break;
   }

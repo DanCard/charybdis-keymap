@@ -107,7 +107,6 @@ static const char* get_key_name(uint16_t kc) {
         // Custom Keycodes from features/keycodes.h
         case KC_Q_L4:      return "Q(L4)";
         case KC_6_L6:      return "6(L6)";
-        case KC_7_L7:      return "7(L7)";
         case KC_1_L1:      return "1(L1)";
         case KC_2_L2:      return "2(L2)";
         case KC_3_L3:      return "3(L3)";

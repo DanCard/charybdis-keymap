@@ -149,7 +149,7 @@ KEY_LABELS = {
     "KC_P9": "Num 9",
     "QK_BOOT": "BOOT",
     "QK_CLEAR_EEPROM": "EE\nCLR",
-    "QK_GESC": "Esc\n~\n`",
+    "QK_GESC": "Esc\n~",
     "MS_BTN1": "Left\nClick",
     "MS_BTN2": "Right\nClick",
     "MS_BTN3": "Middle\nClick",
@@ -180,6 +180,7 @@ CUSTOM_KEY_MAP = {
     "KC_X_TG2": "X\nTG2",
     "KC_V_TG5": "V\nTG5",
     "KC_Q_L4": "Q\nL4",
+    "KC_Q_Z": "Q\nZ",
     "KC_L1_L3": "L1\nL3",
     "KC_R_L2": "L2\nTgl",
     "KC_ENT_MO4": "Enter\nL4",
@@ -370,15 +371,17 @@ def simplify_key(key_code, layer_num=None):
             return "0\nL0"
 
     # Special handling for Layer 1
+    # Note: KC_1_L1 hold on L1 goes to L0 (toggle off), but KC_2/3/4 hold
+    # on L0 or L1 goes to L2/3/4 respectively (tap_hold.c checks layer_state <= 1)
     if layer_num == 1:
         if key_code == "KC_1_L1":
             return "1\nL0"
         if key_code == "KC_2_L2":
-            return "2\nL0"
+            return "2\nL2"
         if key_code == "KC_3_L3":
-            return "3\nL0"
+            return "3\nL3"
         if key_code == "KC_4_L4":
-            return "4\nL0"
+            return "4\nL4"
 
     # Special handling for Layer 2
     if layer_num == 2:
@@ -623,7 +626,34 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
     Get the background and border colors for a key based on layer themes.
     Returns (bg_color, border_color) or (None, None) if no special theme applies.
     """
-    if y != 0:  # Only top row gets themed colors
+    # Layer 1: Arrow keys police theme (pink/cyan)
+    # Right side original x values: 7,8,9,10,11 - only x>=11 gets shifted to ~6.5
+    # So rightmost is either x>=11 (unshifted) or 6<x<7 (shifted)
+    if layer_num == 1:
+        # Left side arrows (pink): row 3 leftmost 2 keys (LEFT, RIGHT at x<2)
+        # Thumb arrows: row 4-5 specific positions for UP, DOWN
+        is_left_arrow = (y == 3 and x < 2) or (y == 4 and 2 <= x <= 3) or (y == 5 and 2 <= x <= 4)
+
+        # Right side arrows (cyan): rightmost column(s) only
+        # Rightmost key: x >= 11 (unshifted) or 6 < x < 8 (shifted from x=11)
+        # Row 0-1: only rightmost (UP, DOWN)
+        # Row 2: rightmost 2 (LEFT at x=10, RIGHT at x=11 or shifted)
+        is_rightmost = (x >= 11) or (6 < x < 8)
+        is_second_rightmost = (x >= 10) or (5 < x < 6.5)
+
+        is_right_arrow = ((y == 0 or y == 1) and is_rightmost) or (y == 2 and is_second_rightmost)
+
+        if is_left_arrow:
+            if use_255:
+                return L1_PINK_255, L1_PINK_BORDER
+            return L1_PINK_NORM, None
+        elif is_right_arrow:
+            if use_255:
+                return L1_CYAN_255, L1_CYAN_BORDER
+            return L1_CYAN_NORM, None
+        return None, None
+
+    if y != 0:  # Only top row gets themed colors for other layers
         return None, None
 
     if layer_num == 6:  # Police theme
@@ -635,16 +665,6 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
             if use_255:
                 return L6_BLUE_255, L6_BLUE_BORDER
             return L6_BLUE_NORM, None
-
-    elif layer_num == 1:  # Flash theme (pink/cyan)
-        if x <= 1:
-            if use_255:
-                return L1_PINK_255, L1_PINK_BORDER
-            return L1_PINK_NORM, None
-        elif x >= 10:
-            if use_255:
-                return L1_CYAN_255, L1_CYAN_BORDER
-            return L1_CYAN_NORM, None
 
     elif layer_num == 7:  # Rainbow theme
         if x == 0:

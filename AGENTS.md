@@ -5,7 +5,6 @@ Firmware for BastardKB Charybdis 4x6 with trackball, using QMK Firmware. Custom 
 ## Build & Development Commands
 
 ```bash
-./build.sh                                          # Quick build for Elite-Pi (RP2040)
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```
 Output: `qmk_firmware/bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2`

@@ -859,183 +859,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, 6, record->event.pressed);
   case KC_EXIT_TO3: return handle_l3_thumb(TH_EXIT_TO3, 0, 3, record->event.pressed);
 
-  // Dual-function Arrow/Number keys
-  case KC_2_LEFT:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_2);
-        register_mods(mods);
-      } else {
-        register_code(KC_LEFT);
-      }
-    } else {
-      unregister_code(KC_LEFT);
-    }
-    return false;
-  case KC_3_UP:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_3);
-        register_mods(mods);
-      } else {
-        register_code(KC_UP);
-      }
-    } else {
-      unregister_code(KC_UP);
-    }
-    return false;
-  case KC_4_DOWN:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_4);
-        register_mods(mods);
-      } else {
-        register_code(KC_DOWN);
-      }
-    } else {
-      unregister_code(KC_DOWN);
-    }
-    return false;
-  case KC_5_RIGHT:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_5);
-        register_mods(mods);
-      } else {
-        register_code(KC_RIGHT);
-      }
-    } else {
-      unregister_code(KC_RIGHT);
-    }
-    return false;
-  case KC_6_LEFT:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_6);
-        register_mods(mods);
-      } else {
-        register_code(KC_LEFT);
-      }
-    } else {
-      unregister_code(KC_LEFT);
-    }
-    return false;
-  case KC_LEFT_2:
-    if (!record->event.pressed) {
-      if (!th[TH_K2_TO2].triggered) {
-        if (get_mods() & MOD_MASK_SHIFT) {
-          uint8_t mods = get_mods();
-          unregister_mods(MOD_MASK_SHIFT);
-          tap_code(KC_2);
-          register_mods(mods);
-        } else {
-          tap_code(KC_LEFT);
-        }
-      }
-    }
-    return false;
-  case KC_UP_3:
-    if (!record->event.pressed) {
-      if (!th[TH_K3_TO3].triggered) {
-        if (get_mods() & MOD_MASK_SHIFT) {
-          uint8_t mods = get_mods();
-          unregister_mods(MOD_MASK_SHIFT);
-          tap_code(KC_3);
-          register_mods(mods);
-        } else {
-          tap_code(KC_UP);
-        }
-      }
-    }
-    return false;
-  case KC_DOWN_4:
-    if (!record->event.pressed) {
-      if (!th[TH_K4_TO4].triggered) {
-        if (get_mods() & MOD_MASK_SHIFT) {
-          uint8_t mods = get_mods();
-          unregister_mods(MOD_MASK_SHIFT);
-          tap_code(KC_4);
-          register_mods(mods);
-        } else {
-          tap_code(KC_DOWN);
-        }
-      }
-    }
-    return false;
-  case KC_RIGHT_5:
-    if (!record->event.pressed) {
-      if (!th[TH_K5_TO5].triggered) {
-        if (get_mods() & MOD_MASK_SHIFT) {
-          uint8_t mods = get_mods();
-          unregister_mods(MOD_MASK_SHIFT);
-          tap_code(KC_5);
-          register_mods(mods);
-        } else {
-          tap_code(KC_RIGHT);
-        }
-      }
-    }
-    return false;
-  case KC_LEFT_6:
-    if (!record->event.pressed) {
-      if (!th[TH_K6_TO6].triggered) {
-        if (get_mods() & MOD_MASK_SHIFT) {
-          uint8_t mods = get_mods();
-          unregister_mods(MOD_MASK_SHIFT);
-          tap_code(KC_6);
-          register_mods(mods);
-        } else {
-          tap_code(KC_LEFT);
-        }
-      }
-    }
-    return false;
-  case KC_UP_7:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_7);
-        register_mods(mods);
-      } else {
-        tap_code(KC_UP);
-      }
-    }
-    return false;
-  case KC_DOWN_8:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_8);
-        register_mods(mods);
-      } else {
-        tap_code(KC_DOWN);
-      }
-    }
-    return false;
-  case KC_RIGHT_9:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_9);
-        register_mods(mods);
-      } else {
-        tap_code(KC_RIGHT);
-      }
-    }
-    return false;
+
+
+
+
 
   case KC_0_TO0:
     // ... logic for KC_0_TO0 if needed ...
@@ -1054,6 +881,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             update_mouse_button_state(MS_BTN1, false);
             uprintf("Selection Lock: OFF (BTN1 Released)\n");
         }
+    }
+    return false;
+
+  case KC_Q_Z:
+    if (record->event.pressed) {
+      th[TH_Q_Z].held = true;
+      th[TH_Q_Z].triggered = false;
+      th[TH_Q_Z].timer = timer_read();
+    } else {
+      th[TH_Q_Z].held = false;
+      if (!th[TH_Q_Z].triggered) {
+        tap_code(KC_Q);
+      } else {
+        unregister_code(KC_Z);
+      }
     }
     return false;
 
@@ -1096,18 +938,18 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0, KC_MINS,
+    [0] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
                  KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
             // Layer 1: base + arrows
-            [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0, KC_UP,                     KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
+            [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0_TO0, KC_UP,                     KC_TAB , KC_Q_Z, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
                      KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
-                     KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
-                                              KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
-                                                              KC_LALT, KC_BSPC,   KC_BSPC),
+                     KC_LEFT, KC_RIGHT, KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                                              KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_RCTL, KC_ENT_L2,
+                                                              KC_DOWN, KC_BSPC,   KC_BSPC),
         [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
                      KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
                      KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
@@ -1142,14 +984,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
           KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                            KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                                     KC_EXIT, KC_EXIT,   KC_EXIT),
-    
-        // Layer 7: old arrow base
-        [7] = LAYOUT(QK_GESC, KC_1, KC_2_LEFT, KC_3_UP, KC_4_DOWN, KC_5_RIGHT,   KC_6_LEFT, KC_UP_7, KC_DOWN_8, KC_RIGHT_9, KC_0_TO0, KC_MINS,
-                   KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
-                   KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                   KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
-                                            KC_SPC_L4, KC_ENT_L2, KC_EXIT_TO3,   KC_DEL, KC_ENT_L2,
-                                                            KC_LALT, KC_BSPC,   KC_BSPC),
+
 };
 
 bool rgb_matrix_indicators_user(void) {
