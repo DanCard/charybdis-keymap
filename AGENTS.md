@@ -64,7 +64,7 @@ Each feature: `features/feature_name.h` (prototypes, extern globals, typedefs) +
 ## Git Conventions
 
 **Commit Messages**:
-- **Do NOT** use "feat:" prefix (was overused)
+- **CRITICAL**: Do NOT use "feat:" prefix - user preference
 - Other prefixes like "fix:", "chore:" are acceptable
 - Use descriptive, plain English messages when not using prefixes
 - Examples: "update Layer 1 RGB indicators to show arrow keys on right half", "fix: EEPROM write timing issue", "chore: reorganize Python scripts"
