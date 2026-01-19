@@ -176,8 +176,21 @@ bool housekeeping_rgb_indicators(void) {
 
   uint8_t layer = get_highest_layer(layer_state);
   switch (layer) {
-  case 1:
+  case 1: {
+    // Layer 1: Only left-side arrows (right keyboard is base layer)
+    bool phase = (timer_read() / 500) % 2;
+    if (is_keyboard_left()) {
+      // Left Arrows: LEFT(4), RIGHT(11), UP(28), DOWN(25)
+      static const uint8_t left_leds[] = {4, 11, 28, 25};
+      for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
+         if (phase) rgb_matrix_set_color(left_leds[i], 255, 0, 255); // Pink
+         else       rgb_matrix_set_color(left_leds[i], 0, 255, 0);   // Green
+      }
+    }
+    break;
+  }
   case 7: {
+    // Layer 7: Arrows on both sides (copy of old layer 1)
     bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {
       // Left Arrows: LEFT(4), RIGHT(11), UP(28), DOWN(25)

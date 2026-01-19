@@ -1092,18 +1092,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
-    // Layer 1: base + arrows
-    [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0_TO0, KC_UP,
-              KC_TAB , KC_Q_Z, KC_W_X  , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
-              KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
-              KC_LCTL, KC_LEFT, KC_RIGHT, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
-                                      KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
+            // Layer 1: Right Arrows
+    [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9 , KC_0_TO0  , KC_MINS,
+                 KC_TAB , KC_Q_Z , KC_W_X  , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
+                 KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H  , KC_J , KC_K, KC_L , KC_PLUS_COLON, KC_QUOT,
+                 KC_LCTL, KC_LEFT, KC_RIGHT, KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                                           KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
                                                       KC_DOWN, KC_BSPC,   KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
-                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
-                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
-                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
-                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
+                 KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
+                 KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
+                 KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
+                                         KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     [3] = LAYOUT(
       QK_GESC  , KC_EXIT    , KC_MS_FAST_UP, KC_EXIT, KC_EXIT, QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI       , KC_EXIT, QK_BOOT,
@@ -1134,13 +1134,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,   KC_EXIT  , KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                    KC_EXIT, KC_EXIT, KC_EXIT,   KC_EXIT, KC_EXIT,
                                             KC_EXIT, KC_EXIT,   KC_EXIT),
-            // Layer 7: Right Arrows (copy of Layer 1)
-            [7] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7, KC_8, KC_9, KC_0_TO0,  KC_UP,
-                     KC_TAB , KC_Q_Z, KC_W_X  , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P,  KC_BSLS,
-                     KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                     KC_LCTL, KC_LEFT, KC_RIGHT, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
-                                              KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
-                                                              KC_DOWN, KC_BSPC,   KC_BSPC),
+    // Layer 7: base + arrows
+    [7] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0_TO0, KC_UP,
+                 KC_TAB , KC_Q_Z , KC_W_X  , KC_E   , KC_R   , KC_T   ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
+                 KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
+                 KC_LCTL, KC_LEFT, KC_RIGHT, KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                                           KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
+                                                      KC_DOWN, KC_BSPC,   KC_BSPC),
+
 
 };
 
