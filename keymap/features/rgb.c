@@ -179,14 +179,14 @@ bool housekeeping_rgb_indicators(void) {
   case 1: {
     bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {
-      // Left Keys: LCTL(3), Q(6), Thumbs(24-28)
-      static const uint8_t left_leds[] = {3, 6, 24, 25, 26, 27, 28};
+      // Left Arrows: LEFT(3), RIGHT(4), UP(28), DOWN(25)
+      static const uint8_t left_leds[] = {3, 4, 28, 25};
       for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
          if (phase) rgb_matrix_set_color(left_leds[i], 255, 0, 255); // Pink
          else       rgb_matrix_set_color(left_leds[i], 0, 255, 0);   // Green
       }
     } else {
-      // Right Keys: 0, 1, 2, 5 (Existing Arrows)
+      // Right Arrows: UP(0), DOWN(1), LEFT(2), RIGHT(5)
       static const uint8_t right_leds[] = {0, 1, 2, 5};
       for (int i = 0; i < sizeof(right_leds) / sizeof(right_leds[0]); i++) {
          if (phase) rgb_matrix_set_color(right_leds[i], 0, 255, 0);   // Green

@@ -625,23 +625,39 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
     """
     Get the background and border colors for a key based on layer themes.
     Returns (bg_color, border_color) or (None, None) if no special theme applies.
+
+    Coordinate reference (after shifts applied in parse_info_json):
+    - Left main: x=0-5, y=0-3
+    - Left thumb: y=4 (top row), y=5 (bottom row)
+      - After thumb_shift_left=2.0: UP at x=5 (y=4), DOWN at x=4 (y=5)
+    - Right main: after right_main_shift (4.0 PDF, 4.5 wallpaper)
+      - Rightmost column: x>11 (catches 11.5 wallpaper, 12 PDF)
+      - Second rightmost: x>10
     """
-    # Layer 1: Arrow keys police theme (pink/cyan)
-    # Right side original x values: 7,8,9,10,11 - only x>=11 gets shifted to ~6.5
-    # So rightmost is either x>=11 (unshifted) or 6<x<7 (shifted)
+    # Layer 1: Arrow keys theme (pink for left, cyan for right)
     if layer_num == 1:
-        # Left side arrows (pink): row 3 leftmost 2 keys (LEFT, RIGHT at x<2)
-        # Thumb arrows: row 4-5 specific positions for UP, DOWN
-        is_left_arrow = (y == 3 and x < 2) or (y == 4 and 2 <= x <= 3) or (y == 5 and 2 <= x <= 4)
+        # Left side arrows (pink):
+        # - Row 3, leftmost 2 keys (LEFT, RIGHT at x=0,1)
+        # - Thumb UP at y=4, x=5 (after shift)
+        # - Thumb DOWN at y=5, x=4 (after shift)
+        is_left_arrow = (
+            (y == 3 and x < 2) or      # LEFT, RIGHT on bottom row
+            (y == 4 and 4.5 < x < 5.5) or  # UP on thumb top row (x=5)
+            (y == 5 and 3.5 < x < 4.5)     # DOWN on thumb bottom row (x=4)
+        )
 
         # Right side arrows (cyan): rightmost column(s) only
-        # Rightmost key: x >= 11 (unshifted) or 6 < x < 8 (shifted from x=11)
-        # Row 0-1: only rightmost (UP, DOWN)
-        # Row 2: rightmost 2 (LEFT at x=10, RIGHT at x=11 or shifted)
-        is_rightmost = (x >= 11) or (6 < x < 8)
-        is_second_rightmost = (x >= 10) or (5 < x < 6.5)
+        # After shift: rightmost is x>11, second rightmost is x>10
+        # Row 0: UP (rightmost only)
+        # Row 1: DOWN (rightmost only)
+        # Row 2: LEFT (second rightmost), RIGHT (rightmost)
+        is_rightmost = x > 11
+        is_second_rightmost = x > 10
 
-        is_right_arrow = ((y == 0 or y == 1) and is_rightmost) or (y == 2 and is_second_rightmost)
+        is_right_arrow = (
+            ((y == 0 or y == 1) and is_rightmost) or
+            (y == 2 and is_second_rightmost)
+        )
 
         if is_left_arrow:
             if use_255:
@@ -656,12 +672,12 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
     if y != 0:  # Only top row gets themed colors for other layers
         return None, None
 
-    if layer_num == 6:  # Police theme
-        if x <= 1:
+    if layer_num == 6:  # Police theme - only corner keys
+        if x == 0:  # Left top corner (Esc) - red
             if use_255:
                 return L6_RED_255, L6_RED_BORDER
             return L6_RED_NORM, None
-        elif x >= 10:
+        elif x > 11:  # Right top corner (Minus) - blue
             if use_255:
                 return L6_BLUE_255, L6_BLUE_BORDER
             return L6_BLUE_NORM, None

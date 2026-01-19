@@ -253,6 +253,126 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   return state;
 }
 
+static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
+  // Only apply on Layer 1
+  if (get_highest_layer(layer_state) != 1)
+    return true;
+
+  // Only on press
+  if (!record->event.pressed)
+    return true;
+
+  uint8_t mods = get_mods();
+  bool shift_held = mods & MOD_MASK_SHIFT;
+  bool ctrl_held = mods & MOD_MASK_CTRL;
+
+  if (!shift_held && !ctrl_held)
+    return true;
+
+  // Distinguish Left Side (Rows 0-4) vs Right Side (Rows 5-9)
+  bool is_right_side = (record->event.key.row >= 5);
+
+  if (is_right_side) {
+    switch (keycode) {
+    case KC_LEFT: // Position of KC_PLUS_COLON (+ / :)
+      if (shift_held) {
+        tap_code(KC_SCLN); // Shift held -> :
+        return false;
+      }
+      if (ctrl_held) {
+        unregister_mods(MOD_MASK_CTRL);
+        tap_code16(S(KC_EQL)); // +
+        register_mods(mods & MOD_MASK_CTRL);
+        return false;
+      }
+      break;
+
+    case KC_RIGHT: // Position of KC_QUOT (' / ")
+      if (shift_held) {
+        tap_code(KC_QUOT); // Shift held -> "
+        return false;
+      }
+      if (ctrl_held) {
+        unregister_mods(MOD_MASK_CTRL);
+        tap_code(KC_QUOT); // '
+        register_mods(mods & MOD_MASK_CTRL);
+        return false;
+      }
+      break;
+
+    case KC_UP: // Position of KC_MINS (- / _)
+      if (shift_held) {
+        tap_code(KC_MINS); // Shift held -> _
+        return false;
+      }
+      if (ctrl_held) {
+        unregister_mods(MOD_MASK_CTRL);
+        tap_code(KC_MINS); // -
+        register_mods(mods & MOD_MASK_CTRL);
+        return false;
+      }
+      break;
+
+    case KC_DOWN: // Position of KC_BSLS (\ / |)
+      if (shift_held) {
+        tap_code(KC_BSLS); // Shift held -> |
+        return false;
+      }
+      if (ctrl_held) {
+        unregister_mods(MOD_MASK_CTRL);
+        tap_code(KC_BSLS); // Backslash
+        register_mods(mods & MOD_MASK_CTRL);
+        return false;
+      }
+      break;
+    }
+  } else {
+    // Left Side Arrows
+    switch (keycode) {
+    case KC_RIGHT: // Position of KC_Z (L0: TD_Z_LAYER -> Z)
+      if (shift_held) {
+        // Shift + Z -> Z
+        tap_code(KC_Z);
+        return false;
+      }
+      if (ctrl_held) {
+        // Ctrl + Arrow -> Unshifted 'z'
+        unregister_mods(MOD_MASK_CTRL);
+        tap_code(KC_Z);
+        register_mods(mods & MOD_MASK_CTRL);
+        return false;
+      }
+      break;
+      
+    case KC_LEFT: // Position of KC_LCTL
+      if (shift_held || ctrl_held) {
+        // Map to LCTL (Modifier tap usually does nothing, but preserving intent)
+        tap_code(KC_LCTL); 
+        return false;
+      }
+      break;
+
+    case KC_UP: // Position of KC_L1_L3
+      if (shift_held || ctrl_held) {
+         // Map to L1_L3 Tap Action (Toggle Layer 1)
+         layer_invert(1);
+         return false;
+      }
+      break;
+
+    case KC_DOWN: // Position of KC_LALT
+      if (shift_held || ctrl_held) {
+        // Map to LALT
+        tap_code(KC_LALT);
+        return false;
+      }
+      break;
+    }
+  }
+
+  return true;
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   process_statistics(record);
   update_mouse_button_state(keycode, record->event.pressed);
@@ -387,6 +507,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
 
   switch (keycode) {
+  case KC_LEFT:
+  case KC_RIGHT:
+  case KC_UP:
+  case KC_DOWN:
+    if (!handle_l1_arrow_overrides(keycode, record)) {
+      return false;
+    }
+    break;
+
   case KC_EXIT:
     if (record->event.pressed) {
       layer_history_pop();

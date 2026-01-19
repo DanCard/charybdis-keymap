@@ -154,6 +154,7 @@ void debug_dump_sync_state(void) {
   uint32_t since_sync = last_sync_time > 0 ? timer_elapsed32(last_sync_time) : 0;
 
   uprintf("\n\033[95m========== SYNC STATE DUMP ==========\033[0m\n");
+  uprintf("Build: %s %s\n", __DATE__, __TIME__);
   LOG_TIME();
   uprintf("Role: %s\n", is_keyboard_master() ? "MASTER" : "SLAVE");
   uprintf("Hand: %s\n", is_keyboard_left() ? "LEFT" : "RIGHT");
