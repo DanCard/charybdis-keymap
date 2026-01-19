@@ -47,7 +47,7 @@ extern bool slave_first_sync;
 extern uint16_t current_random_seed;
 extern uint16_t slave_task_counter;
 extern bool slave_mouse_active;
-extern bool auto_mouse_on;
+extern bool layer3_auto_activated;
 extern uint16_t auto_mouse_timer;
 extern const char *layer_change_reason;
 

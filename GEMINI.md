@@ -44,6 +44,7 @@ python3 wallpaper.py
 
 ### Critical Rules
 *   **Do NOT Reflow:** Never change the line endings or whitespace of `LAYOUT` macros, visual grid arrays, or enum lists. These are formatted to represent the physical key positions.
+*   **Commit Messages:** Do NOT use the word "feat" in commit messages.
 *   **Indentation:** Use 2 spaces.
 *   **Symlink:** Edit files in `keymap/`. This directory is symlinked to `qmk_firmware/keyboards/bastardkb/charybdis/4x6/keymaps/dcar/`. Do not edit files inside `qmk_firmware/` directly.
 

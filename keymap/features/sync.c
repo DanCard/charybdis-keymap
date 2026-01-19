@@ -118,10 +118,10 @@ void housekeeping_task_sync(void) {
         
         // Handle Slave Mouse Activity (Auto Layer 3)
         if (response_data.mouse_active) {
-            if (!auto_mouse_on) {
+            if (!layer3_auto_activated) {
                 layer_change_reason = "Slave Mouse Movement";
                 layer_on(3);
-                auto_mouse_on = true;
+                layer3_auto_activated = true;
                 uprintf("Master: Activated Layer 3 due to Slave Mouse\n");
             }
             // Keep timer alive
