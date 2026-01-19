@@ -16,7 +16,7 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_0_L1, TH_K0, KC_0},
     {KC_9_L2, TH_K9, KC_9},
     {KC_8_L3, TH_K8, KC_8},
-    {KC_7_TO0, TH_K7, KC_7},
+    {KC_7_L7, TH_K7_L7, KC_7},
     {KC_6_TO0, TH_K6, KC_6},
     {KC_PMNS_L4, TH_PMNS_TG4, KC_PMNS},
     {KC_F12_EXIT, TH_F12, KC_F12},
@@ -340,5 +340,12 @@ void housekeeping_tap_hold(void) {
     uprintf(">>> KC_W_X Hold Triggered -> X\n");
     register_code(KC_X);
     TH_TRIGGER(TH_W_X);
+  }
+  if (TH_CHECK(TH_K7_L7)) {
+    uprintf(">>> KC_7_L7 Hold Triggered -> Layer 7 (Right Arrows)\n");
+    layer_change_reason = "7(Hold): Layer 7 (Right Arrows)";
+    layer_move(7);
+    TH_TRIGGER(TH_K7_L7);
+    housekeeping_rgb_indicators();
   }
 }

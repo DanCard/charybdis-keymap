@@ -17,6 +17,7 @@
     TH_K6_TO6, TH_K0_TO0,
     TH_Q_Z,  // Q tap, Z hold
     TH_W_X,  // W tap, X hold
+    TH_K7_L7, // 7 tap, Layer 7 hold
     TH_COUNT  // Total count
 };
 
