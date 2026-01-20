@@ -141,12 +141,24 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       last_cpi_print = now;
     }
   }
-
-  uint8_t movement = abs(x) + abs(y);
+  uint8_t abs_x = abs(x);
+  
+  uint8_t movement = abs_x + abs(y);
   bool is_small_movement = movement == 1;
   static uint8_t jitter_streak = 0;
 
-  if (is_jitter_filter_active) {
+  if (is_jitter_filter_active && !layer_state_is(3)) {
+    if (abs_x == 2 && y == 0) {
+      // uprintf("\033[90mMouse: Jitter Detected (x=%d, y=%d)\033[0m\n", x, y);
+      static uint32_t last_x2_streak = 0;
+      int timer_elapsed = timer_elapsed32(last_x2_streak);
+      if (timer_elapsed > 25) {
+        uprintf("\033[90mMouse: Jitter filtered for x=2,y=0 (timer elapsed %d)\033[0m\n", timer_elapsed);
+        movement = 1;
+        is_small_movement = true;
+      }
+      last_x2_streak = now;
+    }
     // Filter out 1-unit movements (jitter)
     // Keep diagonals (e.g. x=1, y=1) or larger movements
 
@@ -194,10 +206,12 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     }
   }
 
-  bool did_trackball_move = (!is_jitter_filter_active &&  movement > 0) ||
-                            ( is_jitter_filter_active && (movement > 1 || (is_small_movement && jitter_streak > MOUSE_JITTER_STREAK_THRESHOLD)));
+  bool trackball_significant_move =
+           ((layer_state_is(3) &&  movement > 0) ||
+     (!is_jitter_filter_active &&  movement > 0) ||
+     ( is_jitter_filter_active && (movement > 1  || (is_small_movement && jitter_streak > MOUSE_JITTER_STREAK_THRESHOLD))));
   // Only auto activate layer for significant movement
-  if (did_trackball_move) {
+  if (trackball_significant_move) {
     if (layer3_auto_activated) {
       auto_mouse_timer = timer_read();      // Movement extends the timer
     }
