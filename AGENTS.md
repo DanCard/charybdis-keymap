@@ -66,8 +66,19 @@ Each feature: `features/feature_name.h` (prototypes, extern globals, typedefs) +
 **Commit Messages**:
 - **CRITICAL**: Do NOT use "feat:" prefix - user preference
 - Other prefixes like "fix:", "chore:" are acceptable
-- Use descriptive, plain English messages when not using prefixes
-- Examples: "update Layer 1 RGB indicators to show arrow keys on right half", "fix: EEPROM write timing issue", "chore: reorganize Python scripts"
+- **CRITICAL**: Use longer, detailed messages with bullet points
+- Bullet format: describe the "why" first, then list specific changes
+- Example:
+  ```
+  reorganize layers: remove 6 and 7, update settings and tap-hold
+
+  - Removed layers 6 and 7 (Settings and Right Arrows)
+  - Renumbered Settings to Layer 5, Right Arrows merged into Layer 1
+  - Updated KC_7_L7 to KC_7_L6 in keycodes and tap-hold
+  - Removed Layer 6 from RGB indicators (police theme moved to Layer 5)
+  - Updated documentation scripts (wallpaper.py, layout_common.py)
+  - Reduced NIGHT_BRIGHTNESS from 8 to 1
+  ```
 
 ## Common Patterns
 

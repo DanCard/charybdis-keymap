@@ -608,7 +608,8 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
       - Rightmost column: x>11 (catches 11.5 wallpaper, 12 PDF)
       - Second rightmost: x>10
     """
-    # Layer 1: Arrow keys theme (pink for left, cyan for right)
+    # Layer 1: Arrow keys theme (pink for left side only)
+    # Firmware only highlights left keyboard arrows, not right side
     if layer_num == 1:
         # Left side arrows (pink):
         # - Row 3, keys at x=1,2 (LEFT, RIGHT after CTRL at x=0)
@@ -620,27 +621,10 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
             (y == 5 and 3.5 < x < 4.5)     # DOWN on thumb bottom row (x=4)
         )
 
-        # Right side arrows (cyan): rightmost column(s) only
-        # After shift: rightmost is x>11, second rightmost is x>10
-        # Row 0: UP (rightmost only)
-        # Row 1: DOWN (rightmost only)
-        # Row 2: LEFT (second rightmost), RIGHT (rightmost)
-        is_rightmost = x > 11
-        is_second_rightmost = x > 10
-
-        is_right_arrow = (
-            ((y == 0 or y == 1) and is_rightmost) or
-            (y == 2 and is_second_rightmost)
-        )
-
         if is_left_arrow:
             if use_255:
                 return L1_PINK_255, L1_PINK_BORDER
             return L1_PINK_NORM, None
-        elif is_right_arrow:
-            if use_255:
-                return L1_CYAN_255, L1_CYAN_BORDER
-            return L1_CYAN_NORM, None
         return None, None
 
     if y != 0:  # Only top row gets themed colors for other layers
