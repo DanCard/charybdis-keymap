@@ -23,6 +23,8 @@ static const simple_tap_hold_t simple_tap_holds[] = {
     {KC_0_TO0, TH_K0_TO0, KC_0},
     {KC_5_L5, TH_K5, KC_5},
     {KC_MINS_EQL, TH_MINS_EQL, KC_MINS},
+    {KC_F1_F11, TH_F1_F11, KC_F1},
+    {KC_F2_F12, TH_F2_F12, KC_F2},
 };
 #define SIMPLE_TAP_HOLD_COUNT (sizeof(simple_tap_holds) / sizeof(simple_tap_holds[0]))
 
@@ -345,5 +347,15 @@ void housekeeping_tap_hold(void) {
     uprintf(">>> KC_MINS_EQL Hold Triggered -> EQL\n");
     tap_code(KC_EQL);
     TH_TRIGGER(TH_MINS_EQL);
+  }
+  if (TH_CHECK(TH_F1_F11)) {
+    uprintf(">>> KC_F1_F11 Hold Triggered -> F11\n");
+    tap_code(KC_F11);
+    TH_TRIGGER(TH_F1_F11);
+  }
+  if (TH_CHECK(TH_F2_F12)) {
+    uprintf(">>> KC_F2_F12 Hold Triggered -> F12\n");
+    tap_code(KC_F12);
+    TH_TRIGGER(TH_F2_F12);
   }
 }

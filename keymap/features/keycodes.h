@@ -79,5 +79,7 @@ enum custom_keycodes {
   KC_Q_Z,         // Tap: Q, Hold: Z
   KC_W_X,         // Tap: W, Hold: X
   KC_7_L6,        // Tap: 7, Hold: Layer 6 (Right Arrows)
-  KC_MINS_EQL     // Tap: Minus, Hold: Equals
+  KC_MINS_EQL,    // Tap: Minus, Hold: Equals
+  KC_F1_F11,      // Tap: F1, Hold: F11
+  KC_F2_F12       // Tap: F2, Hold: F12
 };

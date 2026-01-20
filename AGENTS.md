@@ -68,6 +68,7 @@ Each feature: `features/feature_name.h` (prototypes, extern globals, typedefs) +
 - Other prefixes like "fix:", "chore:" are acceptable
 - **CRITICAL**: Use longer, detailed messages with bullet points
 - Bullet format: describe the "why" first, then list specific changes
+- Do NOT mention regeneration of wallpaper.png or charybdis_layout.pdf (done regularly)
 - Example:
   ```
   reorganize layers: remove 6 and 7, update settings and tap-hold

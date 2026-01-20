@@ -19,6 +19,8 @@
     TH_W_X,  // W tap, X hold
     TH_K7_L6, // 7 tap, Layer 6 hold
     TH_MINS_EQL, // Minus tap, Equals hold
+    TH_F1_F11, // F1 tap, F11 hold
+    TH_F2_F12, // F2 tap, F12 hold
     TH_COUNT  // Total count
 };
 
