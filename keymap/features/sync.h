@@ -52,6 +52,7 @@ extern uint16_t auto_mouse_timer;
 extern const char *layer_change_reason;
 
 // Function prototypes
-void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data, uint8_t out_buflen, void *out_data);
-void housekeeping_task_sync(void); // Renamed from housekeeping_task_user to avoid conflict
-void debug_dump_sync_state(void);
+void housekeeping_task_sync(void);
+void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
+                                  uint8_t out_buflen, void *out_data);
+void debug_dump_state(void);

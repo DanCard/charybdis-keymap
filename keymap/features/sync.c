@@ -1,4 +1,5 @@
 #include "sync.h"
+#include "mouse.h"
 #include "logging.h"
 #include <lib/lib8tion/lib8tion.h>
 
@@ -151,15 +152,23 @@ void housekeeping_task_sync(void) {
   }
 }
 
-// Debug function to dump full sync state
-void debug_dump_sync_state(void) {
+// Debug function to dump full system state
+void debug_dump_state(void) {
   uint32_t since_sync = last_sync_time > 0 ? timer_elapsed32(last_sync_time) : 0;
 
-  uprintf("\n\033[95m========== SYNC STATE DUMP ==========\033[0m\n");
+  uprintf("\n\033[95m========== SYSTEM STATE DUMP ==========\033[0m\n");
   uprintf("Build: %s %s\n", __DATE__, __TIME__);
   LOG_TIME();
   uprintf("Role: %s\n", is_keyboard_master() ? "MASTER" : "SLAVE");
   uprintf("Hand: %s\n", is_keyboard_left() ? "LEFT" : "RIGHT");
+  
+  uprintf("\n\033[96m--- Auto Mouse State ---\033[0m\n");
+  uprintf("Layer 3 Auto Active: %s\n", layer3_auto_activated ? "YES" : "no");
+  uprintf("Timer: %u ms elapsed (Timeout: %u ms)\n", timer_elapsed(auto_mouse_timer), auto_mouse_timeout);
+  uprintf("Mouse Buttons Held Mask: 0x%02X\n", mouse_buttons_held);
+  uprintf("Selection Lock: %s\n", is_selection_locked ? "YES" : "no");
+  uprintf("Slave Mouse Active Flag: %s\n", slave_mouse_active ? "YES" : "no");
+
   uprintf("\n\033[96m--- RGB State ---\033[0m\n");
   uprintf("Mode: %d (%s)\n", rgb_matrix_get_mode(), get_rgb_mode_name(rgb_matrix_get_mode()));
   uprintf("Brightness: %s (V=%d)\n", is_day_mode ? "DAY" : "NIGHT", rgb_matrix_get_val());

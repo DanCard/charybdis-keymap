@@ -11,6 +11,7 @@ extern bool is_selection_locked;
 extern bool layer3_auto_activated;
 extern uint16_t auto_mouse_timer;
 extern uint16_t auto_mouse_timeout;
+extern uint8_t mouse_buttons_held;
 
 // Mouse Key globals (extern from QMK core)
 extern uint8_t mk_max_speed;

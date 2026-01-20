@@ -1031,16 +1031,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
       uint32_t uptime_min = timer_read32() / 60000;
       uprintf("Uptime: %lu minutes\n", (unsigned long)uptime_min);
-      debug_dump_sync_state();
+      debug_dump_state();
       layer_history_pop();
       rgb_matrix_indicators_user();
     }
     return false;
-  case KC_FILT_LOG:
+  case KC_DBG_TOG:
     if (record->event.pressed) {
       is_sync_logging_enabled = !is_sync_logging_enabled;
       uint32_t uptime_min = timer_read32() / 60000;
-      uprintf("[%lu.%03lu] Sync Heartbeat: %s (Uptime: %lu min)\n", sec, ms, is_sync_logging_enabled ? "ON" : "OFF", (unsigned long)uptime_min);
+      uprintf("[%lu.%03lu] Debug Logging: %s (Uptime: %lu min)\n", sec, ms, is_sync_logging_enabled ? "ON" : "OFF", (unsigned long)uptime_min);
       
       // Update EEPROM
       uint16_t current_config = eeconfig_read_user();
@@ -1211,7 +1211,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                               KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
   // Settings Layer - accessed via long press 5
   [6] = LAYOUT(
-  KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,  KC_DUMP_LOG, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_FILT_LOG, KC_EXIT, KC_PSCR,
+  KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,  KC_DUMP_LOG, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_DBG_TOG, KC_EXIT, KC_PSCR,
   KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,  KC_FIRE  , KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
   KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,  KC_EXIT  , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT    , KC_EXIT,
   KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,  KC_EXIT  , KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,

@@ -15,7 +15,7 @@ uint16_t auto_mouse_timeout = 1500; // Default (matches AUTO_MOUSE_TIME in confi
 // Internal timers
 static uint16_t snipe_timer = 0;
 static uint16_t fast_mode_timer = 0;
-static uint8_t mouse_buttons_held = 0;
+uint8_t mouse_buttons_held = 0;
 bool is_selection_locked = false;
 
 void update_mouse_button_state(uint16_t keycode, bool pressed) {
