@@ -189,6 +189,13 @@ const uint16_t PROGMEM zv_combo[] = {TD(TD_Z_LAYER), KC_V, COMBO_END};
 const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
 const uint16_t PROGMEM alt_home_combo[] = {TD(TD_Z_LAYER), KC_C, COMBO_END};
 
+// Layer 1 specific combos (Z replaced by LEFT, X replaced by RIGHT)
+const uint16_t PROGMEM l1_home_combo[] = {KC_LEFT, KC_RIGHT, COMBO_END};
+const uint16_t PROGMEM l1_pgup_combo[] = {KC_RIGHT, KC_C, COMBO_END};
+const uint16_t PROGMEM l1_xv_combo[] = {KC_RIGHT, KC_V, COMBO_END};
+const uint16_t PROGMEM l1_zv_combo[] = {KC_LEFT, KC_V, COMBO_END};
+const uint16_t PROGMEM l1_alt_home_combo[] = {KC_LEFT, KC_C, COMBO_END};
+
 combo_t key_combos[] = {
     COMBO(left_combo, KC_LEFT),   COMBO(up_combo, KC_UP),
     COMBO(down_combo, KC_DOWN),   COMBO(af_combo, KC_RIGHT),
@@ -197,6 +204,12 @@ combo_t key_combos[] = {
     COMBO(pgdn_combo, KC_PGDN),   COMBO(xv_combo, C(S(KC_V))),
     COMBO(zv_combo, KC_END),      COMBO(alt_home_combo, LALT(KC_HOME)),
     COMBO(caps_combo, KC_CAPS),
+    // Layer 1 Combos
+    COMBO(l1_home_combo, KC_HOME),
+    COMBO(l1_pgup_combo, KC_PGUP),
+    COMBO(l1_xv_combo, C(S(KC_V))),
+    COMBO(l1_zv_combo, KC_END),
+    COMBO(l1_alt_home_combo, LALT(KC_HOME)),
 };
 
 bool is_fast_mouse = false;
@@ -253,27 +266,30 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   return state;
 }
 
+// State variables for Left Side Overrides
+static bool l1_left_active = false;
+static bool l1_right_active = false;
+static bool l1_up_active = false;
+static bool l1_down_active = false;
+
 static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
   // Only apply on Layer 1 or Layer 7
   uint8_t layer = get_highest_layer(layer_state);
-  if (layer != 1 && layer != 7)
-    return true;
-
-  // Only on press
-  if (!record->event.pressed)
-    return true;
-
-  uint8_t mods = get_mods();
-  bool shift_held = mods & MOD_MASK_SHIFT;
-  bool ctrl_held = mods & MOD_MASK_CTRL;
-
-  if (!shift_held && !ctrl_held)
-    return true;
-
-  // Distinguish Left Side (Rows 0-4) vs Right Side (Rows 5-9)
+  
+  bool is_press = record->event.pressed;
   bool is_right_side = (record->event.key.row >= 5);
 
   if (is_right_side) {
+    if (!is_press) return true;
+    if (layer != 1 && layer != 7) return true;
+
+    uint8_t mods = get_mods();
+    bool shift_held = mods & MOD_MASK_SHIFT;
+    bool ctrl_held = mods & MOD_MASK_CTRL;
+
+    if (!shift_held && !ctrl_held)
+      return true;
+
     switch (keycode) {
     case KC_LEFT: // Position of KC_PLUS_COLON (+ / :)
       if (shift_held) {
@@ -327,51 +343,108 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
       }
       break;
     }
-  } else {
-    // Left Side Arrows
-    switch (keycode) {
-    case KC_LEFT: // Position of KC_Z (L0: TD_Z_LAYER -> Z)
-      if (shift_held) {
-        // Shift + LEFT -> Z (for Shift+Z)
-        tap_code(KC_Z);
-        return false;
+    return true;
+  }
+
+  // Left Side Logic (Support Hold)
+  switch (keycode) {
+    // LEFT -> Base: Z (TD_Z_LAYER)
+    case KC_LEFT: 
+      if (is_press) {
+        uint8_t mods = get_mods();
+        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
+          l1_left_active = true;
+          register_code(KC_Z);
+          return false;
+        }
+      } else {
+        if (l1_left_active) {
+          unregister_code(KC_Z);
+          l1_left_active = false;
+          return false;
+        }
       }
-      if (ctrl_held) {
-        // Ctrl + LEFT -> Ctrl+Z (undo)
-        tap_code(KC_Z);
-        return false;
+      break;
+    case TD(TD_Z_LAYER): // Fallback check for release on Base Layer
+      if (!is_press && l1_left_active) {
+          unregister_code(KC_Z);
+          l1_left_active = false;
+          return false;
       }
       break;
 
-    case KC_RIGHT: // Position of KC_X (L0: X)
-      if (shift_held) {
-        // Shift + RIGHT -> X (for Shift+X)
-        tap_code(KC_X);
-        return false;
+    // RIGHT -> Base: X
+    case KC_RIGHT: 
+      if (is_press) {
+        uint8_t mods = get_mods();
+        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
+          l1_right_active = true;
+          register_code(KC_X);
+          return false;
+        }
+      } else {
+        if (l1_right_active) {
+          unregister_code(KC_X);
+          l1_right_active = false;
+          return false;
+        }
       }
-      if (ctrl_held) {
-        // Ctrl + RIGHT -> Ctrl+X (cut)
-        tap_code(KC_X);
-        return false;
+      break;
+    case KC_X: // Fallback check for release on Base Layer
+      if (!is_press && l1_right_active) {
+          unregister_code(KC_X);
+          l1_right_active = false;
+          return false;
       }
       break;
 
-    case KC_UP: // Position of KC_L1_L3
-      if (shift_held || ctrl_held) {
-         // Map to L1_L3 Tap Action (Toggle Layer 1)
-         layer_invert(1);
-         return false;
+    // UP -> Base: L1_L3 (Layer Toggle)
+    case KC_UP: 
+      if (is_press) {
+        uint8_t mods = get_mods();
+        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
+          l1_up_active = true;
+          layer_invert(1);
+          return false;
+        }
+      } else {
+        if (l1_up_active) {
+          l1_up_active = false;
+          return false;
+        }
+      }
+      break;
+    case KC_L1_L3: // Fallback check for release on Base Layer
+      if (!is_press && l1_up_active) {
+          l1_up_active = false;
+          return false;
       }
       break;
 
-    case KC_DOWN: // Position of KC_LALT
-      if (shift_held || ctrl_held) {
-        // Map to LALT
-        tap_code(KC_LALT);
-        return false;
+    // DOWN -> Base: LALT
+    case KC_DOWN: 
+      if (is_press) {
+        uint8_t mods = get_mods();
+        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
+          l1_down_active = true;
+          register_code(KC_LALT);
+          return false;
+        }
+      } else {
+        if (l1_down_active) {
+          unregister_code(KC_LALT);
+          l1_down_active = false;
+          return false;
+        }
       }
       break;
-    }
+    case KC_LALT: // Fallback check for release on Base Layer
+      if (!is_press && l1_down_active) {
+          unregister_code(KC_LALT);
+          l1_down_active = false;
+          return false;
+      }
+      break;
   }
 
   return true;
@@ -968,6 +1041,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       is_sync_logging_enabled = !is_sync_logging_enabled;
       uint32_t uptime_min = timer_read32() / 60000;
       uprintf("[%lu.%03lu] Sync Heartbeat: %s (Uptime: %lu min)\n", sec, ms, is_sync_logging_enabled ? "ON" : "OFF", (unsigned long)uptime_min);
+      
+      // Update EEPROM
+      uint16_t current_config = eeconfig_read_user();
+      if (is_sync_logging_enabled) {
+        current_config |= 0x0040; // Set Bit 6
+      } else {
+        current_config &= ~0x0040; // Clear Bit 6
+      }
+      eeconfig_update_user(current_config);
+
       layer_history_pop();
       rgb_matrix_indicators_user();
     }
@@ -1134,11 +1217,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,  KC_EXIT  , KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                    KC_EXIT, KC_EXIT, KC_EXIT,  KC_EXIT, KC_EXIT,
                                             KC_EXIT, KC_EXIT,  KC_EXIT),
-    // Layer 7: base + arrows
-    [7] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0_TO0, KC_UP,
-                 KC_TAB , KC_Q_Z , KC_W_X  , KC_E   , KC_R   , KC_T   ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
-                 KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
-                 KC_LCTL, KC_LEFT, KC_RIGHT, KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+    // Layer 7: right side arrows
+    [7] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0_TO0, KC_UP,
+                 KC_TAB , KC_Q_L4, KC_W   , KC_E   , KC_R   , KC_T   ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
+                 KC_LSFT, KC_A   , KC_S   , KC_D   , KC_F   , KC_G   ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
+                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V  , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
                                            KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
                                                       KC_DOWN, KC_BSPC,   KC_BSPC),
 
@@ -1167,14 +1250,15 @@ void keyboard_post_init_user(void) {
 
   // Restore State
   is_jitter_filter_active = (user_config & 0x0080);
+  is_sync_logging_enabled = (user_config & 0x0040); // Bit 6: Sync Logging
   is_day_mode = rgb_matrix_get_val() > 100;
 
   uint8_t saved_theme = (uint8_t)(user_config & 0x3F);
   uint8_t saved_hue = (uint8_t)((user_config >> 8) & 0xFF);
   uint8_t max_effects = RGB_MATRIX_EFFECT_MAX;
 
-  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d)\n", user_config, saved_theme,
-          saved_hue, is_jitter_filter_active);
+  uprintf("Init: EEPROM Read=%u (Theme %d, Hue %d, Jitter %d, Log %d)\n", user_config, saved_theme,
+          saved_hue, is_jitter_filter_active, is_sync_logging_enabled);
 
   // Increment Theme (Cycle 1 to MAX-1)
   uint8_t next_theme = saved_theme + 1;
@@ -1190,6 +1274,9 @@ void keyboard_post_init_user(void) {
   uint16_t new_config = ((uint16_t)next_hue << 8) | (next_theme & 0x3F);
   if (is_jitter_filter_active) {
     new_config |= 0x0080;
+  }
+  if (is_sync_logging_enabled) {
+    new_config |= 0x0040;
   }
   
   pending_eeprom_config = new_config;

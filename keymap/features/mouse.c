@@ -108,8 +108,8 @@ void process_mouse_timeouts(void) {
 }
 
 // Main mouse processing task (called from pointing_device_task_user)
-#define MOUSE_JITTER_STREAK_INTERVAL 50  // Max ms between small movements to count as a streak
-#define MOUSE_JITTER_STREAK_THRESHOLD 9  // Number of small movements to establish a streak
+#define MOUSE_JITTER_STREAK_INTERVAL  10  // Max ms between small movements to count as a streak
+#define MOUSE_JITTER_STREAK_THRESHOLD 60  // Number of small movements to establish a streak
 
 report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   int8_t x = mouse_report.x;
@@ -142,8 +142,6 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
 
     if (is_small_movement) {
       static uint32_t last_jitter_time = 0;
-
-
       // Check if this small movement occurred very soon after the previous one.
       // High-frequency small movements (interval < MOUSE_JITTER_STREAK_INTERVAL) are likely intentional
       // slow tracking rather than random sensor noise.
@@ -151,23 +149,24 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         if (jitter_streak < 255) jitter_streak++;
       } else {
         // If there's a gap, reset the streak; it's considered isolated jitter again.
-        if (jitter_streak > 0) {
+        static uint32_t mouse_streak_reset_log = 0;
+        if (jitter_streak > 0 && timer_elapsed32(mouse_streak_reset_log) > 1000) {
           uprintf("\033[90mMouse: Streak Reset (was %d)\033[0m\n", jitter_streak);
+          mouse_streak_reset_log = now;
         }
         jitter_streak = 0;
       }
-      last_jitter_time = timer_read32();
+      last_jitter_time = now;
 
       // We only suppress the movement if it hasn't established a "streak".
       // A streak of MOUSE_JITTER_STREAK_THRESHOLD+ events means the user is consistently moving the ball slowly,
       // so we stop filtering and let the movement through to the host.
       if (jitter_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
         static uint32_t last_jitter_log = 0;
-        // Apply logging throttle (default 500ms)
         if (timer_elapsed32(last_jitter_log) > 500) {
           LOG_TIME();
           uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d)\033[0m\n", x, y, jitter_streak);
-          last_jitter_log = timer_read32();
+          last_jitter_log = now;
         }
         // Zero out the report so it's ignored by the host AND by the auto-layer logic below
         mouse_report.x = 0;
@@ -176,12 +175,12 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         y = 0;
       } else {
         // Log when we break the filter
-        static uint8_t last_logged_streak = 0;
-        if (jitter_streak == MOUSE_JITTER_STREAK_THRESHOLD && last_logged_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
+        static uint32_t last_logged_streak = 0;
+        if (jitter_streak >= MOUSE_JITTER_STREAK_THRESHOLD && timer_elapsed32(last_logged_streak) > 500) {
           uprintf("\033[92mMouse: Streak Established (%d), Filter Broken\033[0m\n", jitter_streak);
+          last_logged_streak = now;
         }
-        last_logged_streak = jitter_streak;
-      }
+     }
     }
   }
 
@@ -201,7 +200,8 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     if (is_keyboard_master()) {
       // Only activate Auto Mouse if Layer 3 isn't already active (e.g. manually locked)
       if (!layer_state_is(3)) {
-        uprintf("Mouse: Activated (x=%d, y=%d)\n", x, y);
+        uprintf("Mouse: Activated (x=%d, y=%d), jitter streak: %d, movement: %d, is jitter filter active: %d, is small movement: %d\n",
+                x, y, jitter_streak, movement, is_jitter_filter_active, is_small_movement);
         layer_change_reason = "Auto Mouse Movement";
         layer_on(3); // Switch to Mouse Layer (3)
         layer3_auto_activated = true;

@@ -111,8 +111,10 @@ void housekeeping_task_sync(void) {
         last_slave_response = response_data; // Cache for heartbeat
 
         if (response_data.did_rgb_sync && sync_data.rgb_mode != last_synced_mode) {
-          LOG_TIME();
-          uprintf("\033[92mMaster: Slave synced RGB to mode %d (seed=%u)\033[0m\n", sync_data.rgb_mode, current_random_seed);
+          if (is_sync_logging_enabled) {
+            LOG_TIME();
+            uprintf("\033[92mMaster: Slave synced RGB to mode %d (seed=%u)\033[0m\n", sync_data.rgb_mode, current_random_seed);
+          }
           last_synced_mode = sync_data.rgb_mode;
         }
         
