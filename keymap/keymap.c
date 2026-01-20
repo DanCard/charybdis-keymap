@@ -887,7 +887,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       uprintf("RM_VAL change requested. Current Val: %d\n",
               rgb_matrix_get_val());
     }
-    return false;
+    return true;
   case KC_QUES_SLSH:
     if (record->event.pressed) {
       if (get_mods() & MOD_MASK_SHIFT) {
