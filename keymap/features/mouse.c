@@ -92,8 +92,18 @@ void process_mouse_timeouts(void) {
 
     static char mouse_reason_buffer[64];
     
-    // If any mouse button is held, keep the layer alive (reset timer)
-    if (mouse_buttons_held && layer3_auto_activated) {
+    // Keep layer 3 alive if:
+    // 1. Any mouse button is held
+    // 2. Selection Lock is active
+    // 3. Drag Scroll is active
+    // 4. Scroll Lock LED is on
+    bool lock_layer = false;
+    if (mouse_buttons_held) lock_layer = true;
+    if (is_selection_locked) lock_layer = true;
+    if (charybdis_get_pointer_dragscroll_enabled()) lock_layer = true;
+    if (host_keyboard_led_state().scroll_lock) lock_layer = true;
+
+    if (lock_layer && layer3_auto_activated) {
         auto_mouse_timer = timer_read();
     }
 
