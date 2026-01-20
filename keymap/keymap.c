@@ -268,7 +268,6 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 // State variables for Left Side Overrides
 static bool l1_left_active = false;
-static bool l1_right_active = false;
 static bool l1_up_active = false;
 static bool l1_down_active = false;
 
@@ -369,31 +368,6 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
       if (!is_press && l1_left_active) {
           unregister_code(KC_Z);
           l1_left_active = false;
-          return false;
-      }
-      break;
-
-    // RIGHT -> Base: X
-    case KC_RIGHT: 
-      if (is_press) {
-        uint8_t mods = get_mods();
-        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-          l1_right_active = true;
-          register_code(KC_X);
-          return false;
-        }
-      } else {
-        if (l1_right_active) {
-          unregister_code(KC_X);
-          l1_right_active = false;
-          return false;
-        }
-      }
-      break;
-    case KC_X: // Fallback check for release on Base Layer
-      if (!is_press && l1_right_active) {
-          unregister_code(KC_X);
-          l1_right_active = false;
           return false;
       }
       break;
@@ -1213,9 +1187,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9 , KC_0_TO0  , KC_MINS_EQL,
                  KC_TAB , KC_Q_Z , KC_W_X  , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
                  KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H  , KC_J , KC_K, KC_L , KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, KC_LEFT, KC_RIGHT, KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                 KC_LCTL, KC_LEFT, KC_X    , KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
                                            KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
-                                                      KC_DOWN, KC_BSPC,   KC_BSPC),
+                                                      KC_DOWN, KC_RIGHT,  KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_F1_F11, KC_F2_F12, KC_F3  , KC_F4  , KC_F5        ,   KC_F6  , KC_F7  , KC_F8  , KC_F9     , KC_F10   , QK_BOOT,
                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, HYPR(KC_N), QK_BOOT   ,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT  , KC_EXIT,

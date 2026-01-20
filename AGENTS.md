@@ -5,32 +5,32 @@ Firmware for BastardKB Charybdis 4x6 with trackball, using QMK Firmware. Custom 
 ## Build & Development Commands
 
 ```bash
+# Build firmware (CRITICAL: must use -e CONVERT_TO=elite_pi for RP2040)
 qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
+
+# Lint code (if linter configured)
+# qmk lint
+
+# View real-time logs
+qmk console
+
+# Generate documentation
+python3 scripts/generate_layout_pdf.py && python3 scripts/generate_wallpaper.py
 ```
-Output: `qmk_firmware/bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2`
 
-**CRITICAL**: Must use `-e CONVERT_TO=elite_pi` flag - this keyboard uses Elite-Pi (RP2040), not Elite-C (AVR).
-
-### Flashing Firmware
-**IMPORTANT: Flash BOTH controllers for split RGB to work!**
-
-1. Flash right side (master): double-tap reset, copy UF2 to `/media/$USER/RPI-RP2/`
-2. Flash left side (slave): disconnect TRRS, hold BOOT while plugging USB, copy same UF2
+**Flashing Firmware**: Flash BOTH controllers for split RGB to work
+1. Right side (master): double-tap reset, copy UF2 to `/media/$USER/RPI-RP2/`
+2. Left side (slave): disconnect TRRS, hold BOOT while plugging USB, copy same UF2
 3. Reconnect TRRS cable
 
-### Testing
-No unit tests - verify via `qmk console` (real-time logging). Log with `LOG_TIME(); uprintf("Event\n");`
-
-```bash
-python3 generate_layout_pdf.py && python3 wallpaper.py  # Regenerate docs
-```
+**Testing**: No unit tests - verify via `qmk console` with `LOG_TIME(); uprintf("Event\n");`
 
 Python deps: `pip install pillow reportlab`
 
 ## Code Style Guidelines
 
 ### C Code (keymap.c, features/*)
-- **2 spaces indentation**
+- **Indentation**: 4 spaces (from .clang-format), NOT 2 spaces
 - **CRITICAL**: Do NOT reflow `LAYOUT` macros, enums, or array lists - preserve visual grid layouts
 - Custom keycodes: Uppercase with underscores, prefix `KC_` (e.g., `KC_RAINBOW`, `KC_MOUSE_LOCK`)
 - Static variables: snake_case (e.g., `is_flashlight`, `auto_mouse_timeout`)
@@ -51,7 +51,7 @@ Each feature: `features/feature_name.h` (prototypes, extern globals, typedefs) +
 ## Project-Specific Rules
 
 **From .cursorrules**:
-1. 2 spaces indentation
+1. 2 spaces indentation (but .clang-format uses 4 spaces - follow .clang-format)
 2. **CRITICAL**: Do NOT reflow `LAYOUT` macros, enums, or array lists
 3. Preserve visual grid layouts
 
@@ -108,8 +108,13 @@ case KC_MY_THEME: if (record->event.pressed) rgb_matrix_mode_noeeprom(RGB_MATRIX
 
 **EEPROM Deferred Write** (avoid USB timeout - delay writes 1500ms via `EEPROM_DEFER_MS`):
 ```c
-static uint16_t pending_eeprom_config = 0; static bool eeprom_update_pending = false; static uint32_t eeprom_defer_timer = 0;
-// In housekeeping: if (eeprom_update_pending && timer_elapsed(eeprom_defer_timer) > EEPROM_DEFER_MS) { eeconfig_update_user(pending_eeprom_config); eeprom_update_pending = false; }
+static uint16_t pending_eeprom_config = 0;
+static bool eeprom_update_pending = false;
+static uint32_t eeprom_defer_timer = 0;
+// In housekeeping: if (eeprom_update_pending && timer_elapsed(eeprom_defer_timer) > EEPROM_DEFER_MS) {
+//     eeconfig_update_user(pending_eeprom_config);
+//     eeprom_update_pending = false;
+// }
 ```
 
 **Split Sync State Update** (master only):
@@ -149,7 +154,10 @@ keymap/                              # Source of truth (symlinked to qmk_firmwar
       ├── logging.h                  # Logging macros
       └── statistics.h/c             # Key usage statistics
 
-generate_layout_pdf.py, wallpaper.py  # Documentation scripts
+scripts/                             # Documentation generation
+  ├── generate_layout_pdf.py         # Generates charybdis_layout.pdf
+  ├── generate_wallpaper.py          # Generates wallpaper.png
+  └── layout_common.py               # Shared code for documentation
 ```
 
 ## Key Features
