@@ -14,8 +14,7 @@ LAYER_COLORS_NORM = {
     2: (0.7, 1.0, 0.7),      # Green (Arrow)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
     4: (1.0, 0.5, 0.0),      # Orange (One-Hand)
-    5: (0.7, 0.7, 1.0),      # Blue (Nav)
-    6: (0.95, 0.95, 0.95),   # White (Settings)
+    5: (0.95, 0.95, 0.95),   # White (Settings)
 }
 
 LAYER_COLORS_255 = {
@@ -24,8 +23,7 @@ LAYER_COLORS_255 = {
     2: (130, 220, 130),      # Green (Arrow)
     3: (240, 220, 100),      # Yellow (Mouse)
     4: (255, 150, 0),        # Orange (One-Hand)
-    5: (130, 150, 255),      # Blue (Nav)
-    6: (240, 240, 245),      # White (Settings)
+    5: (240, 240, 245),      # White (Settings)
 }
 
 # Key border colors for wallpaper (darker versions)
@@ -35,8 +33,7 @@ KEY_BORDER_COLORS = {
     2: (80, 160, 80),
     3: (180, 160, 60),
     4: (180, 80, 0),
-    5: (80, 100, 180),
-    6: (180, 180, 190),
+    5: (180, 180, 190),
 }
 
 LAYER_NAMES = {
@@ -45,13 +42,11 @@ LAYER_NAMES = {
     2: "ARROW",
     3: "MOUSE",
     4: "ONE-HAND",
-    5: "NUMBER SYMBOLS",
-    6: "SETTINGS",
-    7: "ARROWS FOR NUMBERS",
+    5: "SETTINGS",
 }
 
 # Theme colors for special layers
-# Layer 6 - Police theme
+# Layer 5 - Police theme
 L6_RED_NORM = (1.0, 0.2, 0.2)
 L6_BLUE_NORM = (0.2, 0.4, 1.0)
 L6_RED_255 = (255, 50, 50)
@@ -67,26 +62,7 @@ L1_CYAN_255 = (0, 200, 150)
 L1_PINK_BORDER = (180, 70, 130)
 L1_CYAN_BORDER = (0, 140, 105)
 
-# Layer 7 - Rainbow theme
-L7_RAINBOW_NORM = [
-    (1.0, 0.2, 0.2),   # Red
-    (1.0, 0.6, 0.0),   # Orange
-    (0.0, 0.8, 0.4),   # Green
-    (0.2, 0.4, 1.0),   # Blue
-]
-L7_RAINBOW_255 = [
-    (255, 50, 50),     # Red
-    (255, 150, 0),     # Orange
-    (0, 200, 100),     # Green
-    (50, 100, 255),    # Blue
-]
-L7_RAINBOW_BORDER = [
-    (180, 30, 30),     # Dark red
-    (180, 100, 0),     # Dark orange
-    (0, 140, 70),      # Dark green
-    (30, 60, 180),     # Dark blue
-]
-
+# Layer 7 - Rainbow theme (Removed)
 # Key label simplifications for standard QMK keycodes
 KEY_LABELS = {
     "KC_ESC": "Escape",
@@ -245,8 +221,6 @@ CUSTOM_KEY_MAP = {
     "KC_UP_3": "Up\n3",
     "KC_DOWN_4": "Down\n4",
     "KC_RIGHT_5": "Right\n5",
-    "KC_6_TO6": "Left\n6",
-    "KC_LEFT_6": "Left\n6",
     "KC_7_UP": "Up\n7",
     "KC_UP_7": "Up\n7",
     "KC_8_DOWN": "Down\n8",
@@ -273,6 +247,7 @@ CUSTOM_KEY_MAP = {
     "KC_DAY": "Day\nBright",
     "KC_NIGHT": "Night\nDim",
     "KC_QUES_SLSH": "?\n/",
+    "KC_MINS_EQL": "-\n=",
 }
 
 # Shift key mappings
@@ -356,8 +331,8 @@ def simplify_key(key_code, layer_num=None):
             return "/\nL0"
         return "Z\nL4"
 
-    # Special handling for Layer 0 and Layer 6 Long Press
-    if layer_num == 0 or layer_num == 6:
+    # Special handling for Layer 0 and Layer 5 Long Press
+    if layer_num == 0 or layer_num == 5:
         if key_code == "KC_1_L1":
             return "1\nL1"
         if key_code == "KC_2_L2":
@@ -366,8 +341,6 @@ def simplify_key(key_code, layer_num=None):
             return "3\nL3"
         if key_code == "KC_4_L4":
             return "4\nL4"
-        if key_code == "KC_5_L5":
-            return "5\nL5"
         if key_code == "KC_0_TO0":
             return "0\nL0"
 
@@ -673,7 +646,7 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
     if y != 0:  # Only top row gets themed colors for other layers
         return None, None
 
-    if layer_num == 6:  # Police theme - only corner keys
+    if layer_num == 5:  # Police theme - only corner keys
         if x == 0:  # Left top corner (Esc) - red
             if use_255:
                 return L6_RED_255, L6_RED_BORDER
@@ -683,22 +656,7 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
                 return L6_BLUE_255, L6_BLUE_BORDER
             return L6_BLUE_NORM, None
 
-    elif layer_num == 7:  # Rainbow theme
-        if x == 0:
-            if use_255:
-                return L7_RAINBOW_255[0], L7_RAINBOW_BORDER[0]
-            return L7_RAINBOW_NORM[0], None
-        elif x == 1:
-            if use_255:
-                return L7_RAINBOW_255[1], L7_RAINBOW_BORDER[1]
-            return L7_RAINBOW_NORM[1], None
-        elif x == 10:
-            if use_255:
-                return L7_RAINBOW_255[2], L7_RAINBOW_BORDER[2]
-            return L7_RAINBOW_NORM[2], None
-        elif x == 11:
-            if use_255:
-                return L7_RAINBOW_255[3], L7_RAINBOW_BORDER[3]
-            return L7_RAINBOW_NORM[3], None
+    elif layer_num == 6:  # Rainbow theme (Removed)
+        return None, None
 
     return None, None

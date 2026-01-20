@@ -988,11 +988,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_DAY:
     if (record->event.pressed) {
       // Set High Brightness (Day Mode)
-      // Keep current Hue/Sat, set Value to 225
-      rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 225);
+      // Keep current Hue/Sat, set Value to DAY_BRIGHTNESS
+      rgb_matrix_sethsv(rgb_matrix_get_hue(), rgb_matrix_get_sat(), DAY_BRIGHTNESS);
       is_day_mode = true;
       sync_needed = true;
-      uprintf("[%lu.%03lu] Day Mode: Brightness set to 225\n", sec, ms);
+      uprintf("[%lu.%03lu] Day Mode: Brightness set to %d (Saved to EEPROM)\n", sec, ms, DAY_BRIGHTNESS);
       layer_history_pop();
       rgb_matrix_indicators_user();
     }
@@ -1000,11 +1000,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_NIGHT:
     if (record->event.pressed) {
       // Set Low Brightness (Night Mode)
-      // Keep current Hue/Sat, set Value to 16
-      rgb_matrix_sethsv_noeeprom(rgb_matrix_get_hue(), rgb_matrix_get_sat(), 16);
+      // Keep current Hue/Sat, set Value to NIGHT_BRIGHTNESS
+      rgb_matrix_sethsv(rgb_matrix_get_hue(), rgb_matrix_get_sat(), NIGHT_BRIGHTNESS);
       is_day_mode = false;
       sync_needed = true;
-      uprintf("[%lu.%03lu] Night Mode: Brightness set to 16\n", sec, ms);
+      uprintf("[%lu.%03lu] Night Mode: Brightness set to %d (Saved to EEPROM)\n", sec, ms, NIGHT_BRIGHTNESS);
       layer_history_pop();
       rgb_matrix_indicators_user();
     }
@@ -1203,21 +1203,21 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0, KC_MINS,
+    [0] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS_EQL,
                  KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
             // Layer 1: Right Arrows
-    [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9 , KC_0_TO0  , KC_MINS,
+    [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9 , KC_0_TO0  , KC_MINS_EQL,
                  KC_TAB , KC_Q_Z , KC_W_X  , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
                  KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H  , KC_J , KC_K, KC_L , KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, KC_LEFT, KC_RIGHT, KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
                                            KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
                                                       KC_DOWN, KC_BSPC,   KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5        ,   KC_F6      , KC_F7  , KC_F8  , KC_F9  , KC_F10 , QK_BOOT,
-                 KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_EXIT    , KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_F11,
+                 KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, QK_BOOT      ,   KC_LBRC    , KC_RBRC, S(KC_LBRC), S(KC_RBRC), HYPR(KC_N), KC_F11,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT    , KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, KC_F12,
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_RSFT,
                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
@@ -1230,35 +1230,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                  MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_EXIT,
                                                  KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     // Layer 4: left hand layer                                                            
-    [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS,
+    [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS_EQL,
                   KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                   KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                   KC_LCTL, KC_QUES_SLSH, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RCTL,
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_L2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
-    // Layer 5: number symbol layer
-    [5] = LAYOUT(KC_PSCR, KC_1_L1  , KC_2_L2, KC_3_L3 , KC_4_L4 , KC_5_L5,   KC_6_L6, KC_7   , KC_8   , KC_9      , KC_0_TO0  , QK_BOOT,
-                  KC_TAB , KC_MINS_TO0, KC_7 , KC_8    , KC_9    , KC_EXIT,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), HYPR(KC_N),
-                  KC_LSFT, S(KC_EQL)  , KC_4 , KC_5    , KC_6    , KC_EXIT,   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT   , KC_EXIT,
-                  KC_LCTL, KC_0       , KC_1 , KC_2    , KC_3    , KC_EQL ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN   , KC_END    , KC_RSFT,
-                                  KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_R_L2, KC_ENT_EXIT,
-                                              KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
-  // Settings Layer - accessed via long press 5
-  [6] = LAYOUT(
+    // Layer 5: Settings Layer - accessed via long press 6
+  [5] = LAYOUT(
   KC_PSCR, KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , KC_EXIT,  KC_DUMP_LOG, KC_PRINT_STATS, KC_PRINT_STATS_GRID, KC_DBG_TOG, KC_EXIT, KC_PSCR,
   KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,  KC_FIRE  , KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
   KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,  KC_EXIT  , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT    , KC_EXIT,
   KC_EXIT, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_EXIT,  KC_EXIT  , KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_EXIT, KC_EXIT, KC_EXIT,
                                    KC_EXIT, KC_EXIT, KC_EXIT,  KC_EXIT, KC_EXIT,
                                             KC_EXIT, KC_EXIT,  KC_EXIT),
-    // Layer 7: right side arrows
-    [7] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6_L6, KC_7_L7, KC_8, KC_9, KC_0_TO0, KC_UP,
-                 KC_TAB , KC_Q_L4, KC_W   , KC_E   , KC_R   , KC_T   ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_DOWN,
-                 KC_LSFT, KC_A   , KC_S   , KC_D   , KC_F   , KC_G   ,   KC_H, KC_J, KC_K, KC_L, KC_LEFT, KC_RIGHT,
-                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C, KC_V  , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
-                                           KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
-                                                      KC_DOWN, KC_BSPC,   KC_BSPC),
-
 
 };
 

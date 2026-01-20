@@ -66,18 +66,18 @@ enum custom_keycodes {
   KC_NIGHT,       // Set brightness to Night level
   KC_FLASHLIGHT,  // Toggle Flashlight mode
   KC_SLSH_TO0,    // Tap: /, Hold: Temporary Layer 0
-  KC_5_L5,        // Tap: 5, Hold: Layer 5 (Settings)
   KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
   KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
   KC_L3_EXT_TO1,  // Layer 3 Left Thumb: Tap TO(1), Hold TO(6)
   KC_EXIT_TO3,    // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
   KC_PRINT_STATS, // Print statistics histogram immediately
   KC_PRINT_STATS_GRID, // Print statistics in a 2D grid format
-  KC_6_L6,        // Tap: 6, Hold: Layer 6
+  KC_5_L5,        // Tap: 5, Hold: Layer 5 (Settings)
   KC_0_TO0,       // Tap: 0, Hold: TO(0)
   KC_SEL_LOCK,    // Toggle Left Click Hold (Selection Lock)
   KC_QUES_SLSH,   // Tap: ?, Shift+Tap: /
   KC_Q_Z,         // Tap: Q, Hold: Z
   KC_W_X,         // Tap: W, Hold: X
-  KC_7_L7         // Tap: 7, Hold: Layer 7 (Right Arrows)
+  KC_7_L6,        // Tap: 7, Hold: Layer 6 (Right Arrows)
+  KC_MINS_EQL     // Tap: Minus, Hold: Equals
 };

@@ -195,26 +195,6 @@ bool housekeeping_rgb_indicators(void) {
     }
     break;
   }
-  case 7: {
-    // Layer 7: Arrows on both sides (copy of old layer 1)
-    bool phase = (timer_read() / 500) % 2;
-    if (is_keyboard_left()) {
-      // Left Arrows: LEFT(4), RIGHT(11), UP(28), DOWN(25)
-      static const uint8_t left_leds[] = {4, 11, 28, 25};
-      for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
-         if (phase) rgb_matrix_set_color_scaled(left_leds[i], 255, 0, 255); // Pink
-         else       rgb_matrix_set_color_scaled(left_leds[i], 0, 255, 0);   // Green
-      }
-    } else {
-      // Right Arrows: UP(0), DOWN(1), LEFT(2), RIGHT(5)
-      static const uint8_t right_leds[] = {0, 1, 2, 5};
-      for (int i = 0; i < sizeof(right_leds) / sizeof(right_leds[0]); i++) {
-         if (phase) rgb_matrix_set_color_scaled(right_leds[i], 0, 255, 0);   // Green
-         else       rgb_matrix_set_color_scaled(right_leds[i], 255, 0, 255); // Pink
-      }
-    }
-    break;
-  }
   case 2: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {5, 10, 13, 18, 4, 11, 12, 19};
@@ -243,16 +223,6 @@ bool housekeeping_rgb_indicators(void) {
     break;
   }
   case 5: {
-    if (is_keyboard_left()) {
-      static const uint8_t left[] = {6, 9, 14, 17, 5, 10, 13, 18, 4, 11};
-      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color_scaled(left[i], 255, 110, 150);
-    } else {
-      static const uint8_t right[] = {17, 14, 9, 18, 13, 10};
-      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color_scaled(right[i], 255, 110, 150);
-    }
-    break;
-  }
-  case 6: {
     // Police Theme: Top Left and Top Right keys flash Red/Blue
     bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {

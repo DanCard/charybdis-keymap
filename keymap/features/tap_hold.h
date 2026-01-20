@@ -14,10 +14,11 @@
     TH_F12,
     TH_L3_TO4, TH_L3_TO2, TH_L3_TO1,
     TH_EXIT_TO3,
-    TH_K6_TO6, TH_K0_TO0,
+    TH_K0_TO0,
     TH_Q_Z,  // Q tap, Z hold
     TH_W_X,  // W tap, X hold
-    TH_K7_L7, // 7 tap, Layer 7 hold
+    TH_K7_L6, // 7 tap, Layer 6 hold
+    TH_MINS_EQL, // Minus tap, Equals hold
     TH_COUNT  // Total count
 };
 

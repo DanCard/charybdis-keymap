@@ -21,7 +21,6 @@ from layout_common import (
     L6_BLUE_BORDER,
     L1_PINK_BORDER,
     L1_CYAN_BORDER,
-    L7_RAINBOW_BORDER,
     parse_keymap,
     parse_info_json,
     extract_combos_from_keymap,
