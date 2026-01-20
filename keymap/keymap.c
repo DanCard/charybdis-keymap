@@ -597,6 +597,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
       layer_history_pop();
       rgb_matrix_indicators_user();
+      
+      // Explicitly clear all mouse lock states
+      mouse_is_locked = false;
+      if (is_selection_locked) {
+          unregister_code(MS_BTN1);
+          is_selection_locked = false;
+          update_mouse_button_state(MS_BTN1, false);
+      }
+      charybdis_set_pointer_dragscroll_enabled(false);
+      if (is_sniping_active) {
+          is_sniping_active = false;
+          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      }
+      if (is_fast_mode_active) {
+          is_fast_mode_active = false;
+          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      }
     }
     return false;
 
@@ -605,6 +622,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       layer_history_pop();
       rgb_matrix_indicators_user();
       th[TH_ENT_MO].timer = timer_read();
+
+      // Explicitly clear all mouse lock states
+      mouse_is_locked = false;
+      if (is_selection_locked) {
+          unregister_code(MS_BTN1);
+          is_selection_locked = false;
+          update_mouse_button_state(MS_BTN1, false);
+      }
+      charybdis_set_pointer_dragscroll_enabled(false);
+      if (is_sniping_active) {
+          is_sniping_active = false;
+          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      }
+      if (is_fast_mode_active) {
+          is_fast_mode_active = false;
+          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      }
     } else {
 // ...
       uprintf("KC_ENT_EXIT Released. Elapsed: %u. Action: %s\n",

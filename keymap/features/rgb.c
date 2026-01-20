@@ -115,6 +115,12 @@ void handle_rgb_mode_change(uint8_t mode) {
   }
 }
 
+// Helper to set color scaled by global brightness
+void rgb_matrix_set_color_scaled(int index, uint8_t r, uint8_t g, uint8_t b) {
+  uint8_t val = rgb_matrix_get_val();
+  rgb_matrix_set_color(index, (uint16_t)r * val / 255, (uint16_t)g * val / 255, (uint16_t)b * val / 255);
+}
+
 bool housekeeping_rgb_indicators(void) {
   if (is_flashlight) {
     rgb_matrix_set_color_all(255, 255, 255);
@@ -127,17 +133,17 @@ bool housekeeping_rgb_indicators(void) {
     bool am_i_left = is_keyboard_left();
 
     if (am_i_left) {
-      if (phase) rgb_matrix_set_color(far_left_col[0], 255, 255, 255);
+      if (phase) rgb_matrix_set_color_scaled(far_left_col[0], 255, 255, 255);
       else rgb_matrix_set_color(far_left_col[0], 0, 0, 0);
     } else {
-      if (!phase) rgb_matrix_set_color(far_right_col[0], 255, 255, 255);
+      if (!phase) rgb_matrix_set_color_scaled(far_right_col[0], 255, 255, 255);
       else rgb_matrix_set_color(far_right_col[0], 0, 0, 0);
     }
   }
 
   if (is_jitter_filter_active && !is_keyboard_left()) {
-    rgb_matrix_set_color(27, 0, 255, 255);
-    rgb_matrix_set_color(28, 0, 255, 255);
+    rgb_matrix_set_color_scaled(27, 0, 255, 255);
+    rgb_matrix_set_color_scaled(28, 0, 255, 255);
   }
 
   bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
@@ -148,7 +154,7 @@ bool housekeeping_rgb_indicators(void) {
       for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) {
         HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
-        rgb_matrix_set_color(far_right_col[i], rgb.r, rgb.g, rgb.b);
+        rgb_matrix_set_color_scaled(far_right_col[i], rgb.r, rgb.g, rgb.b);
       }
     }
     return false;
@@ -157,7 +163,7 @@ bool housekeeping_rgb_indicators(void) {
   if (is_fast_mode_active) {
     if (!is_keyboard_left()) {
       for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) rgb_matrix_set_color(far_right_col[i], 255, 0, 0);
+      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) rgb_matrix_set_color_scaled(far_right_col[i], 255, 0, 0);
     }
     return false;
   }
@@ -168,7 +174,7 @@ bool housekeeping_rgb_indicators(void) {
       for (int i = 0; i < sizeof(far_left_col) / sizeof(far_left_col[0]); i++) {
         HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
         RGB rgb = hsv_to_rgb(hsv);
-        rgb_matrix_set_color(far_left_col[i], rgb.r, rgb.g, rgb.b);
+        rgb_matrix_set_color_scaled(far_left_col[i], rgb.r, rgb.g, rgb.b);
       }
     }
     return false;
@@ -183,8 +189,8 @@ bool housekeeping_rgb_indicators(void) {
       // Left Arrows: LEFT(4), RIGHT(11), UP(28), DOWN(25)
       static const uint8_t left_leds[] = {4, 11, 28, 25};
       for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
-         if (phase) rgb_matrix_set_color(left_leds[i], 255, 0, 255); // Pink
-         else       rgb_matrix_set_color(left_leds[i], 0, 255, 0);   // Green
+         if (phase) rgb_matrix_set_color_scaled(left_leds[i], 255, 0, 255); // Pink
+         else       rgb_matrix_set_color_scaled(left_leds[i], 0, 255, 0);   // Green
       }
     }
     break;
@@ -196,15 +202,15 @@ bool housekeeping_rgb_indicators(void) {
       // Left Arrows: LEFT(4), RIGHT(11), UP(28), DOWN(25)
       static const uint8_t left_leds[] = {4, 11, 28, 25};
       for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
-         if (phase) rgb_matrix_set_color(left_leds[i], 255, 0, 255); // Pink
-         else       rgb_matrix_set_color(left_leds[i], 0, 255, 0);   // Green
+         if (phase) rgb_matrix_set_color_scaled(left_leds[i], 255, 0, 255); // Pink
+         else       rgb_matrix_set_color_scaled(left_leds[i], 0, 255, 0);   // Green
       }
     } else {
       // Right Arrows: UP(0), DOWN(1), LEFT(2), RIGHT(5)
       static const uint8_t right_leds[] = {0, 1, 2, 5};
       for (int i = 0; i < sizeof(right_leds) / sizeof(right_leds[0]); i++) {
-         if (phase) rgb_matrix_set_color(right_leds[i], 0, 255, 0);   // Green
-         else       rgb_matrix_set_color(right_leds[i], 255, 0, 255); // Pink
+         if (phase) rgb_matrix_set_color_scaled(right_leds[i], 0, 255, 0);   // Green
+         else       rgb_matrix_set_color_scaled(right_leds[i], 255, 0, 255); // Pink
       }
     }
     break;
@@ -212,37 +218,37 @@ bool housekeeping_rgb_indicators(void) {
   case 2: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {5, 10, 13, 18, 4, 11, 12, 19};
-      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 0, 255, 0);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color_scaled(left[i], 0, 255, 0);
     } else {
       static const uint8_t right[] = {18, 13, 10, 5, 19, 12, 11, 4};
-      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color(right[i], 0, 255, 0);
+      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color_scaled(right[i], 0, 255, 0);
     }
     break;
   }
   case 3: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {8, 1, 9, 14, 17, 21, 2, 5, 10, 13, 18, 4, 11, 12, 19, 26, 25, 24};
-      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 255, 255, 0);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color_scaled(left[i], 255, 255, 0);
     } else {
       static const uint8_t right[] = {21, 14, 9, 22, 19, 12, 11, 4};
-      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color(right[i], 255, 255, 0);
+      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color_scaled(right[i], 255, 255, 0);
     }
     break;
   }
   case 4: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {0, 7, 8, 15, 16, 20, 1, 6, 9, 14, 17, 21, 2, 5, 10, 13, 18, 22, 3, 4, 11, 12, 19, 23, 26, 27, 28, 25, 24};
-      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 255, 127, 0);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color_scaled(left[i], 255, 127, 0);
     }
     break;
   }
   case 5: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {6, 9, 14, 17, 5, 10, 13, 18, 4, 11};
-      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color(left[i], 255, 110, 150);
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color_scaled(left[i], 255, 110, 150);
     } else {
       static const uint8_t right[] = {17, 14, 9, 18, 13, 10};
-      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color(right[i], 255, 110, 150);
+      for (int i = 0; i < sizeof(right) / sizeof(right[0]); i++) rgb_matrix_set_color_scaled(right[i], 255, 110, 150);
     }
     break;
   }
@@ -251,12 +257,12 @@ bool housekeeping_rgb_indicators(void) {
     bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {
       // Left Top-Left (Esc) is LED 0
-      if (phase) rgb_matrix_set_color(0, 255, 0, 0); // Red
-      else       rgb_matrix_set_color(0, 0, 0, 255); // Blue
+      if (phase) rgb_matrix_set_color_scaled(0, 255, 0, 0); // Red
+      else       rgb_matrix_set_color_scaled(0, 0, 0, 255); // Blue
     } else {
       // Right Top-Right (Minus) is LED 0
-      if (phase) rgb_matrix_set_color(0, 0, 0, 255); // Blue
-      else       rgb_matrix_set_color(0, 255, 0, 0); // Red
+      if (phase) rgb_matrix_set_color_scaled(0, 0, 0, 255); // Blue
+      else       rgb_matrix_set_color_scaled(0, 255, 0, 0); // Red
     }
     break;
   }
