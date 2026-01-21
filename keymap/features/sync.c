@@ -34,6 +34,7 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   is_fast_mode_active = sync_data->is_fast_mode_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
+  charybdis_set_pointer_dragscroll_enabled(sync_data->is_dragscroll_enabled);
   is_caps_lock_on = sync_data->is_caps_lock_on;
   is_day_mode = sync_data->is_day_mode;
 
@@ -95,6 +96,7 @@ void housekeeping_task_sync(void) {
           .is_fast_mode_active = is_fast_mode_active,
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
+          .is_dragscroll_enabled = charybdis_get_pointer_dragscroll_enabled(),
           .is_caps_lock_on = is_caps_lock_on,
           .is_day_mode = is_day_mode,
           .rgb_mode = rgb_matrix_get_mode(),
@@ -123,7 +125,7 @@ void housekeeping_task_sync(void) {
         if (response_data.mouse_active) {
             if (!layer3_auto_activated) {
                 layer_change_reason = "Slave Mouse Movement";
-                layer_on(3);
+                layer_move(3);
                 layer3_auto_activated = true;
                 uprintf("Master: Activated Layer 3 due to Slave Mouse\n");
             }
@@ -167,6 +169,7 @@ void debug_dump_state(void) {
   uprintf("Timer: %u ms elapsed (Timeout: %u ms)\n", timer_elapsed(auto_mouse_timer), auto_mouse_timeout);
   uprintf("Mouse Buttons Held Mask: 0x%02X\n", mouse_buttons_held);
   uprintf("Selection Lock: %s\n", is_selection_locked ? "YES" : "no");
+  uprintf("Drag Scroll Active: %s\n", charybdis_get_pointer_dragscroll_enabled() ? "YES" : "no");
   uprintf("Slave Mouse Active Flag: %s\n", slave_mouse_active ? "YES" : "no");
 
   uprintf("\n\033[96m--- RGB State ---\033[0m\n");

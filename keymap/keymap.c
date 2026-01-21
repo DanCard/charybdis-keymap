@@ -138,11 +138,11 @@ void z_finished(tap_dance_state_t *state, void *user_data) {
   case SINGLE_HOLD:
     z_original_layer = get_highest_layer(layer_state);
     if (z_original_layer == 4) {
-      layer_change_reason = "Tap Dance Z Hold";
-      layer_move(0); // Peek at base layer
+      layer_change_reason = "Tap Dance Z Hold: Peek Base";
+      layer_move(0);
     } else {
-      layer_change_reason = "Tap Dance Z Hold";
-      layer_move(4); // Peek at layer 4
+      layer_change_reason = "Tap Dance Z Hold: Peek L4";
+      layer_move(4);
     }
     rgb_matrix_indicators_user();
     break;
@@ -158,15 +158,8 @@ void z_reset(tap_dance_state_t *state, void *user_data) {
     }
   } break;
   case SINGLE_HOLD:
-    if (get_highest_layer(layer_state) == 4) {
-      // Was peeking at layer 4, restore original layer
-      layer_change_reason = "Z(Hold Release): Restore";
-      layer_move(z_original_layer);
-    } else {
-      // Was peeking at base layer, restore layer 4
-      layer_change_reason = "Z(Hold Release): L4";
-      layer_move(4);
-    }
+    layer_change_reason = "Z(Hold Release): Restore";
+    layer_history_pop();
     break;
   }
   z_tap_state.state = 0;
@@ -378,7 +371,13 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
         uint8_t mods = get_mods();
         if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
           l1_up_active = true;
-          layer_invert(1);
+          if (layer_state_is(1)) {
+            layer_change_reason = "L1 Arrow Override: L1 OFF";
+            layer_history_pop();
+          } else {
+            layer_change_reason = "L1 Arrow Override: L1 ON";
+            layer_move(1);
+          }
           return false;
         }
       } else {
@@ -539,6 +538,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case KC_END:
       uprintf("[%lu.%03lu] END (diff %lu)\n", sec, ms, diff);
       break;
+    case DRGSCRL:
+      uprintf("[%lu.%03lu] DRAG SCROLL (Momentary) Press\n", sec, ms);
+      break;
+    case SCROLL_MODE:
+      uprintf("[%lu.%03lu] DRAG SCROLL (Toggle) Press\n", sec, ms);
+      break;
+    }
+  } else {
+    // Release logging
+    switch (keycode) {
+    case DRGSCRL:
+      uprintf("[%lu.%03lu] DRAG SCROLL (Momentary) Release\n", sec, ms);
+      break;
     }
   }
 
@@ -557,6 +569,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
   }
 
+  // Handle context-aware mouse keys (Drag Scroll Override)
+  if (!process_mouse_keycodes(keycode, record)) {
+    return false;
+  }
+
   switch (keycode) {
   case KC_LEFT:
   case KC_RIGHT:
@@ -570,60 +587,24 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_EXIT:
     if (record->event.pressed) {
       layer_history_pop();
+      clear_mouse_states();
       rgb_matrix_indicators_user();
-      
-      // Explicitly clear all mouse lock states
-      mouse_is_locked = false;
-      if (is_selection_locked) {
-          unregister_code(MS_BTN1);
-          is_selection_locked = false;
-          update_mouse_button_state(MS_BTN1, false);
-      }
-      charybdis_set_pointer_dragscroll_enabled(false);
-      if (is_sniping_active) {
-          is_sniping_active = false;
-          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      }
-      if (is_fast_mode_active) {
-          is_fast_mode_active = false;
-          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      }
     }
     return false;
 
   case KC_ENT_EXIT:
     if (record->event.pressed) {
       layer_history_pop();
+      clear_mouse_states();
       rgb_matrix_indicators_user();
       th[TH_ENT_MO].timer = timer_read();
-
-      // Explicitly clear all mouse lock states
-      mouse_is_locked = false;
-      if (is_selection_locked) {
-          unregister_code(MS_BTN1);
-          is_selection_locked = false;
-          update_mouse_button_state(MS_BTN1, false);
-      }
-      charybdis_set_pointer_dragscroll_enabled(false);
-      if (is_sniping_active) {
-          is_sniping_active = false;
-          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      }
-      if (is_fast_mode_active) {
-          is_fast_mode_active = false;
-          pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-      }
     } else {
-// ...
       uprintf("KC_ENT_EXIT Released. Elapsed: %u. Action: %s\n",
               timer_elapsed(th[TH_ENT_MO].timer),
               (timer_elapsed(th[TH_ENT_MO].timer) < TAPPING_TERM) ? "Tap (Exit)"
                                                               : "Hold (Exit)");
       if (timer_elapsed(th[TH_ENT_MO].timer) < TAPPING_TERM) {
         tap_code(KC_ENT);
-        // Tap = Permanent Exit. We stay at layer 0.
-      } else {
-        // Hold = Momentary Peek. Restore the full layer state.
       }
       rgb_matrix_indicators_user();
     }
@@ -641,10 +622,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (!th[TH_L1].triggered) {
         if (layer_state_is(1)) {
           layer_change_reason = "L_TG1 (Tap): Toggle L1 (OFF)";
-          layer_off(1);
+          layer_history_pop();
         } else {
-          layer_change_reason = "L_TG1 (Tap): Toggle L1 (Base+Arrows)";
-          layer_on(1);
+          layer_change_reason = "L_TG1 (Tap): Toggle L1 (ON)";
+          layer_move(1);
         }
       }
       rgb_matrix_indicators_user();
@@ -653,11 +634,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_R_L2:
     if (record->event.pressed) {
       if (get_highest_layer(layer_state) > 0) {
-        layer_change_reason = "R_TG2 (Tap): L0 (Reset)";
-        layer_move(0);
+        layer_change_reason = "R_TG2 (Tap): Exit";
+        layer_history_pop();
       } else {
-        layer_change_reason = "R_TG2 (Tap): Toggle L2 (Invert)";
-        layer_invert(2);
+        layer_change_reason = "R_TG2 (Tap): Toggle L2 (ON)";
+        layer_move(2);
       }
       rgb_matrix_indicators_user();
     }
@@ -672,9 +653,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (!th[TH_P].triggered) {
         tap_code(KC_P);
       } else {
-        // Hold was triggered, restore layer 4
-        layer_change_reason = "P(Hold Release): L4";
-        layer_move(4);
+        // Hold was triggered, restore previous layer via history
+        layer_history_pop();
       }
     }
     return false;
@@ -688,9 +668,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
        if (!th[TH_Q].triggered) {
          tap_code(KC_Q);
        } else {
-         // Hold was triggered, restore base layer
-         layer_change_reason = "Q(Hold Release): Base";
-         layer_move(0);
+         // Hold was triggered, restore previous layer via history
+         layer_history_pop();
        }
      }
      return false;
@@ -713,10 +692,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       sync_needed = true;
       if (mouse_is_locked) {
         layer_change_reason = "Mouse Lock ON";
-        layer_on(3);
+        layer_move(3);
       } else {
         layer_change_reason = "Mouse Lock OFF";
-        layer_off(3);
+        layer_history_pop();
       }
     }
     return false;
@@ -733,7 +712,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case KC_ENT_L2_EXIT:
     if (record->event.pressed) {
       layer_change_reason = "ENT_L2_EXIT";
-      layer_off(2);
+      layer_history_pop();
       tap_code(KC_ENT);
     }
     return false;
@@ -895,9 +874,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       if (!th[TH_SLSH].triggered) {
         tap_code(KC_SLSH);
       } else {
-        // Hold was triggered, restore layer 4
-        layer_change_reason = "/ (Hold Release): L4";
-        layer_move(4);
+        // Hold was triggered, restore previous layer via history
+        layer_history_pop();
       }
     }
     return false;
@@ -1180,28 +1158,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
-            // Layer 1: Right Arrows
+            // Layer 1: Right Arrows  
     [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9 , KC_0_TO0  , KC_MINS_EQL,
                  KC_TAB , KC_Q_Z , KC_W    , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
                  KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H  , KC_J , KC_K, KC_L , KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, KC_LEFT, KC_X    , KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
                                            KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
                                                       KC_DOWN, KC_RIGHT,  KC_BSPC),
-    [2] = LAYOUT(KC_EXIT, KC_F1_F11, KC_F2_F12, KC_F3  , KC_F4  , KC_F5        ,   KC_F6  , KC_F7  , KC_F8  , KC_F9     , KC_F10   , QK_BOOT,
+    [2] = LAYOUT(KC_EXIT, KC_F1_F11, KC_F2_F12, KC_F3  , KC_F4  , KC_F5    ,   KC_F6  , KC_F7  , KC_F8  , KC_F9     , KC_F10   , QK_BOOT,
                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, HYPR(KC_N), QK_BOOT   ,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT  , KC_EXIT,
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN   , KC_END   , KC_RSFT,
                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
-    [3] = LAYOUT(
-      QK_GESC  , KC_EXIT    , KC_MS_FAST_UP, KC_EXIT, KC_EXIT, QK_BOOT,   KC_EXIT, KC_RCTL , KC_RALT, KC_RGUI       , KC_EXIT, QK_BOOT,
-      KC_EXIT  , KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN2, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT       , KC_EXIT, KC_EXIT,
-      KC_MS_FAST_LEFT, MS_LEFT, KC_SEL_LOCK, MS_RGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, DRGSCRL, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
-      KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, MS_BTN3, KC_EXIT,   KC_EXIT, KC_EXIT , MS_BTN3, MS_BTN3       , MS_BTN3, KC_RSFT,
-                                 MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_ENT_EXIT,
-                                                 KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
+[3] = LAYOUT(
+  QK_GESC        , KC_EXIT   , KC_MS_FAST_UP, KC_EXIT  , KC_EXIT, QK_BOOT,   KC_EXIT      , KC_RCTL , KC_RALT   , KC_RGUI    , KC_EXIT, QK_BOOT,
+  KC_SEL_LOCK    , CM_MS_UL  , CM_MS_UP   , CM_MS_UR   , MS_BTN2, KC_EXIT,   KC_EXIT      , KC_SNIPE, KC_FAST   , KC_EXIT    , KC_EXIT, KC_EXIT,
+  KC_MS_FAST_LEFT, CM_MS_LEFT, SCROLL_MODE, CM_MS_RIGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, SCROLL_MODE, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
+  KC_EXIT        , CM_MS_DL  , CM_MS_DOWN , CM_MS_DR   , MS_BTN3, KC_EXIT,   KC_EXIT      , KC_EXIT , MS_BTN3   , MS_BTN3    , MS_BTN3, KC_RSFT,
+                                    MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_ENT_EXIT,
+                                                    KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     // Layer 4: left hand layer                                                            
-    [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS_EQL,
+    [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0_TO0, KC_MINS_EQL,
                   KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                   KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                   KC_LCTL, KC_SLSH, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RCTL,

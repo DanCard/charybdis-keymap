@@ -2,6 +2,8 @@
 
 #include QMK_KEYBOARD_H
 
+#define SCROLL_MODE DRG_TOG
+
 // Custom Keycodes
 enum custom_keycodes {
   KC_RAINBOW = QK_USER_0,
@@ -27,7 +29,6 @@ enum custom_keycodes {
   KC_MS_DIAG_UR,
   KC_MS_DIAG_DL,
   KC_MS_DIAG_DR,
-  KC_SCR_MODE,
   KC_1_L1,
   KC_2_L2,
   KC_3_L3,
@@ -80,5 +81,15 @@ enum custom_keycodes {
   KC_7_L6,        // Tap: 7, Hold: Layer 6 (Right Arrows)
   KC_MINS_EQL,    // Tap: Minus, Hold: Equals
   KC_F1_F11,      // Tap: F1, Hold: F11
-  KC_F2_F12       // Tap: F2, Hold: F12
+  KC_F2_F12,      // Tap: F2, Hold: F12
+  
+  // Context-aware Mouse Keys (Drag Scroll override)
+  CM_MS_UP,
+  CM_MS_DOWN,
+  CM_MS_LEFT,
+  CM_MS_RIGHT,
+  CM_MS_UL, // Up-Left
+  CM_MS_UR, // Up-Right
+  CM_MS_DL, // Down-Left
+  CM_MS_DR  // Down-Right
 };

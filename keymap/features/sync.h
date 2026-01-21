@@ -19,6 +19,7 @@ typedef struct _user_sync_info_t {
   bool is_fast_mode_active;
   bool mouse_is_locked;
   bool is_jitter_filter_active;
+  bool is_dragscroll_enabled;
   bool is_caps_lock_on;
   bool is_day_mode;
   uint8_t rgb_mode;

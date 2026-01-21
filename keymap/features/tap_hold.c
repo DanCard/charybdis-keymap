@@ -3,6 +3,7 @@
 #include "sync.h"
 #include "keycodes.h"
 #include "logging.h"
+#include "mouse.h"
 #include <lib/lib8tion/lib8tion.h>
 
 // Tap/Hold Key State
@@ -50,9 +51,9 @@ bool process_tap_hold_key(uint16_t keycode, keyrecord_t *record) {
 // Exit key helper (SPC_EXIT, ENT_EXIT, BSPC_EXIT)
 bool handle_exit_key(uint16_t tap_key, bool pressed) {
     if (pressed) {
-        // layer_change_reason = "Exit Key: L0"; // Handled by layer_history_pop
         layer_history_pop();
-        housekeeping_rgb_indicators(); // Call rgb indicator update
+        clear_mouse_states();
+        housekeeping_rgb_indicators();
         th[TH_ENT_MO].timer = timer_read();
     } else {
         if (timer_elapsed(th[TH_ENT_MO].timer) < LONG_PRESS_TIMEOUT) {
@@ -101,27 +102,27 @@ bool handle_thumb_toggle(uint8_t th_idx, uint16_t tap_key, const char* name, boo
 void housekeeping_tap_hold(void) {
   if (th[TH_PGUP].held && !th[TH_PGUP].triggered &&
       timer_elapsed(th[TH_PGUP].timer) > LONG_PRESS_TIMEOUT) {
-    layer_change_reason = "PGUP(Hold): Exit to Base";
-    layer_move(0);
+    layer_change_reason = "PGUP(Hold): Exit";
+    layer_history_pop();
     th[TH_PGUP].triggered = true;
     housekeeping_rgb_indicators();
   }
   if (th[TH_HOME].held && !th[TH_HOME].triggered &&
       timer_elapsed(th[TH_HOME].timer) > LONG_PRESS_TIMEOUT) {
-    layer_change_reason = "HOME(Hold): Exit to Base";
-    layer_move(0);
+    layer_change_reason = "HOME(Hold): Exit";
+    layer_history_pop();
     th[TH_HOME].triggered = true;
     housekeeping_rgb_indicators();
   }
   if (th[TH_P].held && !th[TH_P].triggered && timer_elapsed(th[TH_P].timer) > LONG_PRESS_TIMEOUT) {
     layer_change_reason = "P(Hold): Peek at Base";
-    layer_state_set(0); // Peek at base layer
+    layer_move(0);
     th[TH_P].triggered = true;
     housekeeping_rgb_indicators();
   }
   if (th[TH_SLSH].held && !th[TH_SLSH].triggered && timer_elapsed(th[TH_SLSH].timer) > LONG_PRESS_TIMEOUT) {
     layer_change_reason = "/(Hold): Peek at Base";
-    layer_state_set(0); // Peek at base layer
+    layer_move(0);
     th[TH_SLSH].triggered = true;
     housekeeping_rgb_indicators();
   }
@@ -139,8 +140,8 @@ void housekeeping_tap_hold(void) {
   }
   if (th[TH_ENT_MO].held && !th[TH_ENT_MO].triggered &&
       timer_elapsed(th[TH_ENT_MO].timer) > LONG_PRESS_TIMEOUT) {
-    layer_change_reason = "ENT(Hold): MO(4)";
-    layer_on(4);
+    layer_change_reason = "ENT(Hold): L4";
+    layer_move(4);
     th[TH_ENT_MO].triggered = true;
     housekeeping_rgb_indicators();
   }
@@ -152,7 +153,7 @@ void housekeeping_tap_hold(void) {
       layer_move(1);
     } else {
       layer_change_reason = "K1(Hold): Toggle L1 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     }
     th[TH_K1].triggered = true;
     housekeeping_rgb_indicators();
@@ -164,7 +165,7 @@ void housekeeping_tap_hold(void) {
       layer_move(2);
     } else {
       layer_change_reason = "K2(Hold): Toggle L2 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     }
     th[TH_K2].triggered = true;
     housekeeping_rgb_indicators();
@@ -176,7 +177,7 @@ void housekeeping_tap_hold(void) {
       layer_move(3);
     } else {
       layer_change_reason = "K3(Hold): Toggle L3 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     }
     th[TH_K3].triggered = true;
     housekeeping_rgb_indicators();
@@ -188,7 +189,7 @@ void housekeeping_tap_hold(void) {
       layer_move(4);
     } else {
       layer_change_reason = "K4(Hold): Toggle L4 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     }
     th[TH_K4].triggered = true;
     housekeeping_rgb_indicators();
@@ -200,7 +201,7 @@ void housekeeping_tap_hold(void) {
       layer_move(5);
     } else {
       layer_change_reason = "K5(Hold): Toggle L5 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     }
     th[TH_K5].triggered = true;
     housekeeping_rgb_indicators();
@@ -209,8 +210,8 @@ void housekeeping_tap_hold(void) {
   // New Layer 4 Keys Logic
   if (th[TH_MINS].held && !th[TH_MINS].triggered &&
       timer_elapsed(th[TH_MINS].timer) > LONG_PRESS_TIMEOUT) {
-    layer_change_reason = "MINS(Hold): L4->Base";
-    layer_move(0);
+    layer_change_reason = "MINS(Hold): Exit";
+    layer_history_pop();
     th[TH_MINS].triggered = true;
     housekeeping_rgb_indicators();
   }
@@ -237,15 +238,15 @@ void housekeeping_tap_hold(void) {
   }
   if (th[TH_K7].held && !th[TH_K7].triggered &&
       timer_elapsed(th[TH_K7].timer) > LONG_PRESS_TIMEOUT) {
-    layer_change_reason = "K7(Hold): L4->Base";
-    layer_move(0);
+    layer_change_reason = "K7(Hold): Exit";
+    layer_history_pop();
     th[TH_K7].triggered = true;
     housekeeping_rgb_indicators();
   }
   if (th[TH_K6].held && !th[TH_K6].triggered &&
       timer_elapsed(th[TH_K6].timer) > LONG_PRESS_TIMEOUT) {
-    layer_change_reason = "K6(Hold): L4->Base";
-    layer_move(0);
+    layer_change_reason = "K6(Hold): Exit";
+    layer_history_pop();
     th[TH_K6].triggered = true;
     housekeeping_rgb_indicators();
   }
@@ -256,7 +257,7 @@ void housekeeping_tap_hold(void) {
     uprintf(">>> Thumb Hold Triggered: ENT_TG2 -> Toggle Layer 2\n");
     if (get_highest_layer(layer_state) == 2) {
       layer_change_reason = "ENT(Hold): Toggle L2 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     } else {
       layer_change_reason = "ENT(Hold): Toggle L2 (ON)";
       layer_move(2);
@@ -269,7 +270,7 @@ void housekeeping_tap_hold(void) {
     uprintf(">>> Thumb Hold Triggered: ENT_TG4 -> Toggle Layer 4\n");
     if (get_highest_layer(layer_state) == 4) {
       layer_change_reason = "ENT(Hold): Toggle L4 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     } else {
       layer_change_reason = "ENT(Hold): Toggle L4 (ON)";
       layer_move(4);
@@ -282,7 +283,7 @@ void housekeeping_tap_hold(void) {
     uprintf(">>> Thumb Hold Triggered: SPC_TG2 -> Toggle Layer 2\n");
     if (get_highest_layer(layer_state) == 2) {
       layer_change_reason = "SPC(Hold): Toggle L2 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     } else {
       layer_change_reason = "SPC(Hold): Toggle L2 (ON)";
       layer_move(2);
@@ -295,7 +296,7 @@ void housekeeping_tap_hold(void) {
     uprintf(">>> Thumb Hold Triggered: SPC_TG4 -> Toggle Layer 4\n");
     if (get_highest_layer(layer_state) == 4) {
       layer_change_reason = "SPC(Hold): Toggle L4 (OFF)";
-      layer_move(0);
+      layer_history_pop();
     } else {
       layer_change_reason = "SPC(Hold): Toggle L4 (ON)";
       layer_move(4);
@@ -305,17 +306,17 @@ void housekeeping_tap_hold(void) {
   }
   if (th[TH_F12].held && !th[TH_F12].triggered &&
       timer_elapsed(th[TH_F12].timer) > LONG_PRESS_TIMEOUT) {
-    uprintf(">>> Thumb Hold Triggered: F12 -> Exit to Base\n");
-    layer_change_reason = "F12(Hold): Exit to Base";
-    layer_move(0);
+    uprintf(">>> Thumb Hold Triggered: F12 -> Exit\n");
+    layer_change_reason = "F12(Hold): Exit";
+    layer_history_pop();
     th[TH_F12].triggered = true;
     housekeeping_rgb_indicators();
   }
 
   if (TH_CHECK(TH_K0_TO0)) {
-    uprintf(">>> KC_0_TO0 Hold Triggered -> Layer 0\n");
-    layer_change_reason = "0(Hold): Layer 0";
-    layer_move(0);
+    uprintf(">>> KC_0_TO0 Hold Triggered -> Exit\n");
+    layer_change_reason = "0(Hold): Exit";
+    layer_history_pop();
     TH_TRIGGER(TH_K0_TO0);
     housekeeping_rgb_indicators();
   }
