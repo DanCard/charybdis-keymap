@@ -92,6 +92,7 @@ static uint32_t eeprom_defer_timer = 0;
 
 static uint8_t master_rgb_init_mode = 0;
 static bool master_rgb_init_pending = false;
+static bool layer_0_refresh_pending = false;
 
 // Mouse Key globals
 extern uint8_t mk_max_speed;
@@ -240,8 +241,9 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   layer_change_reason = NULL;
 
   // Force RGB refresh when returning to layer 0 to clear stale indicator colors
+  // Defer this to matrix_scan to ensure layer_state has fully updated (avoiding race condition)
   if (layer == 0 && prev_layer != 0) {
-    handle_rgb_mode_change(rgb_matrix_get_mode());
+    layer_0_refresh_pending = true;
   }
   if (layer == 3) {
     uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
@@ -1291,6 +1293,14 @@ void matrix_scan_user(void) {
     handle_rgb_mode_change(master_rgb_init_mode);
     master_rgb_init_pending = false;
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
+  }
+
+  // Handle deferred layer 0 refresh (fixes stuck layer colors)
+  if (layer_0_refresh_pending) {
+    rgb_matrix_set_color_all(0, 0, 0); // Ensure Layer 1 artifacts are wiped (prevents "ghosting" in reactive modes)
+    handle_rgb_mode_change(rgb_matrix_get_mode());
+    layer_0_refresh_pending = false;
+    uprintf("Deferred Layer 0 RGB refresh executed\n");
   }
 
   // Process mouse-related timeouts (Snipe, Fast Mode, Auto Mouse)

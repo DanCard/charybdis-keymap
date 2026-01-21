@@ -11,3 +11,5 @@ SRC += features/mouse.c
 SRC += features/rgb.c
 SRC += features/tap_hold.c
 SRC += features/statistics.c
+
+CFLAGS += -Wno-misleading-indentation

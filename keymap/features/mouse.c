@@ -6,19 +6,19 @@
 #include <lib/lib8tion/lib8tion.h>
 
 // Mouse state definitions
-bool is_sniping_active = false;
-bool is_fast_mode_active = false;
-bool mouse_is_locked = false;
-bool is_jitter_filter_active = false;
-bool layer3_auto_activated = false;
-uint16_t auto_mouse_timer = 0;
-uint16_t auto_mouse_timeout = 1500; // Default (matches AUTO_MOUSE_TIME in config.h)
+bool     is_sniping_active       = false;
+bool     is_fast_mode_active     = false;
+bool     mouse_is_locked         = false;
+bool     is_jitter_filter_active = false;
+bool     layer3_auto_activated   = false;
+uint16_t auto_mouse_timer        = 0;
+uint16_t auto_mouse_timeout      = 1500; // Default (matches AUTO_MOUSE_TIME in config.h)
 
 // Internal timers
-static uint16_t snipe_timer = 0;
-static uint16_t fast_mode_timer = 0;
-uint8_t mouse_buttons_held = 0;
-bool is_selection_locked = false;
+static uint16_t snipe_timer         = 0;
+static uint16_t fast_mode_timer     = 0;
+uint8_t         mouse_buttons_held  = 0;
+bool            is_selection_locked = false;
 
 void update_mouse_button_state(uint16_t keycode, bool pressed) {
   uint8_t mask = 0;
@@ -31,9 +31,9 @@ void update_mouse_button_state(uint16_t keycode, bool pressed) {
     case MS_BTN6: mask = 1 << 5; break;
     case MS_BTN7: mask = 1 << 6; break;
     case MS_BTN8: mask = 1 << 7; break;
-    default: return;
+    default:                    return;
   }
-  
+
   if (pressed) {
     mouse_buttons_held |= mask;
     // Reset timer immediately on press/hold event
@@ -48,88 +48,84 @@ void update_mouse_button_state(uint16_t keycode, bool pressed) {
 // Mouse Key globals logic
 // Fast mouse movement helper
 bool handle_fast_mouse(uint16_t direction, bool pressed) {
-    if (pressed) {
-        if (!is_sniping_active) tap_code(MS_ACL1);
-        register_code(direction);
-    } else {
-        unregister_code(direction);
-        if (!is_sniping_active) tap_code(MS_ACL0);
-    }
-    return false;
+  if (pressed) {
+    if (!is_sniping_active) tap_code(MS_ACL1);
+    register_code(direction);
+  } else {
+    unregister_code(direction);
+    if (!is_sniping_active) tap_code(MS_ACL0);
+  }
+  return false;
 }
 
 // Diagonal mouse movement helper
 bool handle_diag_mouse(uint16_t dir1, uint16_t dir2, bool pressed) {
-    if (pressed) {
-        register_code(dir1);
-        register_code(dir2);
-    } else {
-        unregister_code(dir1);
-        unregister_code(dir2);
-    }
-    return false;
+  if (pressed) {
+    register_code(dir1);
+    register_code(dir2);
+  } else {
+    unregister_code(dir1);
+    unregister_code(dir2);
+  }
+  return false;
 }
 
 // Process mouse timeouts (called from matrix_scan_user)
 void process_mouse_timeouts(void) {
-    // Timeout for Snipe Mode
-    if (is_sniping_active && timer_elapsed(snipe_timer) > SNIPE_MODE_TIMEOUT) {
-        is_sniping_active = false;
-        pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-        mk_max_speed = 12; // Restore default
-        mk_interval = 16;
-        sync_needed = true;
-        uprintf("Snipe Mode Timeout. CPI -> Default\n");
-    }
+  // Timeout for Snipe Mode
+  if (is_sniping_active && timer_elapsed(snipe_timer) > SNIPE_MODE_TIMEOUT) {
+    is_sniping_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    mk_max_speed = 12; // Restore default
+    mk_interval  = 16;
+    sync_needed  = true;
+    uprintf("Snipe Mode Timeout. CPI -> Default\n");
+  }
 
-    // Timeout for Fast Mode
-    if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > FAST_MODE_TIMEOUT) {
-        is_fast_mode_active = false;
-        pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-        mk_max_speed = 12; // Restore default
-        mk_interval = 16;
-        sync_needed = true;
-        uprintf("Fast Mode Timeout. CPI -> Default\n");
-    }
+  // Timeout for Fast Mode
+  if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > FAST_MODE_TIMEOUT) {
+    is_fast_mode_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    mk_max_speed = 12; // Restore default
+    mk_interval  = 16;
+    sync_needed  = true;
+    uprintf("Fast Mode Timeout. CPI -> Default\n");
+  }
 
-    static char mouse_reason_buffer[64];
-    
-    // Keep layer 3 alive if:
-    // 1. Any mouse button is held
-    // 2. Selection Lock is active
-    // 3. Drag Scroll is active
-    // 4. Scroll Lock LED is on
-    bool lock_layer = false;
-    if (mouse_buttons_held) lock_layer = true;
-    if (is_selection_locked) lock_layer = true;
-    if (charybdis_get_pointer_dragscroll_enabled()) lock_layer = true;
-    if (host_keyboard_led_state().scroll_lock) lock_layer = true;
+  static char mouse_reason_buffer[64];
 
-    if (lock_layer && layer3_auto_activated) {
-        auto_mouse_timer = timer_read();
-    }
+  // Keep layer 3 alive if:
+  // 1. Any mouse button is held
+  // 2. Selection Lock is active
+  // 3. Drag Scroll is active
+  // 4. Scroll Lock LED is on
+  bool lock_layer = false;
+  if (mouse_buttons_held) lock_layer = true;
+  if (is_selection_locked) lock_layer = true;
+  if (charybdis_get_pointer_dragscroll_enabled()) lock_layer = true;
+  if (host_keyboard_led_state().scroll_lock) lock_layer = true;
 
-    if (layer3_auto_activated && !mouse_is_locked &&
-        timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
-        snprintf(mouse_reason_buffer, sizeof(mouse_reason_buffer), "Auto Mouse Timeout (%u ms)", auto_mouse_timeout);
-        layer_change_reason = mouse_reason_buffer;
-        layer_history_pop(); // Restore previous layer state
-        layer3_auto_activated = false;
-        mouse_buttons_held = 0; // Failsafe: clear held status if we force layer off
-    }
+  if (lock_layer && layer3_auto_activated) {
+    auto_mouse_timer = timer_read();
+  }
+
+  if (layer3_auto_activated && !mouse_is_locked && timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
+    snprintf(mouse_reason_buffer, sizeof(mouse_reason_buffer), "Auto Mouse Timeout (%u ms)", auto_mouse_timeout);
+    layer_change_reason = mouse_reason_buffer;
+    layer_history_pop(); // Restore previous layer state
+    layer3_auto_activated = false;
+    mouse_buttons_held    = 0; // Failsafe: clear held status if we force layer off
+  }
 }
 
 // Main mouse processing task (called from pointing_device_task_user)
-#define MOUSE_JITTER_STREAK_INTERVAL  10  // Max ms between small movements to count as a streak
-#define MOUSE_JITTER_STREAK_THRESHOLD 60  // Number of small movements to establish a streak
-#define MOUSE_DECELERATION_DELAY      1250 // Slow down after this many ms of continuous motion
 
 report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
-  int8_t x = mouse_report.x;
-  int8_t y = mouse_report.y;
-  int8_t v = mouse_report.v;
-  int8_t h = mouse_report.h;
-  bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
+  int8_t x                = mouse_report.x;
+  int8_t y                = mouse_report.y;
+  int8_t v                = mouse_report.v;
+  int8_t h                = mouse_report.h;
+  bool   is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
 
   // Log state change for Scroll Mode
   static bool last_scroll_state = false;
@@ -142,47 +138,68 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   if (is_scroll_active) {
     mouse_report.v = -v;
     mouse_report.h = -h;
-    v = mouse_report.v;
-    h = mouse_report.h;
+    v              = mouse_report.v;
+    h              = mouse_report.h;
   }
 
-  // Deceleration after 1.25s of continuous movement (only for cursor)
-  static uint16_t continuous_motion_start = 0;
-  static uint16_t last_motion_time = 0;
-  static bool in_motion = false;
-  #define MOTION_GAP_TOLERANCE 750  // 750ms gap allowed before resetting motion timer
+// ============================================================
+// PRECISION DECELERATION SYSTEM
+// ============================================================
+// Problem: Trackball is sensitive. When making tiny movements for precision
+// (e.g., clicking a small button), the cursor can still move too fast.
+//
+// Solution: Detect sustained small movements and automatically slow down
+// the cursor to help with precise positioning.
+//
+// How it works:
+// 1. Track movement magnitude: small = abs(x) + abs(y) ≤ 2 pixels
+// 2. Start timer when small movements begin
+// 3. After 200ms of continuous small movements, halve the speed
+// 4. Reset to normal speed if a larger movement (>2 pixels) occurs
+//
+// Example: Hovering over a checkbox. You make micro-adjustments (1-2px).
+// After ~200ms, cursor slows 50%, making it easier to position precisely.
+// ============================================================
+#define SMALL_MOVEMENT_THRESHOLD 2  // Magnitude (abs(x)+abs(y)) considered "small"
+#define SMALL_MOVEMENT_DURATION 200 // ms of consecutive small movements before decelerating
+
+  static uint16_t small_movement_start   = 0;     // Timer for small movement duration
+  static bool     in_small_movement_mode = false; // Are we in small movement mode?
 
   if (x != 0 || y != 0) {
-    if (!in_motion) {
-      in_motion = true;
-      continuous_motion_start = timer_read();
-    }
-    last_motion_time = timer_read();
+    uint8_t magnitude = abs(x) + abs(y);
 
-    if (timer_elapsed(continuous_motion_start) > MOUSE_DECELERATION_DELAY) {
-      static uint32_t last_decel_log = 0;
-      if (timer_elapsed32(last_decel_log) > 1000) {
-        uprintf("\033[94mMouse: Decelerating (motion duration: %u ms)\033[0m\n", timer_elapsed(continuous_motion_start));
-        last_decel_log = timer_read32();
+    if (magnitude <= SMALL_MOVEMENT_THRESHOLD) {
+      // Small movement detected - track how long we've been doing this
+      if (!in_small_movement_mode) {
+        in_small_movement_mode = true;
+        small_movement_start   = timer_read();
       }
-      // Decelerate: halve the speed, but preserve minimum movement of 1
-      if (x != 0) mouse_report.x = (abs(x) > 1) ? (x / 2) : x;
-      if (y != 0) mouse_report.y = (abs(y) > 1) ? (y / 2) : y;
 
-      // Update local variables for subsequent processing
-      x = mouse_report.x;
-      y = mouse_report.y;
-    }
-  } else {
-    // Only reset if gap exceeds tolerance
-    if (in_motion && timer_elapsed(last_motion_time) > MOTION_GAP_TOLERANCE) {
-      in_motion = false;
+      if (timer_elapsed(small_movement_start) > SMALL_MOVEMENT_DURATION) {
+        // Been doing small movements for 200ms+ - slow down for precision
+        static uint32_t last_decel_log = 0;
+        if (timer_elapsed32(last_decel_log) > 1000) {
+          uprintf("\033[94mMouse: Decelerating (small movements for %u ms, mag=%d)\033[0m\n", timer_elapsed(small_movement_start), magnitude);
+          last_decel_log = timer_read32();
+        }
+        // Decelerate: halve the speed, but preserve minimum movement of 1
+        // (x/2) preserves direction, abs(x) > 1 prevents 1 from becoming 0
+        if (x != 0) mouse_report.x = (abs(x) > 1) ? (x / 2) : x;
+        if (y != 0) mouse_report.y = (abs(y) > 1) ? (y / 2) : y;
+
+        x = mouse_report.x;
+        y = mouse_report.y;
+      }
+    } else {
+      // Larger movement - user is intentionally moving fast, reset precision mode
+      in_small_movement_mode = false;
     }
   }
 
   uint32_t now = timer_read32();
   uint32_t sec = now / 1000;
-  uint32_t ms = now % 1000;
+  uint32_t ms  = now % 1000;
 
   // Log movement/scroll
   if (x != 0 || y != 0 || v != 0 || h != 0) {
@@ -198,22 +215,25 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     }
   }
 
-  uint8_t movement = abs(x) + abs(y);
-  bool is_small_movement = movement == 1;
-  static uint8_t jitter_streak = 0;
+  uint8_t        movement          = abs(x) + abs(y);
+  bool           is_small_movement = movement == 1;
+  static uint8_t jitter_streak     = 0;
 
   if (is_jitter_filter_active && !layer_state_is(3)) {
     if (movement == 2) {
       // uprintf("\033[90mMouse: Jitter Detected (x=%d, y=%d)\033[0m\n", x, y);
       static uint32_t last_x2_streak = 0;
-      int timer_elapsed = timer_elapsed32(last_x2_streak);
+      int             timer_elapsed  = timer_elapsed32(last_x2_streak);
       if (timer_elapsed > 25) {
         uprintf("\033[90mMouse: Jitter filtered for x=%d, y=%d (timer elapsed %d)\033[0m\n", x, y, timer_elapsed);
-        movement = 1;
+        movement          = 1;
         is_small_movement = true;
       }
       last_x2_streak = now;
     }
+#define MOUSE_JITTER_STREAK_INTERVAL 10  // Max ms between small movements to count as a streak
+#define MOUSE_JITTER_STREAK_THRESHOLD 60 // Number of small movements to establish a streak
+
     // Filter out 1-unit movements (jitter)
     // Keep diagonals (e.g. x=1, y=1) or larger movements
 
@@ -250,8 +270,8 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         // Zero out the report so it's ignored by the host AND by the auto-layer logic below
         mouse_report.x = 0;
         mouse_report.y = 0;
-        x = 0;
-        y = 0;
+        x              = 0;
+        y              = 0;
       } else {
         // Log when we break the filter
         static uint32_t last_logged_streak = 0;
@@ -259,18 +279,18 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
           uprintf("\033[92mMouse: Streak Established (%d), Filter Broken\033[0m\n", jitter_streak);
           last_logged_streak = now;
         }
-     }
+      }
     }
   }
 
-  bool trackball_significant_move =
-           ((layer_state_is(3) && (movement > 0 || v != 0 || h != 0)) ||
-     (!is_jitter_filter_active && (movement > 0 || v != 0 || h != 0)) ||
-     ( is_jitter_filter_active && (movement > 1  || (is_small_movement && jitter_streak > MOUSE_JITTER_STREAK_THRESHOLD))));
+  bool trackball_significant_move = ( layer_state_is(3)       && movement > 0) ||
+                                    (!is_jitter_filter_active && movement > 0) ||
+                                    (                            movement > 1) ||
+                                    ( is_small_movement       && jitter_streak > MOUSE_JITTER_STREAK_THRESHOLD);
   // Only auto activate layer for significant movement
   if (trackball_significant_move) {
     if (layer3_auto_activated) {
-      auto_mouse_timer = timer_read();      // Movement extends the timer
+      auto_mouse_timer = timer_read(); // Movement extends the timer
     }
     static uint32_t last_logged_movement = 0;
     if (timer_elapsed32(last_logged_movement) > 500) {
@@ -284,147 +304,126 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     if (is_keyboard_master()) {
       // Only activate Auto Mouse if Layer 3 isn't already active (e.g. manually locked)
       if (!layer_state_is(3)) {
-        uprintf("Mouse: Activated (x=%d, y=%d), jitter streak: %d, movement: %d, is jitter filter active: %d, is small movement: %d\n",
-                x, y, jitter_streak, movement, is_jitter_filter_active, is_small_movement);
+        uprintf("Mouse: Activated (x=%d, y=%d), jitter streak: %d, movement: %d, is jitter filter active: %d, is small movement: %d\n", x, y, jitter_streak, movement, is_jitter_filter_active, is_small_movement);
         layer_change_reason = "Auto Mouse Movement";
         layer_move(3); // Switch exclusively to Mouse Layer (3)
         layer3_auto_activated = true;
-        auto_mouse_timer = timer_read();
+        auto_mouse_timer      = timer_read();
       }
     } else {
-      slave_mouse_active = true;          // Slave side: Signal master
+      slave_mouse_active = true; // Slave side: Signal master
     }
   }
   return mouse_report;
 }
 
 bool process_mouse_keycodes(uint16_t keycode, keyrecord_t *record) {
-    if (!record->event.pressed) {
-        // Handle release for all context mouse keys by unregistering everything potential
-        // This is safer than tracking state, as unregistering a key not pressed is a no-op
-        switch (keycode) {
-            case CM_MS_UP:
-                unregister_code(MS_UP);
-                unregister_code(MS_WHLU);
-                return false;
-            case CM_MS_DOWN:
-                unregister_code(MS_DOWN);
-                unregister_code(MS_WHLD);
-                return false;
-            case CM_MS_LEFT:
-                unregister_code(MS_LEFT);
-                unregister_code(MS_WHLL);
-                return false;
-            case CM_MS_RIGHT:
-                unregister_code(MS_RGHT);
-                unregister_code(MS_WHLR);
-                return false;
-            case CM_MS_UL:
-                unregister_code(MS_UP); unregister_code(MS_LEFT);
-                unregister_code(MS_WHLU); unregister_code(MS_WHLL);
-                return false;
-            case CM_MS_UR:
-                unregister_code(MS_UP); unregister_code(MS_RGHT);
-                unregister_code(MS_WHLU); unregister_code(MS_WHLR);
-                return false;
-            case CM_MS_DL:
-                unregister_code(MS_DOWN); unregister_code(MS_LEFT);
-                unregister_code(MS_WHLD); unregister_code(MS_WHLL);
-                return false;
-            case CM_MS_DR:
-                unregister_code(MS_DOWN); unregister_code(MS_RGHT);
-                unregister_code(MS_WHLD); unregister_code(MS_WHLR);
-                return false;
-        }
-        return true; // Not a CM key
-    }
-
-    // Key Pressed
-    bool drag_scroll = charybdis_get_pointer_dragscroll_enabled();
-
+  if (!record->event.pressed) {
+    // Handle release for all context mouse keys by unregistering everything potential
+    // This is safer than tracking state, as unregistering a key not pressed is a no-op
     switch (keycode) {
-        case CM_MS_UP:
-            if (drag_scroll) register_code(MS_WHLU);
-            else register_code(MS_UP);
-            return false;
-        case CM_MS_DOWN:
-            if (drag_scroll) register_code(MS_WHLD);
-            else register_code(MS_DOWN);
-            return false;
-        case CM_MS_LEFT:
-            if (drag_scroll) register_code(MS_WHLL);
-            else register_code(MS_LEFT);
-            return false;
-        case CM_MS_RIGHT:
-            if (drag_scroll) register_code(MS_WHLR);
-            else register_code(MS_RGHT);
-            return false;
-        
-        // Diagonals
-        case CM_MS_UL:
-            if (drag_scroll) { register_code(MS_WHLU); register_code(MS_WHLL); }
-            else { register_code(MS_UP); register_code(MS_LEFT); }
-            return false;
-        case CM_MS_UR:
-            if (drag_scroll) { register_code(MS_WHLU); register_code(MS_WHLR); }
-            else { register_code(MS_UP); register_code(MS_RGHT); }
-            return false;
-        case CM_MS_DL:
-            if (drag_scroll) { register_code(MS_WHLD); register_code(MS_WHLL); }
-            else { register_code(MS_DOWN); register_code(MS_LEFT); }
-            return false;
-        case CM_MS_DR:
-            if (drag_scroll) { register_code(MS_WHLD); register_code(MS_WHLR); }
-            else { register_code(MS_DOWN); register_code(MS_RGHT); }
-            return false;
+      case CM_MS_UP:
+        unregister_code(MS_UP);   unregister_code(MS_WHLU); return false;
+      case CM_MS_DOWN:
+        unregister_code(MS_DOWN); unregister_code(MS_WHLD); return false;
+      case CM_MS_LEFT:
+        unregister_code(MS_LEFT); unregister_code(MS_WHLL); return false;
+      case CM_MS_RIGHT:
+        unregister_code(MS_RGHT); unregister_code(MS_WHLR); return false;
+      // Diagonals
+      case CM_MS_UL:
+        unregister_code(MS_UP);   unregister_code(MS_LEFT);
+        unregister_code(MS_WHLU); unregister_code(MS_WHLL); return false;
+      case CM_MS_UR:
+        unregister_code(MS_UP);   unregister_code(MS_RGHT);
+        unregister_code(MS_WHLU); unregister_code(MS_WHLR); return false;
+      case CM_MS_DL:
+        unregister_code(MS_DOWN); unregister_code(MS_LEFT);
+        unregister_code(MS_WHLD); unregister_code(MS_WHLL); return false;
+      case CM_MS_DR:
+        unregister_code(MS_DOWN); unregister_code(MS_RGHT);
+        unregister_code(MS_WHLD); unregister_code(MS_WHLR); return false;
     }
-
     return true; // Not a CM key
+  }
+
+  // Key Pressed
+  bool drag_scroll = charybdis_get_pointer_dragscroll_enabled();
+
+  switch (keycode) {
+    case CM_MS_UP:
+      if (drag_scroll) register_code(MS_WHLU);
+      else             register_code(MS_UP  ); return false;
+    case CM_MS_DOWN:
+      if (drag_scroll) register_code(MS_WHLD);
+      else             register_code(MS_DOWN); return false;
+    case CM_MS_LEFT:
+      if (drag_scroll) register_code(MS_WHLL);
+      else             register_code(MS_LEFT); return false;
+    case CM_MS_RIGHT:
+      if (drag_scroll) register_code(MS_WHLR);
+      else             register_code(MS_RGHT); return false;
+    // Diagonals
+    case CM_MS_UL:
+      if (drag_scroll) { register_code(MS_WHLU); register_code(MS_WHLL); }
+      else             { register_code(MS_UP  ); register_code(MS_LEFT); } return false;
+    case CM_MS_UR:
+      if (drag_scroll) { register_code(MS_WHLU); register_code(MS_WHLR); }
+      else             { register_code(MS_UP  ); register_code(MS_RGHT); } return false;
+    case CM_MS_DL:
+      if (drag_scroll) { register_code(MS_WHLD); register_code(MS_WHLL); }
+      else             { register_code(MS_DOWN); register_code(MS_LEFT); } return false;
+    case CM_MS_DR:
+      if (drag_scroll) { register_code(MS_WHLD); register_code(MS_WHLR); }
+      else             { register_code(MS_DOWN); register_code(MS_RGHT); } return false;
+  }
+
+  return true; // Not a CM key
 }
 
 // Handlers for Keycode-triggered mouse actions (SNIPE, FAST)
 // Note: These helpers update state variables that are now extern
 void activate_snipe_mode(void) {
-    uint32_t now = timer_read32();
-    is_sniping_active = true;
-    is_fast_mode_active = false;
-    snipe_timer = timer_read();
-    sync_needed = true;
-    pointing_device_set_cpi(250);
-    mk_max_speed = 1; // Very slow mouse keys
-    mk_interval = 24;
-    uprintf("[%lu.%03lu] Snipe ON (2.5s). CPI -> 250, MK -> Slow(1)\n", now/1000, now%1000);
+  uint32_t now        = timer_read32();
+  is_sniping_active   = true;
+  is_fast_mode_active = false;
+  snipe_timer         = timer_read();
+  sync_needed         = true;
+  pointing_device_set_cpi(250);
+  mk_max_speed = 1; // Very slow mouse keys
+  mk_interval  = 24;
+  uprintf("[%lu.%03lu] Snipe ON (2.5s). CPI -> 250, MK -> Slow(1)\n", now / 1000, now % 1000);
 }
 
 void activate_fast_mode(void) {
-    uint32_t now = timer_read32();
-    is_fast_mode_active = true;
-    is_sniping_active = false;
-    fast_mode_timer = timer_read();
-    sync_needed = true;
-    pointing_device_set_cpi(3000);
-    mk_max_speed = 30; // Fast mouse keys
-    mk_interval = 10;
-    uprintf("[%lu.%03lu] Fast Mode ON (2.5s). CPI -> 3000, MK -> Fast\n", now/1000, now%1000);
+  uint32_t now        = timer_read32();
+  is_fast_mode_active = true;
+  is_sniping_active   = false;
+  fast_mode_timer     = timer_read();
+  sync_needed         = true;
+  pointing_device_set_cpi(3000);
+  mk_max_speed = 30; // Fast mouse keys
+  mk_interval  = 10;
+  uprintf("[%lu.%03lu] Fast Mode ON (2.5s). CPI -> 3000, MK -> Fast\n", now / 1000, now % 1000);
 }
 
 // Unified function to clear all mouse-related states on layer exit
 void clear_mouse_states(void) {
-    mouse_is_locked = false;
-    if (is_selection_locked) {
-        unregister_code(MS_BTN1);
-        is_selection_locked = false;
-        update_mouse_button_state(MS_BTN1, false);
-    }
-    charybdis_set_pointer_dragscroll_enabled(false);
-    if (is_sniping_active) {
-        is_sniping_active = false;
-        pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-    }
-    if (is_fast_mode_active) {
-        is_fast_mode_active = false;
-        pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-    }
-    layer3_auto_activated = false;
-    sync_needed = true;
+  mouse_is_locked = false;
+  if (is_selection_locked) {
+    unregister_code(MS_BTN1);
+    is_selection_locked = false;
+    update_mouse_button_state(MS_BTN1, false);
+  }
+  charybdis_set_pointer_dragscroll_enabled(false);
+  if (is_sniping_active) {
+    is_sniping_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+  }
+  if (is_fast_mode_active) {
+    is_fast_mode_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+  }
+  layer3_auto_activated = false;
+  sync_needed           = true;
 }

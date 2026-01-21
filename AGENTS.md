@@ -68,7 +68,7 @@ Each feature: `features/feature_name.h` (prototypes, extern globals, typedefs) +
 - Other prefixes like "fix:", "chore:" are acceptable
 - **CRITICAL**: Use longer, detailed messages with bullet points
 - Bullet format: describe the "why" first, then list specific changes
-- Do NOT mention regeneration of wallpaper.png or charybdis_layout.pdf (done regularly)
+- **CRITICAL**: Do NOT mention regeneration of wallpaper.png or charybdis_layout.pdf (done regularly - no value in commit messages)
 - Example:
   ```
   reorganize layers: remove 6 and 7, update settings and tap-hold
@@ -136,6 +136,7 @@ if (is_keyboard_master()) {
 7. LED indices: local 0-28, add 29 for right half global indices
 8. Layer 3 auto-activates on trackball move unless disabled
 9. Python deps required: `pip install pillow reportlab`
+10. **CRITICAL**: Do NOT mention documentation regeneration in commit messages (done regularly, no value)
 
 ## File Structure
 
