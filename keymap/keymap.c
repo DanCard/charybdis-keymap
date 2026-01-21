@@ -1020,7 +1020,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       rgb_matrix_indicators_user();
     }
     return false;
-  case KC_DBG_TOG:
+  case KC_LOG_SYNC_DEBUG:
     if (record->event.pressed) {
       is_sync_logging_enabled = !is_sync_logging_enabled;
       uint32_t uptime_min = timer_read32() / 60000;
@@ -1189,7 +1189,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_F1,   KC_F2    , KC_F3  , KC_F4  , KC_F5  , KC_F6,    KC_F7      , KC_F8      , KC_F9             , KC_F10   , KC_F11   , KC_F12,
   KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,  KC_FIRE  , KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
   KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,  KC_EXIT  , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT    , KC_EXIT,
-  KC_PSCR, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_DUMP_LOG,  KC_PRINT_STATS, KC_LOG_STATS_GRID, KC_DBG_TOG, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_PSCR,
+  KC_PSCR, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_DUMP_LOG,  KC_PRINT_STATS, KC_LOG_STATS_GRID, KC_LOG_SYNC_DEBUG, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_PSCR,
                                    KC_EXIT, KC_EXIT, KC_EXIT,  KC_EXIT, KC_EXIT,
                                             KC_EXIT, KC_EXIT,  KC_EXIT),
 

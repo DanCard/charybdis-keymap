@@ -250,7 +250,7 @@ CUSTOM_KEY_MAP = {
     "KC_PSCR": "Save\nScreen",
     "LALT(KC_HOME)": "Alt\nHome",
     "KC_DUMP_LOG": "Dump\nLog",
-    "KC_DBG_TOG": "Log\nTog",
+    "KC_LOG_SYNC_DEBUG": "Sync\nLog",
     "KC_FIRE": "Fire",
     "KC_DAY": "Day\nBright",
     "KC_NIGHT": "Night\nDim",
