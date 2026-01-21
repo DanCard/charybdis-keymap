@@ -1,6 +1,7 @@
 #include "mouse.h"
 #include "sync.h"
 #include "logging.h"
+#include "tap_hold.h"
 #include <lib/lib8tion/lib8tion.h>
 
 // Mouse state definitions
@@ -111,7 +112,7 @@ void process_mouse_timeouts(void) {
         timer_elapsed(auto_mouse_timer) > auto_mouse_timeout) {
         snprintf(mouse_reason_buffer, sizeof(mouse_reason_buffer), "Auto Mouse Timeout (%u ms)", auto_mouse_timeout);
         layer_change_reason = mouse_reason_buffer;
-        layer_off(3);
+        layer_history_pop(); // Restore previous layer state
         layer3_auto_activated = false;
         mouse_buttons_held = 0; // Failsafe: clear held status if we force layer off
     }
@@ -120,10 +121,40 @@ void process_mouse_timeouts(void) {
 // Main mouse processing task (called from pointing_device_task_user)
 #define MOUSE_JITTER_STREAK_INTERVAL  10  // Max ms between small movements to count as a streak
 #define MOUSE_JITTER_STREAK_THRESHOLD 60  // Number of small movements to establish a streak
+#define MOUSE_DECELERATION_DELAY      1250 // Slow down after this many ms of continuous motion
 
 report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   int8_t x = mouse_report.x;
   int8_t y = mouse_report.y;
+
+  // Deceleration after 1.25s of continuous movement
+  static uint16_t continuous_motion_start = 0;
+  static bool in_motion = false;
+
+  if (x != 0 || y != 0) {
+    if (!in_motion) {
+      in_motion = true;
+      continuous_motion_start = timer_read();
+    }
+
+    if (timer_elapsed(continuous_motion_start) > MOUSE_DECELERATION_DELAY) {
+      static uint32_t last_decel_log = 0;
+      if (timer_elapsed32(last_decel_log) > 1000) {
+        uprintf("\033[94mMouse: Decelerating (motion duration: %u ms)\033[0m\n", timer_elapsed(continuous_motion_start));
+        last_decel_log = timer_read32();
+      }
+      // Decelerate: halve the speed, but preserve minimum movement of 1
+      if (x != 0) mouse_report.x = (abs(x) > 1) ? (x / 2) : x;
+      if (y != 0) mouse_report.y = (abs(y) > 1) ? (y / 2) : y;
+
+      // Update local variables for subsequent processing
+      x = mouse_report.x;
+      y = mouse_report.y;
+    }
+  } else {
+    in_motion = false;
+  }
+
   uint32_t now = timer_read32();
   uint32_t sec = now / 1000;
   uint32_t ms = now % 1000;
@@ -170,11 +201,13 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         if (jitter_streak < 255) jitter_streak++;
       } else {
         // If there's a gap, reset the streak; it's considered isolated jitter again.
+        /*
         static uint32_t mouse_streak_reset_log = 0;
         if (jitter_streak > 0 && timer_elapsed32(mouse_streak_reset_log) > 1000) {
           uprintf("\033[90mMouse: Streak Reset (was %d)\033[0m\n", jitter_streak);
           mouse_streak_reset_log = now;
         }
+        */
         jitter_streak = 0;
       }
       last_jitter_time = now;
@@ -184,7 +217,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       // so we stop filtering and let the movement through to the host.
       if (jitter_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
         static uint32_t last_jitter_log = 0;
-        if (timer_elapsed32(last_jitter_log) > 500) {
+        if (timer_elapsed32(last_jitter_log) > 1000) {
           LOG_TIME();
           uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d)\033[0m\n", x, y, jitter_streak);
           last_jitter_log = now;
@@ -216,8 +249,11 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     }
     static uint32_t last_logged_movement = 0;
     if (timer_elapsed32(last_logged_movement) > 500) {
-      uprintf("movement: %d, jitter Streak: %d (x=%d, y=%d). Master: %d. L3: %d\n",
-               movement, MOUSE_JITTER_STREAK_THRESHOLD, x, y, is_keyboard_master(), layer_state_is(3));
+      if (!layer_state_is(3)) {
+        LOG_TIME();
+        uprintf("jitter Streak: %d ", jitter_streak);
+      }
+      uprintf("movement: %d, (x=%d, y=%d). \n", movement, x, y);
       last_logged_movement = timer_read32();
     }
     if (is_keyboard_master()) {
@@ -226,7 +262,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         uprintf("Mouse: Activated (x=%d, y=%d), jitter streak: %d, movement: %d, is jitter filter active: %d, is small movement: %d\n",
                 x, y, jitter_streak, movement, is_jitter_filter_active, is_small_movement);
         layer_change_reason = "Auto Mouse Movement";
-        layer_on(3); // Switch to Mouse Layer (3)
+        layer_move(3); // Switch exclusively to Mouse Layer (3)
         layer3_auto_activated = true;
         auto_mouse_timer = timer_read();
       }

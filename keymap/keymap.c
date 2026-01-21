@@ -862,16 +862,28 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 rgb_matrix_get_val());
       }
       return true;
-    case KC_PLUS_COLON:
-      if (record->event.pressed) {      if (get_mods() & MOD_MASK_SHIFT) {
-        // Shift already held by user: send colon directly
-        tap_code(KC_SCLN);
-      } else {
-        // Shift not held: send plus (shifted equals sign)
-        tap_code16(S(KC_EQL));
-      }
-    }
-    return false;
+      case KC_PLUS_COLON:
+        if (record->event.pressed) {
+          uint8_t mods = get_mods();
+          uint8_t layer = get_highest_layer(layer_state);
+          // Row >= 5 is Right Side (for 4x6 split)
+          bool is_right_side = (record->event.key.row >= 5);
+    
+          if (is_right_side && (layer == 0 || layer == 1) && (mods & MOD_MASK_CTRL)) {
+            // Ctrl held -> Output ';' (Semicolon)
+            // Temporarily release Ctrl so we don't send Ctrl+;
+            unregister_mods(MOD_MASK_CTRL);
+            tap_code(KC_SCLN);
+            register_mods(mods & MOD_MASK_CTRL);
+          } else if (mods & MOD_MASK_SHIFT) {
+            // Shift already held by user: send colon directly
+            tap_code(KC_SCLN);
+          } else {
+            // Shift not held: send plus (shifted equals sign)
+            tap_code16(S(KC_EQL));
+          }
+        }
+        return false;
   // KC_MINS_TO0 now handled by simple tap-hold table lookup
   case KC_SLSH_TO0:
     if (record->event.pressed) {
@@ -1186,7 +1198,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       KC_EXIT  , KC_MS_DIAG_UL, MS_UP, KC_MS_DIAG_UR, MS_BTN2, KC_EXIT,   KC_EXIT, KC_SNIPE, KC_FAST, KC_EXIT       , KC_EXIT, KC_EXIT,
       KC_MS_FAST_LEFT, MS_LEFT, KC_SEL_LOCK, MS_RGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, DRGSCRL, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
       KC_EXIT, KC_MS_DIAG_DL, MS_DOWN, KC_MS_DIAG_DR, MS_BTN3, KC_EXIT,   KC_EXIT, KC_EXIT , MS_BTN3, MS_BTN3       , MS_BTN3, KC_RSFT,
-                                 MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_EXIT,
+                                 MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_ENT_EXIT,
                                                  KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     // Layer 4: left hand layer                                                            
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS_EQL,

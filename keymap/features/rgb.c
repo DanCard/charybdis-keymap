@@ -127,6 +127,11 @@ bool housekeeping_rgb_indicators(void) {
     return false;
   }
 
+  uint8_t layer = get_highest_layer(layer_state);
+  if (layer > 0) {
+    rgb_matrix_set_color_all(0, 0, 0);
+  }
+
   // Caps Lock indicator
   if (is_caps_lock_on) {
     bool phase = (timer_read() / 300) % 2;
@@ -148,39 +153,36 @@ bool housekeeping_rgb_indicators(void) {
 
   bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
 
-  if (is_sniping_active) {
-    if (!is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) {
-        HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
-        RGB rgb = hsv_to_rgb(hsv);
-        rgb_matrix_set_color_scaled(far_right_col[i], rgb.r, rgb.g, rgb.b);
-      }
+  // Special mode indicators (sniping/fast/scroll) only apply to one keyboard half.
+  // The keyboard side check is part of the if condition so the OTHER half continues
+  // to the layer theme switch statement below instead of returning early.
+
+  if (is_sniping_active && !is_keyboard_left()) {
+    for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
+    for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) {
+      HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
+      RGB rgb = hsv_to_rgb(hsv);
+      rgb_matrix_set_color_scaled(far_right_col[i], rgb.r, rgb.g, rgb.b);
     }
     return false;
   }
 
-  if (is_fast_mode_active) {
-    if (!is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) rgb_matrix_set_color_scaled(far_right_col[i], 255, 0, 0);
+  if (is_fast_mode_active && !is_keyboard_left()) {
+    for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color(top_row_right[i], 0, 0, 0);
+    for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) rgb_matrix_set_color_scaled(far_right_col[i], 255, 0, 0);
+    return false;
+  }
+
+  if (is_scroll_active && is_keyboard_left()) {
+    for (int i = 0; i < sizeof(top_row_left) / sizeof(top_row_left[0]); i++) rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
+    for (int i = 0; i < sizeof(far_left_col) / sizeof(far_left_col[0]); i++) {
+      HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
+      RGB rgb = hsv_to_rgb(hsv);
+      rgb_matrix_set_color_scaled(far_left_col[i], rgb.r, rgb.g, rgb.b);
     }
     return false;
   }
 
-  if (is_scroll_active) {
-    if (is_keyboard_left()) {
-      for (int i = 0; i < sizeof(top_row_left) / sizeof(top_row_left[0]); i++) rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
-      for (int i = 0; i < sizeof(far_left_col) / sizeof(far_left_col[0]); i++) {
-        HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
-        RGB rgb = hsv_to_rgb(hsv);
-        rgb_matrix_set_color_scaled(far_left_col[i], rgb.r, rgb.g, rgb.b);
-      }
-    }
-    return false;
-  }
-
-  uint8_t layer = get_highest_layer(layer_state);
   switch (layer) {
   case 1: {
     // Layer 1: Only left-side arrows (right keyboard is base layer)
