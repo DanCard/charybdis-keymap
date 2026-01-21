@@ -60,29 +60,29 @@ enum custom_keycodes {
   KC_MS_TMO_DEC,
   KC_SET_LEFT,
   KC_SET_RIGHT,
-  KC_DUMP_LOG,    // Debug key to dump sync state
-  KC_DBG_TOG,     // Toggle Debug Logging
-  KC_JITTER,      // Toggle Mouse Jitter Filter
-  KC_DAY,         // Set brightness to Day level
-  KC_NIGHT,       // Set brightness to Night level
-  KC_FLASHLIGHT,  // Toggle Flashlight mode
-  KC_SLSH_TO0,    // Tap: /, Hold: Temporary Layer 0
-  KC_L3_EXT_TO4,  // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
-  KC_L3_EXT_TO2,  // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
-  KC_L3_EXT_TO1,  // Layer 3 Left Thumb: Tap TO(1), Hold TO(6)
-  KC_EXIT_TO3,    // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
-  KC_PRINT_STATS, // Print statistics histogram immediately
-  KC_PRINT_STATS_GRID, // Print statistics in a 2D grid format
-  KC_5_L5,        // Tap: 5, Hold: Layer 5 (Settings)
-  KC_0_TO0,       // Tap: 0, Hold: TO(0)
-  KC_SEL_LOCK,    // Toggle Left Click Hold (Selection Lock)
-  KC_Q_Z,         // Tap: Q, Hold: Z
-  KC_W_X,         // Tap: W, Hold: X
-  KC_7_L6,        // Tap: 7, Hold: Layer 6 (Right Arrows)
-  KC_MINS_EQL,    // Tap: Minus, Hold: Equals
-  KC_F1_F11,      // Tap: F1, Hold: F11
-  KC_F2_F12,      // Tap: F2, Hold: F12
-  
+  KC_DUMP_LOG,       // Debug key to dump sync state
+  KC_DBG_TOG,        // Toggle Debug Logging
+  KC_JITTER,         // Toggle Mouse Jitter Filter
+  KC_DAY,            // Set brightness to Day level
+  KC_NIGHT,          // Set brightness to Night level
+  KC_FLASHLIGHT,     // Toggle Flashlight mode
+  KC_SLSH_TO0,       // Tap: /, Hold: Temporary Layer 0
+  KC_L3_EXT_TO4,     // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
+  KC_L3_EXT_TO2,     // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
+  KC_L3_EXT_TO1,     // Layer 3 Left Thumb: Tap TO(1), Hold TO(6)
+  KC_EXIT_TO3,       // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
+  KC_PRINT_STATS,    // Print statistics histogram immediately
+  KC_LOG_STATS_GRID, // Print statistics in a 2D grid format
+  KC_5_L5,           // Tap: 5, Hold: Layer 5 (Settings)
+  KC_0_TO0,          // Tap: 0, Hold: TO(0)
+  KC_SEL_LOCK,       // Toggle Left Click Hold (Selection Lock)
+  KC_Q_Z,            // Tap: Q, Hold: Z
+  KC_W_X,            // Tap: W, Hold: X
+  KC_7_L6,           // Tap: 7, Hold: Layer 6 (Right Arrows)
+  KC_MINS_EQL,       // Tap: Minus, Hold: Equals
+  KC_F1_F11,         // Tap: F1, Hold: F11
+  KC_F2_F12,         // Tap: F2, Hold: F12
+
   // Context-aware Mouse Keys (Drag Scroll override)
   CM_MS_UP,
   CM_MS_DOWN,
