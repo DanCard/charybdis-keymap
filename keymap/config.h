@@ -26,7 +26,7 @@
 #define FAST_MODE_TIMEOUT 2500       // Fast mode timeout in ms
 #define EEPROM_DEFER_MS 1500         // Delay EEPROM writes to avoid USB timeout
 #define DAY_BRIGHTNESS 225           // Brightness value for day mode
-#define NIGHT_BRIGHTNESS 1           // Brightness value for night mode
+#define NIGHT_BRIGHTNESS 2           // Brightness value for night mode
 #define RGB_AUTO_CYCLE_INTERVAL 30000 // Auto-cycle RGB every 30 seconds
 
 #define RGB_MATRIX_KEYPRESSES

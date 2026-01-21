@@ -119,7 +119,6 @@ static const char* get_key_name(uint16_t kc) {
         case KC_L1_L3:     return "L1_L3";
         case KC_R_L2:      return "R_TG2";
         case KC_PLUS_COLON: return "+/:";
-        case KC_QUES_SLSH:  return "?//";
         case QK_GESC:       return "GESC";
     }
     

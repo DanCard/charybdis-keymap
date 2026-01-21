@@ -75,7 +75,6 @@ enum custom_keycodes {
   KC_5_L5,        // Tap: 5, Hold: Layer 5 (Settings)
   KC_0_TO0,       // Tap: 0, Hold: TO(0)
   KC_SEL_LOCK,    // Toggle Left Click Hold (Selection Lock)
-  KC_QUES_SLSH,   // Tap: ?, Shift+Tap: /
   KC_Q_Z,         // Tap: Q, Hold: Z
   KC_W_X,         // Tap: W, Hold: X
   KC_7_L6,        // Tap: 7, Hold: Layer 6 (Right Arrows)

@@ -246,7 +246,7 @@ CUSTOM_KEY_MAP = {
     "KC_FIRE": "Fire",
     "KC_DAY": "Day\nBright",
     "KC_NIGHT": "Night\nDim",
-    "KC_QUES_SLSH": "?\n/",
+    "KC_SEL_LOCK": "SEL\nLCK",
     "KC_MINS_EQL": "-\n=",
 }
 
@@ -612,13 +612,13 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
     # Firmware only highlights left keyboard arrows, not right side
     if layer_num == 1:
         # Left side arrows (pink):
-        # - Row 3, keys at x=1,2 (LEFT, RIGHT after CTRL at x=0)
+        # - Row 3, x=1 (LEFT at Z position after CTRL at x=0)
         # - Thumb UP at y=4, x=5 (after shift)
-        # - Thumb DOWN at y=5, x=4 (after shift)
+        # - Thumb DOWN at y=5, x=4 and RIGHT at y=5, x=5 (after shift)
         is_left_arrow = (
-            (y == 3 and 1 <= x <= 2) or      # LEFT, RIGHT on bottom row
+            (y == 3 and x == 1) or         # LEFT on bottom row (Z position)
             (y == 4 and 4.5 < x < 5.5) or  # UP on thumb top row (x=5)
-            (y == 5 and 3.5 < x < 4.5)     # DOWN on thumb bottom row (x=4)
+            (y == 5 and 3.5 < x < 5.5)     # DOWN (x=4) and RIGHT (x=5) on thumb bottom row
         )
 
         if is_left_arrow:

@@ -639,7 +639,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       th[TH_L1].held = false;
       // If released quickly (Tap) -> Toggle L1 (Base + Arrows)
       if (!th[TH_L1].triggered) {
-        if (get_highest_layer(layer_state) == 1) {
+        if (layer_state_is(1)) {
           layer_change_reason = "L_TG1 (Tap): Toggle L1 (OFF)";
           layer_off(1);
         } else {
@@ -855,30 +855,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
     }
     return true;
-  case RM_VALU:
-  case RM_VALD:
-    if (record->event.pressed) {
-      uprintf("RM_VAL change requested. Current Val: %d\n",
-              rgb_matrix_get_val());
-    }
-    return true;
-  case KC_QUES_SLSH:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
-        // Shift already held by user: send slash directly (unshifted)
-        uint8_t mods = get_mods();
-        unregister_mods(MOD_MASK_SHIFT);
-        tap_code(KC_SLSH);
-        register_mods(mods);
-      } else {
-        // Shift not held: send question mark (shifted slash)
-        tap_code16(S(KC_SLSH));
+      case RM_VALU:
+    case RM_VALD:
+      if (record->event.pressed) {
+        uprintf("RM_VAL change requested. Current Val: %d\n",
+                rgb_matrix_get_val());
       }
-    }
-    return false;
-  case KC_PLUS_COLON:
-    if (record->event.pressed) {
-      if (get_mods() & MOD_MASK_SHIFT) {
+      return true;
+    case KC_PLUS_COLON:
+      if (record->event.pressed) {      if (get_mods() & MOD_MASK_SHIFT) {
         // Shift already held by user: send colon directly
         tap_code(KC_SCLN);
       } else {
@@ -1180,14 +1165,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2, KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS_EQL,
                  KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                 KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
                                           KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
             // Layer 1: Right Arrows
     [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9 , KC_0_TO0  , KC_MINS_EQL,
-                 KC_TAB , KC_Q_Z , KC_W_X  , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
+                 KC_TAB , KC_Q_Z , KC_W    , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
                  KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H  , KC_J , KC_K, KC_L , KC_PLUS_COLON, KC_QUOT,
-                 KC_LCTL, KC_LEFT, KC_X    , KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RSFT,
+                 KC_LCTL, KC_LEFT, KC_X    , KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
                                            KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
                                                       KC_DOWN, KC_RIGHT,  KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_F1_F11, KC_F2_F12, KC_F3  , KC_F4  , KC_F5        ,   KC_F6  , KC_F7  , KC_F8  , KC_F9     , KC_F10   , QK_BOOT,
@@ -1207,7 +1192,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS_EQL,
                   KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                   KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
-                  KC_LCTL, KC_QUES_SLSH, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_QUES_SLSH, KC_RCTL,
+                  KC_LCTL, KC_SLSH, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RCTL,
                                                   KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_L2, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Layer 5: Settings Layer - accessed via long press 6
