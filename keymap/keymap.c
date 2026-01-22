@@ -263,7 +263,6 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 // State variables for Left Side Overrides
 static bool l1_left_active = false;
-static bool l1_up_active = false;
 static bool l1_down_active = false;
 
 static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
@@ -280,33 +279,42 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
     uint8_t mods = get_mods();
     bool shift_held = mods & MOD_MASK_SHIFT;
     bool ctrl_held = mods & MOD_MASK_CTRL;
+    bool alt_held = mods & MOD_MASK_ALT;
 
-    if (!shift_held && !ctrl_held)
+    if (!shift_held && !ctrl_held && !alt_held)
       return true;
 
     switch (keycode) {
     case KC_LEFT: // Position of KC_PLUS_COLON (+ / :)
+      if (alt_held) {
+        unregister_mods(MOD_MASK_ALT);
+        tap_code(KC_SCLN);
+        register_mods(mods & MOD_MASK_ALT);
+        return false;
+      }
       if (shift_held) {
         tap_code(KC_SCLN); // Shift held -> :
         return false;
       }
       if (ctrl_held) {
-        unregister_mods(MOD_MASK_CTRL);
-        tap_code16(S(KC_EQL)); // +
-        register_mods(mods & MOD_MASK_CTRL);
+        tap_code16(S(KC_EQL)); // + (Result: Ctrl + +)
         return false;
       }
       break;
 
-    case KC_RIGHT: // Position of KC_QUOT (' / ")
+    case KC_RIGHT: // Position of KC_QUOT (' / ") OR New Thumb Position (Delete override)
+      if (shift_held || ctrl_held) {
+        unregister_mods(MOD_MASK_SHIFT | MOD_MASK_CTRL);
+        tap_code(KC_DEL);
+        register_mods(mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL));
+        return false;
+      }
       if (shift_held) {
         tap_code(KC_QUOT); // Shift held -> "
         return false;
       }
       if (ctrl_held) {
-        unregister_mods(MOD_MASK_CTRL);
-        tap_code(KC_QUOT); // '
-        register_mods(mods & MOD_MASK_CTRL);
+        tap_code(KC_QUOT); // ' (Result: Ctrl + ')
         return false;
       }
       break;
@@ -317,9 +325,7 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
         return false;
       }
       if (ctrl_held) {
-        unregister_mods(MOD_MASK_CTRL);
-        tap_code(KC_MINS); // -
-        register_mods(mods & MOD_MASK_CTRL);
+        tap_code(KC_MINS); // - (Result: Ctrl + -)
         return false;
       }
       break;
@@ -330,9 +336,7 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
         return false;
       }
       if (ctrl_held) {
-        unregister_mods(MOD_MASK_CTRL);
-        tap_code(KC_BSLS); // Backslash
-        register_mods(mods & MOD_MASK_CTRL);
+        tap_code(KC_BSLS); // Backslash (Result: Ctrl + \)
         return false;
       }
       break;
@@ -363,35 +367,6 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
       if (!is_press && l1_left_active) {
           unregister_code(KC_Z);
           l1_left_active = false;
-          return false;
-      }
-      break;
-
-    // UP -> Base: L1_L3 (Layer Toggle)
-    case KC_UP: 
-      if (is_press) {
-        uint8_t mods = get_mods();
-        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-          l1_up_active = true;
-          if (layer_state_is(1)) {
-            layer_change_reason = "L1 Arrow Override: L1 OFF";
-            layer_history_pop();
-          } else {
-            layer_change_reason = "L1 Arrow Override: L1 ON";
-            layer_move(1);
-          }
-          return false;
-        }
-      } else {
-        if (l1_up_active) {
-          l1_up_active = false;
-          return false;
-        }
-      }
-      break;
-    case KC_L1_L3: // Fallback check for release on Base Layer
-      if (!is_press && l1_up_active) {
-          l1_up_active = false;
           return false;
       }
       break;
@@ -846,21 +821,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       case KC_PLUS_COLON:
         if (record->event.pressed) {
           uint8_t mods = get_mods();
-          uint8_t layer = get_highest_layer(layer_state);
-          // Row >= 5 is Right Side (for 4x6 split)
-          bool is_right_side = (record->event.key.row >= 5);
-    
-          if (is_right_side && (layer == 0 || layer == 1) && (mods & MOD_MASK_CTRL)) {
-            // Ctrl held -> Output ';' (Semicolon)
-            // Temporarily release Ctrl so we don't send Ctrl+;
-            unregister_mods(MOD_MASK_CTRL);
+          if (mods & MOD_MASK_ALT) {
+            // Alt held -> Output ';' (Semicolon)
+            unregister_mods(MOD_MASK_ALT);
             tap_code(KC_SCLN);
-            register_mods(mods & MOD_MASK_CTRL);
+            register_mods(mods & MOD_MASK_ALT);
           } else if (mods & MOD_MASK_SHIFT) {
             // Shift already held by user: send colon directly
             tap_code(KC_SCLN);
           } else {
-            // Shift not held: send plus (shifted equals sign)
+            // No mods, or Ctrl -> Output '+' (Shifted equals)
+            // If Ctrl is held, it results in Ctrl + Plus
             tap_code16(S(KC_EQL));
           }
         }
@@ -1162,17 +1133,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_TAB , KC_Q_Z , KC_W    , KC_E   , KC_R   , KC_T   ,   KC_Y   , KC_U  , KC_I , KC_O , KC_P      , KC_BSLS,
                  KC_LSFT, KC_A   , KC_S    , KC_D   , KC_F   , KC_G   ,   KC_H  , KC_J , KC_K, KC_L , KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, KC_LEFT, KC_X    , KC_C   , KC_V   , KC_B   ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
-                                           KC_SPC_L4, KC_ENT_L2, KC_UP,   KC_DEL, KC_ENT_L2,
-                                                      KC_DOWN, KC_RIGHT,  KC_BSPC),
-    [2] = LAYOUT(KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT  , KC_EXIT    ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT     , KC_EXIT  , QK_BOOT,
-                 KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, HYPR(KC_N), QK_BOOT   ,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), KC_EXIT,
+                                           KC_SPC_L4, KC_ENT_L2, KC_EXIT_TO3,   KC_RIGHT, KC_ENT_L2,
+                                                      KC_UP, KC_DOWN,  KC_BSPC),
+    [2] = LAYOUT(KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , QK_BOOT   ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT     , KC_EXIT  , QK_BOOT,
+                 KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, HYPR(KC_N), KC_EXIT   ,   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), QK_CLEAR_EEPROM,
                  KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT  , KC_EXIT,
-                 KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END , KC_EXIT      ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN   , KC_END   , KC_RSFT,
+                 KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END    , KC_EXIT   ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN   , KC_END   , KC_RSFT,
                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
 [3] = LAYOUT(
   QK_GESC        , KC_EXIT   , KC_EXIT      , KC_EXIT  , KC_EXIT, QK_BOOT,   KC_EXIT      , KC_RCTL , KC_RALT   , KC_RGUI    , KC_EXIT, QK_BOOT,
-  KC_SEL_LOCK    , CM_MS_UL  , CM_MS_UP   , CM_MS_UR   , MS_BTN2, KC_EXIT,   KC_EXIT      , KC_SNIPE, KC_FAST   , KC_EXIT    , KC_EXIT, KC_EXIT,
+  KC_SEL_LOCK    , CM_MS_UL  , CM_MS_UP   , CM_MS_UR   , MS_BTN2, KC_EXIT,   KC_EXIT     , KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
   KC_EXIT        , CM_MS_LEFT, SCROLL_MODE, CM_MS_RIGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, SCROLL_MODE, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
   KC_EXIT        , CM_MS_DL  , CM_MS_DOWN , CM_MS_DR   , MS_BTN3, KC_EXIT,   KC_EXIT      , KC_EXIT , MS_BTN3   , MS_BTN3    , MS_BTN3, KC_RSFT,
                                     MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_ENT_EXIT,
@@ -1186,10 +1157,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Layer 5: Settings Layer - accessed via long press 6
   [5] = LAYOUT(
-  KC_F1,   KC_F2    , KC_F3  , KC_F4  , KC_F5  , KC_F6,    KC_F7      , KC_F8      , KC_F9             , KC_F10   , KC_F11   , KC_F12,
-  KC_EXIT, RM_TOGG  , RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,  KC_FIRE  , KC_EXIT  , KC_EXIT, KC_EXIT  , KC_EXIT  , QK_CLEAR_EEPROM,
-  KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,  KC_EXIT  , DPI_MOD    , DPI_RMOD , KC_JITTER, KC_EXIT    , KC_EXIT,
-  KC_PSCR, RM_HUEU  , RM_HUED, RM_SATU  , RM_SATD  , KC_DUMP_LOG,  KC_PRINT_STATS, KC_LOG_STATS_GRID, KC_LOG_SYNC_DEBUG, KC_MS_TMO_INC, KC_MS_TMO_DEC, KC_PSCR,
+  KC_F1  , KC_F2    , KC_F3  , KC_F4  , KC_F5     , KC_F6   ,  KC_F7      , KC_F8         , KC_F9            , KC_F10    , KC_F11 , KC_F12,
+  KC_EXIT, RM_TOGG, RM_NEXT, RM_PREV, KC_RGB_AUTO, KC_EXIT,  KC_DUMP_LOG, KC_PRINT_STATS, KC_LOG_STATS_GRID, KC_LOG_SYNC_DEBUG, KC_EXIT, QK_CLEAR_EEPROM,
+  KC_EXIT, KC_FLASHLIGHT, RM_VALU, RM_VALD, KC_DAY, KC_NIGHT,  KC_EXIT    , DPI_MOD       , DPI_RMOD         , KC_JITTER , KC_EXIT, KC_EXIT,
+  KC_PSCR, RM_HUEU  , RM_HUED, RM_SATU, RM_SATD   , KC_FIRE ,  KC_EXIT    , KC_MS_TMO_INC , KC_MS_TMO_DEC   , KC_EXIT   , KC_EXIT, KC_PSCR,
                                    KC_EXIT, KC_EXIT, KC_EXIT,  KC_EXIT, KC_EXIT,
                                             KC_EXIT, KC_EXIT,  KC_EXIT),
 
