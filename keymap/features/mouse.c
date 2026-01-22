@@ -134,8 +134,10 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     last_scroll_state = is_drag_scroll_active;
     if (is_drag_scroll_active) {
       pointing_device_set_cpi(100); // Low CPI for scroll
+      mk_interval = 100; // Slow down scroll keys (very slow)
     } else {
       pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+      mk_interval = MK_INTERVAL_DEFAULT;
     }
   }
 
@@ -461,6 +463,7 @@ void clear_mouse_states(void) {
   if (is_drag_scroll_active) {
     is_drag_scroll_active = false;
     pointing_device_set_cpi(charybdis_get_pointer_default_dpi()); // Ensure CPI resets
+    mk_interval = MK_INTERVAL_DEFAULT;
   }
   
   // Clear Snipe Mode
