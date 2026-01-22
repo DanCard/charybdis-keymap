@@ -1,0 +1,12 @@
+set -e   # exit on error
+qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
+echo "sleeping, put keyboard into boot mode for flashing" 
+sleep 4
+echo -en "\t\t\t\t\t"
+ls -l --time-style="+%H:%M" qmk_firmware/* | head -1 | awk '{print $6, $7}'
+sudo mount /dev/sda1 /mnt/keyboard
+echo -en "\t\t\t\t\tmounted\n\t\t\t\t\t"
+ls /mnt/keyboard/
+sudo cp -v qmk_firmware/bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2 /mnt/keyboard/
+sync
+sudo umount /mnt/keyboard

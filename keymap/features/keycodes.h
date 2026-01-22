@@ -48,6 +48,7 @@ enum custom_keycodes {
   KC_6_TO0,
   KC_ENT_L2,
   KC_ENT_L4,
+  KC_SPC_L0,
   KC_SPC_L1,
   KC_SPC_L2,
   KC_SPC_L4,

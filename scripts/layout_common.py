@@ -238,6 +238,7 @@ CUSTOM_KEY_MAP = {
     "KC_SPC_L2": "Space\nL2",
     "KC_SPC_L4": "Space\nL4",
     "KC_SPC_L1": "Space\nL1",
+    "KC_SPC_L0": "Space\nL0",
     "KC_1_L1": "1\nL1",
     "KC_ENT_L2": "Enter\nL2",
     "KC_ENT_L4": "Enter\nL4",
