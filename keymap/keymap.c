@@ -183,10 +183,8 @@ const uint16_t PROGMEM zv_combo[] = {TD(TD_Z_LAYER), KC_V, COMBO_END};
 const uint16_t PROGMEM caps_combo[] = {KC_LSFT, KC_RSFT, COMBO_END};
 const uint16_t PROGMEM alt_home_combo[] = {TD(TD_Z_LAYER), KC_C, COMBO_END};
 
-// Layer 1 specific combos (Z replaced by LEFT, X replaced by RIGHT)
-const uint16_t PROGMEM l1_home_combo[] = {KC_LEFT, KC_RIGHT, COMBO_END};
-const uint16_t PROGMEM l1_pgup_combo[] = {KC_RIGHT, KC_C, COMBO_END};
-const uint16_t PROGMEM l1_xv_combo[] = {KC_RIGHT, KC_V, COMBO_END};
+// Layer 1 specific combos (Z replaced by LEFT)
+const uint16_t PROGMEM l1_home_combo[] = {KC_LEFT, KC_X, COMBO_END};
 const uint16_t PROGMEM l1_zv_combo[] = {KC_LEFT, KC_V, COMBO_END};
 const uint16_t PROGMEM l1_alt_home_combo[] = {KC_LEFT, KC_C, COMBO_END};
 
@@ -200,8 +198,6 @@ combo_t key_combos[] = {
     COMBO(caps_combo, KC_CAPS),
     // Layer 1 Combos
     COMBO(l1_home_combo, KC_HOME),
-    COMBO(l1_pgup_combo, KC_PGUP),
-    COMBO(l1_xv_combo, C(S(KC_V))),
     COMBO(l1_zv_combo, KC_END),
     COMBO(l1_alt_home_combo, LALT(KC_HOME)),
 };
