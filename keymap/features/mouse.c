@@ -21,6 +21,11 @@ uint8_t         mouse_buttons_held  = 0;
 bool            is_selection_locked = false;
 bool            is_drag_scroll_active = false;
 
+// Braking Logic (Slow down after hold)
+static uint8_t  cursor_keys_active = 0;
+static uint16_t cursor_start_time  = 0;
+#define CURSOR_BRAKE_TIMEOUT 600
+
 void update_mouse_button_state(uint16_t keycode, bool pressed) {
   uint8_t mask = 0;
   switch (keycode) {
@@ -122,6 +127,16 @@ void process_mouse_timeouts(void) {
 // Main mouse processing task (called from pointing_device_task_user)
 
 report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
+  // Braking Logic: If keys held > 600ms, slow down
+  // Only apply if Drag Scroll is OFF, and explicit Snipe/Fast modes are OFF
+  if (cursor_keys_active > 0 && !is_drag_scroll_active && !is_sniping_active && !is_fast_mode_active) {
+    if (timer_elapsed(cursor_start_time) > CURSOR_BRAKE_TIMEOUT) {
+      // Brake Active
+      mk_max_speed = 1;  // Min speed
+      mk_interval  = 20; // Slightly slower interval for control
+    }
+  }
+
   int8_t x                = mouse_report.x;
   int8_t y                = mouse_report.y;
   int8_t v                = mouse_report.v;
@@ -349,6 +364,35 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
 }
 
 bool process_mouse_keycodes(uint16_t keycode, keyrecord_t *record) {
+  bool is_movement_key = false;
+  switch (keycode) {
+    case CM_MS_UP: case CM_MS_DOWN: case CM_MS_LEFT: case CM_MS_RIGHT:
+    case CM_MS_UL: case CM_MS_UR:   case CM_MS_DL:   case CM_MS_DR:
+      is_movement_key = true;
+      break;
+  }
+
+  if (is_movement_key) {
+    if (record->event.pressed) {
+      if (cursor_keys_active == 0) {
+        cursor_start_time = timer_read();
+        // Ensure we start fast
+        mk_max_speed = MK_MAX_SPEED_DEFAULT;
+        mk_interval = MK_INTERVAL_DEFAULT;
+      }
+      cursor_keys_active++;
+    } else {
+      if (cursor_keys_active > 0) {
+        cursor_keys_active--;
+      }
+      if (cursor_keys_active == 0) {
+        // Movement stopped, reset speeds
+        mk_max_speed = MK_MAX_SPEED_DEFAULT;
+        mk_interval = MK_INTERVAL_DEFAULT;
+      }
+    }
+  }
+
   if (!record->event.pressed) {
     // Handle release for all context mouse keys by unregistering everything potential
     // This is safer than tracking state, as unregistering a key not pressed is a no-op
