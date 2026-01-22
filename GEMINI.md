@@ -20,13 +20,6 @@ qmk compile -kb bastardkb/charybdis/4x6/elitec -km dcar -e CONVERT_TO=elite_pi
 ```
 *Output:* `qmk_firmware/bastardkb_charybdis_4x6_elitec_dcar_elite_pi.uf2`
 
-### Flash Firmware
-**IMPORTANT:** You must flash **BOTH** halves for split RGB to work correctly.
-
-1.  **Right Half (Master):** Put in bootloader mode (double-tap reset). Copy `.uf2` to the mounted drive.
-2.  **Left Half (Slave):** Disconnect TRRS. Put in bootloader mode. Copy the **SAME** `.uf2` file.
-3.  **Reconnect:** Reconnect TRRS cable, then plug USB into the right half.
-
 ### Diagnostics
 View real-time logs:
 ```bash
@@ -36,8 +29,8 @@ qmk console
 ### Documentation Generation
 Update the PDF layout and wallpaper after modifying `keymap.c`:
 ```bash
-python3 generate_layout_pdf.py
-python3 wallpaper.py
+python3 scripts/generate_layout_pdf.py
+python3 scripts/wallpaper.py
 ```
 
 ## Development Conventions

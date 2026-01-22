@@ -21,13 +21,14 @@ python3 scripts/generate_layout_pdf.py && python3 scripts/generate_wallpaper.py
 **Flashing Firmware**: Flash BOTH controllers for split RGB to work
 1. Right side (master): double-tap reset, copy UF2 to `/media/$USER/RPI-RP2/`
 2. Left side (slave): disconnect TRRS, hold BOOT while plugging USB, copy same UF2
-3. Reconnect TRRS cable
 
 **Testing**: No unit tests - verify via `qmk console` with `LOG_TIME(); uprintf("Event\n");`
 
 Python deps: `pip install pillow reportlab`
 
 ## Code Style Guidelines
+
+**CRITICAL**: Do NOT reformat existing code - preserve the original formatting and structure
 
 ### C Code (keymap.c, features/*)
 - **Indentation**: 4 spaces (from .clang-format), NOT 2 spaces

@@ -2,7 +2,7 @@
 
 #include QMK_KEYBOARD_H
 
-#define LAYER_NONE 255
+#define L_POP 255
 
 // Index enum for tap_hold array
  enum tap_hold_idx {
@@ -10,7 +10,7 @@
     TH_PGUP, TH_P, TH_SLSH, TH_HOME, TH_ENT_MO,
     TH_K1, TH_K2, TH_K3, TH_K4, TH_K5,
     TH_MINS, TH_K0, TH_K9, TH_K8, TH_K7, TH_K6,
-    TH_ENT_TG4, TH_ENT_TG2, TH_SPC_TG2, TH_SPC_TG4, TH_PMNS_TG4,
+    TH_ENT_TG4, TH_ENT_TG2, TH_SPC_TG1, TH_SPC_TG2, TH_SPC_TG4, TH_PMNS_TG4,
     TH_F12,
     TH_L3_TO4, TH_L3_TO2, TH_L3_TO1,
     TH_EXIT_TO3,

@@ -73,10 +73,14 @@ bool handle_l3_thumb(uint8_t th_idx, uint8_t tap_layer, uint8_t hold_layer, bool
         th[th_idx].held = false;
         if (timer_elapsed(th[th_idx].timer) < LONG_PRESS_TIMEOUT) {
             layer_change_reason = "L3 Thumb Tap";
-            layer_move(tap_layer);
+            if (tap_layer == L_POP) {
+                layer_history_pop();
+            } else {
+                layer_move(tap_layer);
+            }
         } else {
             layer_change_reason = "L3 Thumb Hold";
-            if (hold_layer == LAYER_NONE) {
+            if (hold_layer == L_POP) {
                 layer_history_pop();
             } else {
                 layer_move(hold_layer);
@@ -280,6 +284,19 @@ void housekeeping_tap_hold(void) {
       layer_move(4);
     }
     th[TH_ENT_TG4].triggered = true;
+    housekeeping_rgb_indicators();
+  }
+  if (th[TH_SPC_TG1].held && !th[TH_SPC_TG1].triggered &&
+      timer_elapsed(th[TH_SPC_TG1].timer) > LONG_PRESS_TIMEOUT) {
+    uprintf(">>> Thumb Hold Triggered: SPC_TG1 -> Toggle Layer 1\n");
+    if (get_highest_layer(layer_state) == 1) {
+      layer_change_reason = "SPC(Hold): Toggle L1 (OFF)";
+      layer_history_pop();
+    } else {
+      layer_change_reason = "SPC(Hold): Toggle L1 (ON)";
+      layer_move(1);
+    }
+    th[TH_SPC_TG1].triggered = true;
     housekeeping_rgb_indicators();
   }
   if (th[TH_SPC_TG2].held && !th[TH_SPC_TG2].triggered &&

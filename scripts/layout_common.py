@@ -191,9 +191,9 @@ CUSTOM_KEY_MAP = {
     "KC_3_L3": "3\nL3",
     "KC_4_L4": "4\nL4",
     "KC_5_L5": "5\nL5",
-    "KC_L3_EXT_TO4": "Exit\nL4",
-    "KC_L3_EXT_TO2": "Exit\nL2",
-    "KC_L3_EXT_TO1": "Exit\nL1",
+    "KC_L3_EXIT_TO4": "Exit\nL4",
+    "KC_L3_EXIT_TO2": "Exit\nL2",
+    "KC_L3_TO1_EXIT": "L1\nExit",
     "RM_TOGG": "RGB\nToggle",
     "KC_JELLY": "Jelly",
     "KC_SPIRAL": "Spiral",
@@ -237,6 +237,8 @@ CUSTOM_KEY_MAP = {
     "KC_RIGHT_9": "Right\n9",
     "KC_SPC_L2": "Space\nL2",
     "KC_SPC_L4": "Space\nL4",
+    "KC_SPC_L1": "Space\nL1",
+    "KC_1_L1": "1\nL1",
     "KC_ENT_L2": "Enter\nL2",
     "KC_ENT_L4": "Enter\nL4",
     "KC_PMNS_L4": "Num -\nL4",
@@ -406,6 +408,12 @@ def simplify_key(key_code, layer_num=None):
         inner_key_code = f"KC_{key}"
         label = KEY_LABELS.get(inner_key_code, key)
         return f"{label}\nL{layer}"
+
+    # Handle MO(layer)
+    mo_match = re.match(r"MO\((\d+)\)", key_code)
+    if mo_match:
+        layer = mo_match.group(1)
+        return f"L{layer}"
 
     # Handle TD(...)
     td_match = re.match(r"TD\((\w+)\)", key_code)

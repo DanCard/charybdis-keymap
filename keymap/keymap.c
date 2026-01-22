@@ -854,6 +854,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   // Verbose thumb toggle keys with debug logging
   case KC_ENT_L2: return handle_thumb_toggle(TH_ENT_TG2, KC_ENT, "KC_ENT_L2", record->event.pressed);
   case KC_ENT_L4: return handle_thumb_toggle(TH_ENT_TG4, KC_ENT, "KC_ENT_L4", record->event.pressed);
+  case KC_SPC_L1: return handle_thumb_toggle(TH_SPC_TG1, KC_SPC, "KC_SPC_L1", record->event.pressed);
   case KC_SPC_L2: return handle_thumb_toggle(TH_SPC_TG2, KC_SPC, "KC_SPC_L2", record->event.pressed);
   case KC_SPC_L4: return handle_thumb_toggle(TH_SPC_TG4, KC_SPC, "KC_SPC_L4", record->event.pressed);
   // KC_PMNS_L4, KC_F12_EXIT now handled by simple tap-hold table lookup
@@ -1022,10 +1023,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           rgb_matrix_indicators_user();
         }
         return false;  // Layer 3 Thumb Logic: Tap = Layer Change, Hold = Switch Layer
-  case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 0, 4, record->event.pressed);
-  case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 0, 2, record->event.pressed);
-  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, LAYER_NONE, record->event.pressed);
-  case KC_EXIT_TO3: return handle_l3_thumb(TH_EXIT_TO3, 0, 3, record->event.pressed);
+  case KC_L3_EXIT_TO4: return handle_l3_thumb(TH_L3_TO4, L_POP, 4, record->event.pressed);
+  case KC_L3_EXIT_TO2: return handle_l3_thumb(TH_L3_TO2, L_POP, 2, record->event.pressed);
+  case KC_L3_TO1_EXIT: return handle_l3_thumb(TH_L3_TO1, 1, L_POP, record->event.pressed);
+  case KC_EXIT_TO3: return handle_l3_thumb(TH_EXIT_TO3, L_POP, 3, record->event.pressed);
 
 
 
@@ -1124,7 +1125,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_TAB , KC_Q_L4, KC_W    , KC_E    , KC_R    , KC_T    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                  KC_LSFT, KC_A    , KC_S    , KC_D    , KC_F    , KC_G    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                  KC_LCTL, TD(TD_Z_LAYER), KC_X, KC_C  , KC_V    , KC_B    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
-                                          KC_SPC_L4, KC_ENT_L2, KC_L1_L3,   KC_DEL, KC_ENT_L2,
+                                          KC_SPC_L1, KC_ENT_L2, MO(3),   KC_DEL, KC_ENT_L2,
                                                           KC_LALT, KC_BSPC,   KC_BSPC),
             // Layer 1: Right Arrows  
     [1] = LAYOUT(QK_GESC, KC_1_L1, KC_2_L2 , KC_3_L3, KC_4_L4, KC_5_L5,   KC_6, KC_7, KC_8, KC_9 , KC_0_TO0  , KC_MINS_EQL,
@@ -1144,7 +1145,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_SEL_LOCK    , CM_MS_UL  , CM_MS_UP   , CM_MS_UR   , MS_BTN2, KC_EXIT,   KC_EXIT     , KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
   KC_EXIT        , CM_MS_LEFT, SCROLL_MODE, CM_MS_RIGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, SCROLL_MODE, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
   KC_EXIT        , CM_MS_DL  , CM_MS_DOWN , CM_MS_DR   , MS_BTN3, KC_EXIT,   KC_EXIT      , KC_EXIT , MS_BTN3   , MS_BTN3    , MS_BTN3, KC_RSFT,
-                                    MS_BTN1, KC_L3_EXT_TO2, KC_L3_EXT_TO1,   KC_MOUSE_LOCK, KC_ENT_EXIT,
+                                    MS_BTN1, KC_L3_EXIT_TO2, KC_L3_TO1_EXIT,   KC_MOUSE_LOCK, KC_ENT_EXIT,
                                                     KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     // Layer 4: left hand layer                                                            
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0_TO0, KC_MINS_EQL,

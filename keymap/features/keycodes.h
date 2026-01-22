@@ -48,6 +48,7 @@ enum custom_keycodes {
   KC_6_TO0,
   KC_ENT_L2,
   KC_ENT_L4,
+  KC_SPC_L1,
   KC_SPC_L2,
   KC_SPC_L4,
   KC_PMNS_L4,
@@ -68,9 +69,9 @@ enum custom_keycodes {
   KC_NIGHT,          // Set brightness to Night level
   KC_FLASHLIGHT,     // Toggle Flashlight mode
   KC_SLSH_TO0,       // Tap: /, Hold: Temporary Layer 0
-  KC_L3_EXT_TO4,     // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
-  KC_L3_EXT_TO2,     // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
-  KC_L3_EXT_TO1,     // Layer 3 Left Thumb: Tap TO(1), Hold TO(6)
+  KC_L3_EXIT_TO4,    // Layer 3 Left Thumb: Tap Exit, Hold TO(4)
+  KC_L3_EXIT_TO2,    // Layer 3 Left Thumb: Tap Exit, Hold TO(2)
+  KC_L3_TO1_EXIT,    // Layer 3 Left Thumb: Tap TO(1), Hold Exit
   KC_EXIT_TO3,       // Layer 1 Left Thumb: Tap Exit, Hold TO(3)
   KC_PRINT_STATS,    // Print statistics histogram immediately
   KC_LOG_STATS_GRID, // Print statistics in a 2D grid format
