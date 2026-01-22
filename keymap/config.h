@@ -7,7 +7,7 @@
 /* Charybdis Mouse Tuning */
 #define CHARYBDIS_MINIMUM_DEFAULT_DPI 200
 #define CHARYBDIS_DEFAULT_DPI_CONFIG_STEP 200
-#define CHARYBDIS_DRAGSCROLL_DIVISOR 4    // Lower = faster scrolling (default is 8)
+#define CHARYBDIS_DRAGSCROLL_DIVISOR 12   // Higher = Slower/Finer (New accumulation logic)
 
 /* Mouse Keys Configuration */
 #define MOUSEKEY_DELAY 0
@@ -15,6 +15,11 @@
 #define MOUSEKEY_MAX_SPEED 12
 #define MOUSEKEY_TIME_TO_MAX 60
 #define MOUSEKEY_WHEEL_DELAY 0
+#define MOUSEKEY_WHEEL_DELTA 1
+
+// Default Mouse Key settings (to restore after Snipe/Fast mode)
+#define MK_MAX_SPEED_DEFAULT MOUSEKEY_MAX_SPEED
+#define MK_INTERVAL_DEFAULT  MOUSEKEY_INTERVAL
 
 /* Auto Mouse Configuration */
 #define AUTO_MOUSE_DEFAULT_LAYER 3    // Switch to Layer 3 (MOUSE)

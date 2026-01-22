@@ -2,7 +2,8 @@
 
 #include QMK_KEYBOARD_H
 
-#define SCROLL_MODE DRG_TOG
+#define SCROLL_MODE DRG_TOG // Toggle Drag Scroll Mode (On/Off)
+// Note: DRGSCRL is the Momentary (Hold) version, defined in charybdis.h
 
 // Custom Keycodes
 enum custom_keycodes {

@@ -9,6 +9,7 @@ extern bool mouse_is_locked;
 extern bool is_jitter_filter_active;
 extern bool is_selection_locked;
 extern bool layer3_auto_activated;
+extern bool is_drag_scroll_active;
 extern uint16_t auto_mouse_timer;
 extern uint16_t auto_mouse_timeout;
 extern uint8_t mouse_buttons_held;

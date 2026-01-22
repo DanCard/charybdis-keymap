@@ -19,6 +19,7 @@ static uint16_t snipe_timer         = 0;
 static uint16_t fast_mode_timer     = 0;
 uint8_t         mouse_buttons_held  = 0;
 bool            is_selection_locked = false;
+bool            is_drag_scroll_active = false;
 
 void update_mouse_button_state(uint16_t keycode, bool pressed) {
   uint8_t mask = 0;
@@ -76,8 +77,8 @@ void process_mouse_timeouts(void) {
   if (is_sniping_active && timer_elapsed(snipe_timer) > SNIPE_MODE_TIMEOUT) {
     is_sniping_active = false;
     pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-    mk_max_speed = 12; // Restore default
-    mk_interval  = 16;
+    mk_max_speed = MK_MAX_SPEED_DEFAULT;
+    mk_interval  = MK_INTERVAL_DEFAULT;
     sync_needed  = true;
     uprintf("Snipe Mode Timeout. CPI -> Default\n");
   }
@@ -86,8 +87,8 @@ void process_mouse_timeouts(void) {
   if (is_fast_mode_active && timer_elapsed(fast_mode_timer) > FAST_MODE_TIMEOUT) {
     is_fast_mode_active = false;
     pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
-    mk_max_speed = 12; // Restore default
-    mk_interval  = 16;
+    mk_max_speed = MK_MAX_SPEED_DEFAULT;
+    mk_interval  = MK_INTERVAL_DEFAULT;
     sync_needed  = true;
     uprintf("Fast Mode Timeout. CPI -> Default\n");
   }
@@ -102,7 +103,7 @@ void process_mouse_timeouts(void) {
   bool lock_layer = false;
   if (mouse_buttons_held) lock_layer = true;
   if (is_selection_locked) lock_layer = true;
-  if (charybdis_get_pointer_dragscroll_enabled()) lock_layer = true;
+  if (is_drag_scroll_active) lock_layer = true;
   if (host_keyboard_led_state().scroll_lock) lock_layer = true;
 
   if (lock_layer && layer3_auto_activated) {
@@ -125,21 +126,49 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   int8_t y                = mouse_report.y;
   int8_t v                = mouse_report.v;
   int8_t h                = mouse_report.h;
-  bool   is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
 
   // Log state change for Scroll Mode
   static bool last_scroll_state = false;
-  if (is_scroll_active != last_scroll_state) {
-    uprintf("\033[93mMouse: Drag Scroll %s\033[0m\n", is_scroll_active ? "ENABLED" : "DISABLED");
-    last_scroll_state = is_scroll_active;
+  if (is_drag_scroll_active != last_scroll_state) {
+    uprintf("\033[93mMouse: Drag Scroll %s\033[0m\n", is_drag_scroll_active ? "ENABLED" : "DISABLED");
+    last_scroll_state = is_drag_scroll_active;
+    if (is_drag_scroll_active) {
+      pointing_device_set_cpi(100); // Low CPI for scroll
+    } else {
+      pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    }
   }
 
-  // Invert scroll direction to match traditional mouse wheel behavior
-  if (is_scroll_active) {
-    mouse_report.v = -v;
-    mouse_report.h = -h;
-    v              = mouse_report.v;
-    h              = mouse_report.h;
+  // Custom Drag Scroll Logic (Accumulated with Remainder)
+  if (is_drag_scroll_active) {
+    static int16_t scroll_remainder_x = 0;
+    static int16_t scroll_remainder_y = 0;
+
+    // Accumulate movement
+    scroll_remainder_x += x;
+    scroll_remainder_y += y;
+
+    // Divisor: Higher = Slower/Finer, Lower = Faster
+    const int16_t scroll_divisor = CHARYBDIS_DRAGSCROLL_DIVISOR;
+
+    int8_t scroll_h = scroll_remainder_x / scroll_divisor;
+    int8_t scroll_v = scroll_remainder_y / scroll_divisor;
+
+    // Update remainders
+    scroll_remainder_x -= scroll_h * scroll_divisor;
+    scroll_remainder_y -= scroll_v * scroll_divisor;
+
+    // Apply scroll (Inverted for natural feel)
+    mouse_report.h = -scroll_h;
+    mouse_report.v = -scroll_v; // Inverted Y
+
+    // Zero out cursor movement
+    mouse_report.x = 0;
+    mouse_report.y = 0;
+    x = 0;
+    y = 0;
+    v = mouse_report.v;
+    h = mouse_report.h;
   }
 
 // ============================================================
@@ -205,7 +234,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   if (x != 0 || y != 0 || v != 0 || h != 0) {
     static uint32_t last_move_log = 0;
     if (timer_elapsed32(last_move_log) > 1000) { // Log at most every 1s
-      if (is_scroll_active) {
+      if (is_drag_scroll_active) {
         uprintf("[%lu.%03lu] Mouse Scroll: v=%d, h=%d\n", sec, ms, v, h);
       } else if (get_highest_layer(layer_state) == 3) {
         uint16_t current_cpi = pointing_device_get_cpi();
@@ -348,9 +377,18 @@ bool process_mouse_keycodes(uint16_t keycode, keyrecord_t *record) {
   }
 
   // Key Pressed
-  bool drag_scroll = charybdis_get_pointer_dragscroll_enabled();
+  bool drag_scroll = is_drag_scroll_active;
 
   switch (keycode) {
+    case SCROLL_MODE:
+      if (record->event.pressed) {
+        is_drag_scroll_active = !is_drag_scroll_active;
+      }
+      return false;
+    case DRGSCRL:
+      is_drag_scroll_active = record->event.pressed;
+      return false;
+
     case CM_MS_UP:
       if (drag_scroll) register_code(MS_WHLU);
       else             register_code(MS_UP  ); return false;
@@ -409,21 +447,38 @@ void activate_fast_mode(void) {
 
 // Unified function to clear all mouse-related states on layer exit
 void clear_mouse_states(void) {
+  uprintf("Clear Mouse States: Locked=%d, SelLock=%d, DragScroll=%d, Snipe=%d, Fast=%d\n",
+          mouse_is_locked, is_selection_locked, is_drag_scroll_active, is_sniping_active, is_fast_mode_active);
+
   mouse_is_locked = false;
   if (is_selection_locked) {
     unregister_code(MS_BTN1);
     is_selection_locked = false;
     update_mouse_button_state(MS_BTN1, false);
   }
-  charybdis_set_pointer_dragscroll_enabled(false);
+  
+  // Clear Drag Scroll
+  if (is_drag_scroll_active) {
+    is_drag_scroll_active = false;
+    pointing_device_set_cpi(charybdis_get_pointer_default_dpi()); // Ensure CPI resets
+  }
+  
+  // Clear Snipe Mode
   if (is_sniping_active) {
     is_sniping_active = false;
     pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    mk_max_speed = MK_MAX_SPEED_DEFAULT;
+    mk_interval  = MK_INTERVAL_DEFAULT;
   }
+  
+  // Clear Fast Mode
   if (is_fast_mode_active) {
     is_fast_mode_active = false;
     pointing_device_set_cpi(charybdis_get_pointer_default_dpi());
+    mk_max_speed = MK_MAX_SPEED_DEFAULT;
+    mk_interval  = MK_INTERVAL_DEFAULT;
   }
+  
   layer3_auto_activated = false;
   sync_needed           = true;
 }

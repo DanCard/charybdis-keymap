@@ -249,11 +249,9 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     uprintf("[%lu.%03lu] Entering Layer 3. CPI: %u\n", sec, ms,
             pointing_device_get_cpi());
   } else if (prev_layer == 3) {
-    // Automatically disable drag scroll when leaving Layer 3
-    if (charybdis_get_pointer_dragscroll_enabled()) {
-      charybdis_set_pointer_dragscroll_enabled(false);
-      uprintf("[%lu.%03lu] Exiting Layer 3: Drag Scroll OFF\n", sec, ms);
-    }
+    // Automatically disable drag scroll and other mouse states when leaving Layer 3
+    uprintf("[%lu.%03lu] Exiting Layer 3: Clearing Mouse States\n", sec, ms);
+    clear_mouse_states();
   }
   
   update_layer_stats(layer);
