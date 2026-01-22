@@ -2,7 +2,7 @@
 
 #include QMK_KEYBOARD_H
 
-
+#define LAYER_NONE 255
 
 // Index enum for tap_hold array
  enum tap_hold_idx {

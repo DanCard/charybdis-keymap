@@ -76,7 +76,11 @@ bool handle_l3_thumb(uint8_t th_idx, uint8_t tap_layer, uint8_t hold_layer, bool
             layer_move(tap_layer);
         } else {
             layer_change_reason = "L3 Thumb Hold";
-            layer_move(hold_layer);
+            if (hold_layer == LAYER_NONE) {
+                layer_history_pop();
+            } else {
+                layer_move(hold_layer);
+            }
         }
         housekeeping_rgb_indicators();
     }

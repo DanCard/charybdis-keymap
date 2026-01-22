@@ -1024,7 +1024,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;  // Layer 3 Thumb Logic: Tap = Layer Change, Hold = Switch Layer
   case KC_L3_EXT_TO4: return handle_l3_thumb(TH_L3_TO4, 0, 4, record->event.pressed);
   case KC_L3_EXT_TO2: return handle_l3_thumb(TH_L3_TO2, 0, 2, record->event.pressed);
-  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, 6, record->event.pressed);
+  case KC_L3_EXT_TO1: return handle_l3_thumb(TH_L3_TO1, 1, LAYER_NONE, record->event.pressed);
   case KC_EXIT_TO3: return handle_l3_thumb(TH_EXIT_TO3, 0, 3, record->event.pressed);
 
 
