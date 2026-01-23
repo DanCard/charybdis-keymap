@@ -185,17 +185,18 @@ bool housekeeping_rgb_indicators(void) {
 
   switch (layer) {
   case 1: {
-    // Layer 1: Only arrows SUPPOSE to light up.
-    // Left: 3 arrows (LEFT=4, RIGHT=24, DOWN=25). Right: 1 arrow (UP=24).
+    // Layer 1: Arrow keys light up with flashing pink/green.
+    // Left thumb: LEFT=24 (inner bottom), DOWN=25 (outer bottom), UP=28 (inner top).
+    // Right thumb: RIGHT=24.
     bool phase = (timer_read() / 500) % 2;
     if (is_keyboard_left()) {
-      static const uint8_t left_leds[] = {4, 24, 25};
+      static const uint8_t left_leds[] = {24, 25, 28};
       for (int i = 0; i < sizeof(left_leds) / sizeof(left_leds[0]); i++) {
          if (phase) rgb_matrix_set_color_scaled(left_leds[i], 255, 0, 255); // Pink
          else       rgb_matrix_set_color_scaled(left_leds[i], 0, 255, 0);   // Green
       }
     } else {
-      // Right Side: UP (LED 24)
+      // Right Side: RIGHT (LED 24)
       if (phase) rgb_matrix_set_color_scaled(24, 255, 0, 255); // Pink
       else       rgb_matrix_set_color_scaled(24, 0, 255, 0);   // Green
     }

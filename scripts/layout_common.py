@@ -328,6 +328,10 @@ def readable_key(k):
 
 def simplify_key(key_code, layer_num=None):
     """Convert QMK keycode to readable label."""
+    # Layer 1: KC_TRNS at Z position falls through to TD_Z_LAYER
+    if layer_num == 1 and key_code == "KC_TRNS":
+        return "Z\nL4"
+
     # Tap Dance Z-Layer Handling
     if "TD_Z_LAYER" in key_code:
         if layer_num == 0:
@@ -625,23 +629,27 @@ def get_themed_colors_for_key(layer_num, x, y, use_255=False):
       - Rightmost column: x>11 (catches 11.5 wallpaper, 12 PDF)
       - Second rightmost: x>10
     """
-    # Layer 1: Arrow keys theme (pink for left side only)
-    # Firmware only highlights left keyboard arrows, not right side
+    # Layer 1: Arrow keys theme (pink for left, cyan for right)
+    # Arrow keys on Layer 1 thumb cluster (after shifts applied):
+    # - UP: x=5, y=4 (left thumb top outer) - pink
+    # - LEFT: x=4, y=5 (left thumb bottom inner) - pink
+    # - DOWN: x=5, y=5 (left thumb bottom outer) - pink
+    # - RIGHT: x=8, y=4 (right thumb top inner) - cyan
     if layer_num == 1:
-        # Left side arrows (pink):
-        # - Row 3, x=1 (LEFT at Z position after CTRL at x=0)
-        # - Thumb UP at y=4, x=5 (after shift)
-        # - Thumb DOWN at y=5, x=4 and RIGHT at y=5, x=5 (after shift)
-        is_left_arrow = (
-            (y == 3 and x == 1) or         # LEFT on bottom row (Z position)
+        is_left_thumb_arrow = (
             (y == 4 and 4.5 < x < 5.5) or  # UP on thumb top row (x=5)
-            (y == 5 and 3.5 < x < 5.5)     # DOWN (x=4) and RIGHT (x=5) on thumb bottom row
+            (y == 5 and 3.5 < x < 5.5)     # LEFT (x=4) and DOWN (x=5) on thumb bottom row
         )
+        is_right_thumb_arrow = (y == 4 and 7.0 < x < 8.5)  # RIGHT (x=7.5 wallpaper, x=8 PDF)
 
-        if is_left_arrow:
+        if is_left_thumb_arrow:
             if use_255:
                 return L1_PINK_255, L1_PINK_BORDER
             return L1_PINK_NORM, None
+        if is_right_thumb_arrow:
+            if use_255:
+                return L1_CYAN_255, L1_CYAN_BORDER
+            return L1_CYAN_NORM, None
         return None, None
 
     if y != 0:  # Only top row gets themed colors for other layers

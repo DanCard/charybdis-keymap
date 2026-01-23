@@ -212,7 +212,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   static uint16_t small_movement_start   = 0;     // Timer for small movement duration
   static bool     in_small_movement_mode = false; // Are we in small movement mode?
 
-  if (x != 0 || y != 0) {
+  if (layer_state_is(3) && (x != 0 || y != 0)) {
     uint8_t magnitude = abs(x) + abs(y);
 
     if (magnitude <= SMALL_MOVEMENT_THRESHOLD) {
@@ -241,6 +241,8 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       // Larger movement - user is intentionally moving fast, reset precision mode
       in_small_movement_mode = false;
     }
+  } else {
+    in_small_movement_mode = false;
   }
 
   uint32_t now = timer_read32();
