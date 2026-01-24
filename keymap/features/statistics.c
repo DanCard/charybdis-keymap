@@ -304,6 +304,16 @@ void print_statistics_grid(void) {
 
     snprintf(title_buf, sizeof(title_buf), "Long Press Grid (>=%dms)", LONG_PRESS_TIMEOUT);
     print_grid_matrix(matrix_counts_long, title_buf);
+
+    // Calculate and print total counts
+    uint32_t matrix_counts_total[MATRIX_ROWS][MATRIX_COLS];
+    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
+        for (uint8_t c = 0; c < MATRIX_COLS; c++) {
+            matrix_counts_total[r][c] = matrix_counts_short[r][c] + matrix_counts_long[r][c];
+        }
+    }
+    snprintf(title_buf, sizeof(title_buf), "Total Press Grid (Short + Long)");
+    print_grid_matrix(matrix_counts_total, title_buf);
 }
 
 void matrix_scan_statistics(void) {
