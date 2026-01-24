@@ -1138,11 +1138,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
 [3] = LAYOUT(
-  QK_GESC        , KC_EXIT   , KC_EXIT      , KC_EXIT  , KC_EXIT, QK_BOOT,   KC_EXIT      , KC_RCTL , KC_RALT   , KC_RGUI    , KC_EXIT, QK_BOOT,
-  KC_SEL_LOCK    , CM_MS_UL  , CM_MS_UP   , CM_MS_UR   , MS_BTN2, KC_EXIT,   KC_EXIT     , KC_SNIPE, KC_FAST, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
+  QK_GESC        , KC_EXIT   , KC_EXIT      , KC_EXIT  , KC_EXIT, QK_BOOT,   KC_EXIT, KC_RCTL      , KC_RALT    , KC_RGUI    , KC_EXIT, QK_BOOT,
+  KC_SEL_LOCK    , CM_MS_UL  , CM_MS_UP   , CM_MS_UR   , MS_BTN2, KC_EXIT,   KC_EXIT, MS_WHLU      , KC_EXIT, KC_EXIT, KC_EXIT, QK_CLEAR_EEPROM,
   KC_EXIT        , CM_MS_LEFT, SCROLL_MODE, CM_MS_RIGHT, MS_BTN1, MS_BTN2,   KC_MOUSE_LOCK, MS_BTN1, SCROLL_MODE, KC_SEL_LOCK, MS_BTN2, KC_EXIT,
-  KC_EXIT        , CM_MS_DL  , CM_MS_DOWN , CM_MS_DR   , MS_BTN3, KC_EXIT,   KC_EXIT      , KC_EXIT , MS_BTN3   , MS_BTN3    , MS_BTN3, KC_RSFT,
-                                    MS_BTN1, KC_EXIT, KC_EXIT,   KC_MOUSE_LOCK, KC_ENT_EXIT,
+  KC_EXIT        , CM_MS_DL  , CM_MS_DOWN , CM_MS_DR   , MS_BTN3, KC_EXIT,   KC_EXIT, MS_WHLD      , MS_BTN3    , MS_BTN3    , MS_BTN3, KC_RSFT,
+                                                MS_BTN1, KC_EXIT, KC_EXIT,   KC_MOUSE_LOCK, KC_ENT_EXIT,
                                                     KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
     // Layer 4: left hand layer                                                            
     [4] = LAYOUT(KC_MINS_TO0, KC_0_L1, KC_9_L2, KC_8_L3, KC_7_TO0, KC_6_TO0,   KC_6, KC_7, KC_8, KC_9, KC_0_TO0, KC_MINS_EQL,

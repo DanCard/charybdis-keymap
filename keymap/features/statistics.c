@@ -135,6 +135,7 @@ typedef struct {
     const char* name;
     uint32_t tap_count;
     uint32_t hold_count;
+    uint32_t total_count;
 } key_stat_t;
 
 void print_statistics_now(void) {
@@ -169,28 +170,29 @@ void print_statistics_now(void) {
     uprintf("---------------------------\n");
 
     uprintf("\n--- Physical Key Usage List ---\n");
-    uprintf("Row Col | Short (<%dms) | Long (>=%dms) | Key (L0) | Code\n", LONG_PRESS_TIMEOUT, LONG_PRESS_TIMEOUT);
-    uprintf("------------------------------------------------------------\n");
+    uprintf("Row Col | Short (<%dms) | Long (>=%dms) | Total         | Key (L0) | Code\n", LONG_PRESS_TIMEOUT, LONG_PRESS_TIMEOUT);
+    uprintf("--------------------------------------------------------------------------------\n");
     
     for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
         for (uint8_t c = 0; c < MATRIX_COLS; c++) {
             uint16_t kc = pgm_read_word(&keymaps[0][r][c]);
             if (kc != KC_NO) {
-                uprintf("%2d  %2d  | %13lu | %12lu | %-8s | 0x%04X\n", 
+                uprintf("%2d  %2d  | %13lu | %12lu | %13lu | %-8s | 0x%04X\n", 
                     r, c, 
                     matrix_counts_short[r][c], 
                     matrix_counts_long[r][c], 
+                    matrix_counts_short[r][c] + matrix_counts_long[r][c],
                     get_key_name(kc), 
                     kc);
             }
         }
     }
-    uprintf("------------------------------------------------------------\n");
+    uprintf("--------------------------------------------------------------------------------\n");
 
-    // Print sorted by tap usage (least used first)
-    uprintf("\n--- Physical Key Usage (Sorted by Tap Count, Least First) ---\n");
-    uprintf("Tap Count | Hold Count | Key (L0) | Row Col | Code\n");
-    uprintf("------------------------------------------------------------\n");
+    // Print sorted by total usage (least used first)
+    uprintf("\n--- Physical Key Usage (Sorted by Total Count, Least First) ---\n");
+    uprintf("Total     | Short      | Long       | Key (L0) | Row Col | Code\n");
+    uprintf("--------------------------------------------------------------------------------\n");
     
     key_stat_t stats[MATRIX_ROWS * MATRIX_COLS];
     uint8_t count = 0;
@@ -205,15 +207,16 @@ void print_statistics_now(void) {
                 stats[count].name = get_key_name(kc);
                 stats[count].tap_count = matrix_counts_short[r][c];
                 stats[count].hold_count = matrix_counts_long[r][c];
+                stats[count].total_count = stats[count].tap_count + stats[count].hold_count;
                 count++;
             }
         }
     }
     
-    // Bubble sort by tap count (ascending)
+    // Bubble sort by total count (ascending)
     for (uint8_t i = 0; i < count - 1; i++) {
         for (uint8_t j = 0; j < count - i - 1; j++) {
-            if (stats[j].tap_count > stats[j + 1].tap_count) {
+            if (stats[j].total_count > stats[j + 1].total_count) {
                 key_stat_t temp = stats[j];
                 stats[j] = stats[j + 1];
                 stats[j + 1] = temp;
@@ -222,7 +225,8 @@ void print_statistics_now(void) {
     }
     
     for (uint8_t i = 0; i < count; i++) {
-        uprintf("%9lu | %10lu | %-8s | %2d   %2d | 0x%04X\n", 
+        uprintf("%9lu | %10lu | %10lu | %-8s | %2d   %2d | 0x%04X\n", 
+            stats[i].total_count,
             stats[i].tap_count, 
             stats[i].hold_count, 
             stats[i].name, 
@@ -230,7 +234,7 @@ void print_statistics_now(void) {
             stats[i].col,
             stats[i].kc);
     }
-    uprintf("------------------------------------------------------------\n");
+    uprintf("--------------------------------------------------------------------------------\n");
 }
 
 static void print_grid_matrix(uint32_t counts[MATRIX_ROWS][MATRIX_COLS], const char* title) {
