@@ -34,7 +34,12 @@ void user_sync_info_slave_handler(uint8_t in_buflen, const void *in_data,
   is_fast_mode_active = sync_data->is_fast_mode_active;
   mouse_is_locked = sync_data->mouse_is_locked;
   is_jitter_filter_active = sync_data->is_jitter_filter_active;
+  
+  // Update custom drag scroll state
+  is_drag_scroll_active = sync_data->is_dragscroll_enabled;
+  // Also update built-in state if needed, though we use custom logic primarily
   charybdis_set_pointer_dragscroll_enabled(sync_data->is_dragscroll_enabled);
+
   is_caps_lock_on = sync_data->is_caps_lock_on;
   is_day_mode = sync_data->is_day_mode;
 
@@ -96,7 +101,7 @@ void housekeeping_task_sync(void) {
           .is_fast_mode_active = is_fast_mode_active,
           .mouse_is_locked = mouse_is_locked,
           .is_jitter_filter_active = is_jitter_filter_active,
-          .is_dragscroll_enabled = charybdis_get_pointer_dragscroll_enabled(),
+          .is_dragscroll_enabled = is_drag_scroll_active,
           .is_caps_lock_on = is_caps_lock_on,
           .is_day_mode = is_day_mode,
           .rgb_mode = rgb_matrix_get_mode(),

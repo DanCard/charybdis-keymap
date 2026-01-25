@@ -151,7 +151,32 @@ bool housekeeping_rgb_indicators(void) {
     rgb_matrix_set_color_scaled(28, 0, 255, 255);
   }
 
-  bool is_scroll_active = charybdis_get_pointer_dragscroll_enabled();
+  // Debug logging for Scroll Mode state (throttled)
+  static uint32_t last_scroll_log = 0;
+  if (timer_elapsed32(last_scroll_log) > 2000) {
+    // Only log if active to reduce noise
+    if (is_drag_scroll_active) {
+       uprintf("RGB: Scroll Active (is_drag_scroll_active=1)\n");
+    }
+    last_scroll_log = timer_read32();
+  }
+
+  // Selection Lock Indicator: "Containment Field" (Blue/Purple Pulse on Borders)
+  if (is_selection_locked) {
+    bool phase = (timer_read() / 1000) % 2;
+    uint8_t r = phase ? 128 : 0;   // Pulse Red component for Purple
+    uint8_t g = 0;
+    uint8_t b = 255;               // Always Blue
+
+    // Light up Top Row
+    if (is_keyboard_left()) {
+      for (int i = 0; i < sizeof(top_row_left) / sizeof(top_row_left[0]); i++) rgb_matrix_set_color_scaled(top_row_left[i], r, g, b);
+      for (int i = 0; i < sizeof(far_left_col) / sizeof(far_left_col[0]); i++) rgb_matrix_set_color_scaled(far_left_col[i], r, g, b);
+    } else {
+      for (int i = 0; i < sizeof(top_row_right) / sizeof(top_row_right[0]); i++) rgb_matrix_set_color_scaled(top_row_right[i], r, g, b);
+      for (int i = 0; i < sizeof(far_right_col) / sizeof(far_right_col[0]); i++) rgb_matrix_set_color_scaled(far_right_col[i], r, g, b);
+    }
+  }
 
   // Special mode indicators (sniping/fast/scroll) only apply to one keyboard half.
   // The keyboard side check is part of the if condition so the OTHER half continues
@@ -173,12 +198,17 @@ bool housekeeping_rgb_indicators(void) {
     return false;
   }
 
-  if (is_scroll_active && is_keyboard_left()) {
-    for (int i = 0; i < sizeof(top_row_left) / sizeof(top_row_left[0]); i++) rgb_matrix_set_color(top_row_left[i], 0, 0, 0);
-    for (int i = 0; i < sizeof(far_left_col) / sizeof(far_left_col[0]); i++) {
-      HSV hsv = {(uint8_t)((i * 64) + (timer_read() / 10)), 255, 255};
-      RGB rgb = hsv_to_rgb(hsv);
-      rgb_matrix_set_color_scaled(far_left_col[i], rgb.r, rgb.g, rgb.b);
+  if (is_drag_scroll_active) {
+    bool phase = (timer_read() / 500) % 2;
+    // Pink (255, 0, 255) / Green (0, 255, 0)
+    uint8_t r = phase ? 255 : 0;
+    uint8_t g = phase ? 0 : 255;
+    uint8_t b = phase ? 255 : 0;
+
+    if (is_keyboard_left()) {
+      rgb_matrix_set_color_scaled(far_left_col[0], r, g, b); // Esc
+    } else {
+      rgb_matrix_set_color_scaled(far_right_col[0], r, g, b); // Minus
     }
     return false;
   }

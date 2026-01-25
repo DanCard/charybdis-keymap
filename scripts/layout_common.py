@@ -185,6 +185,8 @@ CUSTOM_KEY_MAP = {
     "CM_MS_UR": "Up\nRight",
     "CM_MS_DL": "Down\nLeft",
     "CM_MS_DR": "Down\nRight",
+    "MS_WHLU": "Scroll\nUp",
+    "MS_WHLD": "Scroll\nDown",
     "SCROLL_MODE": "Scroll\nMode",
     "KC_1_L1": "1\nL1",
     "KC_2_L2": "2\nL2",
@@ -257,7 +259,7 @@ CUSTOM_KEY_MAP = {
     "KC_FIRE": "Fire",
     "KC_DAY": "Day\nBright",
     "KC_NIGHT": "Night\nDim",
-    "KC_SEL_LOCK": "SEL\nLCK",
+    "KC_SEL_LOCK": "Select\nLock",
     "KC_MINS_EQL": "-\n=",
 }
 
