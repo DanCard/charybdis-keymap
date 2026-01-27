@@ -145,6 +145,7 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
   // Log state change for Scroll Mode
   static bool last_scroll_state = false;
   if (is_drag_scroll_active != last_scroll_state) {
+    rgb_matrix_set_color_all(0, 0, 0);
     uprintf("\033[93mMouse: Drag Scroll %s\033[0m\n", is_drag_scroll_active ? "ENABLED" : "DISABLED");
     last_scroll_state = is_drag_scroll_active;
     if (is_drag_scroll_active) {

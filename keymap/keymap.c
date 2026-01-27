@@ -1036,6 +1036,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true; 
   case KC_SEL_LOCK:
     if (record->event.pressed) {
+        rgb_matrix_set_color_all(0, 0, 0);
         if (!is_selection_locked) {
             register_code(MS_BTN1);
             is_selection_locked = true;
