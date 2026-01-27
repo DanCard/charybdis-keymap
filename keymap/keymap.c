@@ -255,15 +255,11 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   return state;
 }
 
-// State variables for Left Side Overrides (preserved)
-static bool l1_left_active = false;
-static bool l1_down_active = false;
-
-// State variables for Right Side Overrides (Layer 1 Shift+Arrow -> Base Layer)
-static bool l1_right_up_ovr = false;
-static bool l1_right_down_ovr = false;
-static bool l1_right_left_ovr = false;
-static bool l1_right_right_ovr = false;
+// State variables for Thumb Arrow Overrides (Layer 1 Shift+Arrow -> Base Layer)
+static bool l1_up_ovr    = false;
+static bool l1_down_ovr  = false;
+static bool l1_left_ovr  = false;
+static bool l1_right_ovr = false;
 
 static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
   uint8_t layer = get_highest_layer(layer_state);
@@ -271,122 +267,73 @@ static bool handle_l1_arrow_overrides(uint16_t keycode, keyrecord_t *record) {
   bool is_right_side = (record->event.key.row >= 5);
 
   if (is_right_side) {
-    // Override Logic: Layer 1 + Shift + Arrow -> Equivalent Layer 0 Key
-    switch (keycode) {
-      case KC_UP: // L1: UP -> L0: TO(3)
-        if (is_press) {
-          if (layer == 1 && (get_mods() & MOD_MASK_SHIFT)) {
-            l1_right_up_ovr = true;
-            layer_move(3);
-            return false;
-          }
-        } else {
-          if (l1_right_up_ovr) {
-            l1_right_up_ovr = false;
-            // TO(3) is a layer move, no release action needed
-            return false;
-          }
+    // Right Side Thumb: KC_RIGHT -> L0: KC_DEL
+    if (keycode == KC_RIGHT) {
+      if (is_press) {
+        if (layer == 1 && (get_mods() & MOD_MASK_SHIFT)) {
+          l1_right_ovr = true;
+          register_code(KC_DEL);
+          return false;
         }
-        break;
-
-      case KC_RIGHT: // L1: RIGHT -> L0: KC_DEL
-        if (is_press) {
-          if (layer == 1 && (get_mods() & MOD_MASK_SHIFT)) {
-            l1_right_right_ovr = true;
-            register_code(KC_DEL);
-            return false;
-          }
-        } else {
-          if (l1_right_right_ovr) {
-            l1_right_right_ovr = false;
-            unregister_code(KC_DEL);
-            return false;
-          }
-        }
-        break;
-
-      case KC_LEFT: // L1: LEFT -> L0: KC_LALT
-        if (is_press) {
-          if (layer == 1 && (get_mods() & MOD_MASK_SHIFT)) {
-            l1_right_left_ovr = true;
-            register_code(KC_LALT);
-            return false;
-          }
-        } else {
-          if (l1_right_left_ovr) {
-            l1_right_left_ovr = false;
-            unregister_code(KC_LALT);
-            return false;
-          }
-        }
-        break;
-
-      case KC_DOWN: // L1: DOWN -> L0: KC_BSPC
-        if (is_press) {
-          if (layer == 1 && (get_mods() & MOD_MASK_SHIFT)) {
-            l1_right_down_ovr = true;
-            register_code(KC_BSPC);
-            return false;
-          }
-        } else {
-          if (l1_right_down_ovr) {
-            l1_right_down_ovr = false;
-            unregister_code(KC_BSPC);
-            return false;
-          }
-        }
-        break;
+      } else if (l1_right_ovr) {
+        l1_right_ovr = false;
+        unregister_code(KC_DEL);
+        return false;
+      }
     }
-    return true; // Allow standard handling if no override
+    return true; // Allow standard handling for other keys on right side
   }
 
-  // Left Side Logic (Support Hold)
+  // Left Side Thumb Logic
   switch (keycode) {
-    // LEFT -> Base: LALT (Fix for Ctrl+Left Arrow)
-    case KC_LEFT: 
+    case KC_UP: // L1: UP -> L0: TO(3)
       if (is_press) {
-        uint8_t mods = get_mods();
-        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-          l1_left_active = true;
-          register_code(KC_LALT);
+        if (layer == 1 && (get_mods() & MOD_MASK_SHIFT)) {
+          l1_up_ovr = true;
+          layer_move(3);
           return false;
         }
-      } else {
-        if (l1_left_active) {
-          unregister_code(KC_LALT);
-          l1_left_active = false;
-          return false;
-        }
+      } else if (l1_up_ovr) {
+        l1_up_ovr = false;
+        return false;
       }
       break;
 
-    // DOWN -> Base: LALT
-    case KC_DOWN: 
+    case KC_LEFT: // L1: LEFT -> L0: KC_LALT
       if (is_press) {
         uint8_t mods = get_mods();
         if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-          l1_down_active = true;
+          l1_left_ovr = true;
           register_code(KC_LALT);
           return false;
         }
-      } else {
-        if (l1_down_active) {
-          unregister_code(KC_LALT);
-          l1_down_active = false;
-          return false;
-        }
+      } else if (l1_left_ovr) {
+        l1_left_ovr = false;
+        unregister_code(KC_LALT);
+        return false;
       }
       break;
-    case KC_LALT: // Fallback check for release on Base Layer
-      if (!is_press) {
-        if (l1_down_active) {
-          unregister_code(KC_LALT);
-          l1_down_active = false;
+
+    case KC_DOWN: // L1: DOWN -> L0: KC_BSPC
+      if (is_press) {
+        uint8_t mods = get_mods();
+        if ((layer == 1 || layer == 7) && (mods & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
+          l1_down_ovr = true;
+          register_code(KC_BSPC);
           return false;
         }
-        if (l1_left_active) {
+      } else if (l1_down_ovr) {
+        l1_down_ovr = false;
+        unregister_code(KC_BSPC);
+        return false;
+      }
+      break;
+
+    case KC_LALT: // Safety: Clean up any stuck overrides on base layer release
+      if (!is_press) {
+        if (l1_left_ovr) {
           unregister_code(KC_LALT);
-          l1_left_active = false;
+          l1_left_ovr = false;
           return false;
         }
       }
