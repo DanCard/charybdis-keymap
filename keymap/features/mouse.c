@@ -315,8 +315,8 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
         // Throttle jitter logging to once every 60 seconds to prevent 'qmk console' flooding
         if (timer_elapsed32(last_jitter_log) > 60000) {
           LOG_TIME();
-          uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d, num_filtered=%lu)\033[0m\n",
-                                                      x, y, jitter_streak, (unsigned long)num_filtered);
+          uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d, num filtered=%lu)\033[0m\n",
+                                                      x, y, jitter_streak, num_filtered);
           last_jitter_log = now;
           num_filtered = 0;
         } else {
