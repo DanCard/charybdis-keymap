@@ -259,7 +259,10 @@ bool housekeeping_rgb_indicators(void) {
   case 4: {
     if (is_keyboard_left()) {
       static const uint8_t left[] = {0, 7, 8, 15, 16, 20, 1, 6, 9, 14, 17, 21, 2, 5, 10, 13, 18, 22, 3, 4, 11, 12, 19, 23, 26, 27, 28, 25, 24};
-      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) rgb_matrix_set_color_scaled(left[i], 255, 127, 0);
+      uint8_t breath = scale8(sin8(timer_read() / 12), 128) + 127; // Smooth pulse between 50% and 100% brightness
+      for (int i = 0; i < sizeof(left) / sizeof(left[0]); i++) {
+        rgb_matrix_set_color_scaled(left[i], 0, breath / 4, breath); // Vibrant Breathing Blue
+      }
     }
     break;
   }

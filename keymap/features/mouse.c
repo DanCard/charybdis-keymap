@@ -310,11 +310,17 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
       // A streak of MOUSE_JITTER_STREAK_THRESHOLD+ events means the user is consistently moving the ball slowly,
       // so we stop filtering and let the movement through to the host.
       if (jitter_streak < MOUSE_JITTER_STREAK_THRESHOLD) {
+        static uint32_t num_filtered = 0;
         static uint32_t last_jitter_log = 0;
-        if (timer_elapsed32(last_jitter_log) > 1000) {
+        // Throttle jitter logging to once every 60 seconds to prevent 'qmk console' flooding
+        if (timer_elapsed32(last_jitter_log) > 60000) {
           LOG_TIME();
-          uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d)\033[0m\n", x, y, jitter_streak);
+          uprintf("\033[95mMouse: Jitter Filtered (x=%d, y=%d, streak=%d, num_filtered=%d)\033[0m\n",
+                                                      x, y, jitter_streak, num_filtered);
           last_jitter_log = now;
+          num_filtered = 0;
+        } else {
+          num_filtered++;
         }
         // Zero out the report so it's ignored by the host AND by the auto-layer logic below
         mouse_report.x = 0;

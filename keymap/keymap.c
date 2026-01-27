@@ -1099,7 +1099,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                   KC_BSLS    , KC_P_TO0, KC_O    , KC_I    , KC_U    , KC_Y    ,   KC_Y, KC_U, KC_I, KC_O, KC_P, KC_BSLS,
                   KC_QUOT, KC_PLUS_COLON, KC_L   , KC_K    , KC_J    , KC_H    ,   KC_H, KC_J, KC_K, KC_L, KC_PLUS_COLON, KC_QUOT,
                   KC_LCTL, KC_SLSH, KC_DOT, KC_COMM , KC_M    , KC_N    ,   KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RCTL,
-                                                  KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_R_L2, KC_ENT_EXIT,
+                                                  KC_SPC_EXIT, KC_ENT_EXIT, KC_LSFT,   KC_DEL, KC_ENT_EXIT,
                                                               KC_LALT, KC_BSPC,   KC_BSPC),
     // Layer 5: Settings Layer - accessed via long press 6
   [5] = LAYOUT(

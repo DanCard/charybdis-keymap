@@ -13,7 +13,7 @@ LAYER_COLORS_NORM = {
     1: (0.95, 0.95, 0.95),   # White
     2: (0.7, 1.0, 0.7),      # Green (Arrow)
     3: (1.0, 1.0, 0.7),      # Yellow (Mouse)
-    4: (1.0, 0.5, 0.0),      # Orange (One-Hand)
+    4: (0.5, 0.8, 1.0),      # Light Blue (One-Hand)
     5: (0.95, 0.95, 0.95),   # White (Settings)
 }
 
@@ -22,7 +22,7 @@ LAYER_COLORS_255 = {
     1: (240, 240, 245),      # White
     2: (130, 220, 130),      # Green (Arrow)
     3: (240, 220, 100),      # Yellow (Mouse)
-    4: (255, 150, 0),        # Orange (One-Hand)
+    4: (100, 200, 255),      # Light Blue (One-Hand)
     5: (240, 240, 245),      # White (Settings)
 }
 
@@ -32,7 +32,7 @@ KEY_BORDER_COLORS = {
     1: (180, 180, 190),      # Gray for white keys
     2: (80, 160, 80),
     3: (180, 160, 60),
-    4: (180, 80, 0),
+    4: (50, 100, 180),
     5: (180, 180, 190),
 }
 
@@ -420,6 +420,12 @@ def simplify_key(key_code, layer_num=None):
     mo_match = re.match(r"MO\((\d+)\)", key_code)
     if mo_match:
         layer = mo_match.group(1)
+        return f"L{layer}"
+
+    # Handle TO(layer)
+    to_match = re.match(r"TO\((\d+)\)", key_code)
+    if to_match:
+        layer = to_match.group(1)
         return f"L{layer}"
 
     # Handle TD(...)
