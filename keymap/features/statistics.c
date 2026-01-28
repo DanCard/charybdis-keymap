@@ -196,7 +196,8 @@ void print_statistics_now(void) {
     uprintf("Total     | Short      | Long       | Key (L0) | Row Col | Code\n");
     uprintf("--------------------------------------------------------------------------------\n");
     
-    key_stat_t stats[MATRIX_ROWS * MATRIX_COLS];
+    // Move to static to avoid stack overflow (RP2040 stack is limited, 1.2KB is too much)
+    static key_stat_t stats[MATRIX_ROWS * MATRIX_COLS];
     uint8_t count = 0;
     
     for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
@@ -216,12 +217,14 @@ void print_statistics_now(void) {
     }
     
     // Bubble sort by total count (ascending)
-    for (uint8_t i = 0; i < count - 1; i++) {
-        for (uint8_t j = 0; j < count - i - 1; j++) {
-            if (stats[j].total_count > stats[j + 1].total_count) {
-                key_stat_t temp = stats[j];
-                stats[j] = stats[j + 1];
-                stats[j + 1] = temp;
+    if (count > 0) {
+        for (uint8_t i = 0; i < count - 1; i++) {
+            for (uint8_t j = 0; j < count - i - 1; j++) {
+                if (stats[j].total_count > stats[j + 1].total_count) {
+                    key_stat_t temp = stats[j];
+                    stats[j] = stats[j + 1];
+                    stats[j + 1] = temp;
+                }
             }
         }
     }

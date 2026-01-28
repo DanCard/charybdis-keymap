@@ -246,6 +246,54 @@ report_mouse_t housekeeping_mouse_task(report_mouse_t mouse_report) {
     in_small_movement_mode = false;
   }
 
+// ============================================================
+// SUSTAINED MOVEMENT DECELERATION
+// ============================================================
+// Problem: Long movements can become hard to control if the cursor is too fast.
+//
+// Solution: If the mouse has been moving continuously for more than 1 second,
+// decelerate it to allow for better control at the end of a long sweep.
+// ============================================================
+#define SUSTAINED_MOVEMENT_THRESHOLD 1000 // ms of continuous movement before decelerating
+
+  static uint16_t sustained_movement_start = 0;
+  static bool     is_sustained_moving      = false;
+  static bool     is_sustained_decel_active = false;
+
+  if (layer_state_is(3) && (x != 0 || y != 0)) {
+    if (!is_sustained_moving) {
+      is_sustained_moving      = true;
+      sustained_movement_start = timer_read();
+    }
+
+    if (timer_elapsed(sustained_movement_start) > SUSTAINED_MOVEMENT_THRESHOLD) {
+      if (!is_sustained_decel_active) {
+        uprintf("\033[96mMouse: Sustained movement detected (>%dms). Decelerating...\033[0m\n", SUSTAINED_MOVEMENT_THRESHOLD);
+        is_sustained_decel_active = true;
+      }
+
+      // Sustained movement detected - slow down
+      static uint32_t last_sustained_log = 0;
+      if (timer_elapsed32(last_sustained_log) > 2000) {
+        uprintf("\033[96mMouse: Sustained Deceleration Active (x=%d, y=%d)\033[0m\n", mouse_report.x, mouse_report.y);
+        last_sustained_log = timer_read32();
+      }
+
+      // Decelerate by 50%
+      if (x != 0) mouse_report.x = (abs(x) > 1) ? (x / 2) : x;
+      if (y != 0) mouse_report.y = (abs(y) > 1) ? (y / 2) : y;
+
+      x = mouse_report.x;
+      y = mouse_report.y;
+    }
+  } else {
+    if (is_sustained_decel_active) {
+      uprintf("\033[96mMouse: Sustained movement reset.\033[0m\n");
+      is_sustained_decel_active = false;
+    }
+    is_sustained_moving = false;
+  }
+
   uint32_t now = timer_read32();
   uint32_t sec = now / 1000;
   uint32_t ms  = now % 1000;
