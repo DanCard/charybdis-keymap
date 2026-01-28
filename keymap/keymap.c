@@ -236,9 +236,9 @@ layer_state_t layer_state_set_user(layer_state_t state) {
           layer_change_reason ? layer_change_reason : "Standard Keycode / Core");
   layer_change_reason = NULL;
 
-  // Force RGB refresh when returning to layer 0 to clear stale indicator colors
+  // Force RGB refresh when returning to transparent layers (0 or 1) to clear stale indicator colors
   // Defer this to matrix_scan to ensure layer_state has fully updated (avoiding race condition)
-  if (layer == 0 && prev_layer != 0) {
+  if (layer <= 1 && prev_layer != layer) {
     layer_0_refresh_pending = true;
   }
   if (layer == 3) {
@@ -1083,7 +1083,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                       KC_LEFT, KC_DOWN,  KC_BSPC),
     [2] = LAYOUT(KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , QK_BOOT   ,   KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT     , KC_EXIT  , QK_BOOT,
                  KC_PSCR, KC_EXIT, KC_EXIT, KC_EXIT, KC_EXIT   , HYPR(KC_N),   KC_EXIT, KC_LBRC, KC_RBRC, S(KC_LBRC), S(KC_RBRC), QK_CLEAR_EEPROM,
-                 KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT  , KC_EXIT,
+                 KC_LSFT, KC_LEFT, KC_UP  , KC_DOWN, KC_RGHT, LALT(KC_HOME),   KC_EXIT, KC_LEFT, KC_UP  , KC_DOWN   , KC_RGHT  , KC_PSCR,
                  KC_LCTL, KC_HOME, KC_PGUP, KC_PGDN, KC_END    , KC_EXIT   ,   KC_EXIT, KC_HOME, KC_PGUP, KC_PGDN   , KC_END   , KC_RSFT,
                                          KC_SPC_EXIT, KC_ENT_EXIT, KC_L1_L3,   KC_EXIT, KC_ENT_EXIT,
                                                       KC_LALT, KC_BSPC_EXIT,   KC_BSPC_EXIT),
@@ -1209,12 +1209,13 @@ void matrix_scan_user(void) {
     uprintf("Deferred RGB init: mode %d applied\n", master_rgb_init_mode);
   }
 
-  // Handle deferred layer 0 refresh (fixes stuck layer colors)
+  // Handle deferred layer refresh (fixes stuck layer colors)
   if (layer_0_refresh_pending) {
-    rgb_matrix_set_color_all(0, 0, 0); // Ensure Layer 1 artifacts are wiped (prevents "ghosting" in reactive modes)
+    uint8_t current_layer = get_highest_layer(layer_state);
+    rgb_matrix_set_color_all(0, 0, 0); // Ensure layer artifacts are wiped (prevents "ghosting" in reactive modes)
     handle_rgb_mode_change(rgb_matrix_get_mode());
     layer_0_refresh_pending = false;
-    uprintf("Deferred Layer 0 RGB refresh executed\n");
+    uprintf("RGB: Deferred refresh for transparent layer %u executed (clearing artifacts, restoring theme)\n", current_layer);
   }
 
   // Process mouse-related timeouts (Snipe, Fast Mode, Auto Mouse)

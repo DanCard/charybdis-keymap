@@ -17,9 +17,6 @@ static uint32_t last_layer_switch_time = 0;
 static uint8_t current_layer = 0;
 static bool first_layer_update = true;
 
-// Print every 10 minutes (600,000 ms)
-#define PRINT_INTERVAL 600000 
-
 void process_statistics(keyrecord_t *record) {
     uint8_t row = record->event.key.row;
     uint8_t col = record->event.key.col;
@@ -322,6 +319,7 @@ void print_statistics_grid(void) {
 }
 
 void matrix_scan_statistics(void) {
+    #define PRINT_INTERVAL 900000       // Print every 15 minutes (900,000 ms)
     if (timer_elapsed32(last_print_time) > PRINT_INTERVAL) {
         last_print_time = timer_read32();
         static bool print_grid_next = true;

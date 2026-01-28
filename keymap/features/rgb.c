@@ -128,7 +128,7 @@ bool housekeeping_rgb_indicators(void) {
   }
 
   uint8_t layer = get_highest_layer(layer_state);
-  if (layer > 0) {
+  if (layer > 1) {
     rgb_matrix_set_color_all(0, 0, 0);
   }
 
